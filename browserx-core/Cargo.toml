@@ -1,0 +1,14 @@
+[package]
+name = "browserx-core"
+version = "0.1.0"
+authors = ["OneilNvM <oneil324@outlook.com>"]
+description = "A parsing and data processing library for the BrowserX package using WebAssembly"
+repository = "https://github.com/OneilNvM/BrowserX"
+license = "MIT"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "0.2.114"
