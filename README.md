@@ -1,8 +1,8 @@
-<h1 style="text-align:center;">BrowserX</h1>
+<h1 align="center">BrowserX</h1>
 
-<p style="text-align:center; font-weight:700;">
-    <span style="font-style:italic;">BrowserX</span> is a fast, intuitive and lightweight cross-browser compatibility library.<br>
-    Powered by a Rust/WASM engine, it provides near native speed HTML parsing and cross-browser compatibility data processing.
+<p align="center">
+    <strong><em><span style="font-style:italic;">BrowserX</span></em> is a fast, intuitive and lightweight cross-browser compatibility library.<br>
+    Powered by a Rust/WASM engine, it provides near native speed HTML parsing and cross-browser compatibility data processing.</strong>
 </p>
 
 ---
