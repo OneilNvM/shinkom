@@ -1,42 +1,84 @@
-import init, { greet } from '../pkg/browserx_core'
+// @ts-check
+/**@typedef {import('../../types/inspector.types').InspectorConfig} InspectorConfig */
+/**@typedef {import('../../types/browserx.types').BrowserXBus} BrowserXBus */
+
+import init, { greet } from '../../pkg/browserx_core'
 
 class CompatInspector {
     #freezeInspector = false;
+
+    /**@type {AbortController | null} */
     #inspectorController = null;
 
-    constructor(config = {}) {
-        this.config = {
-            disabled: false,
-            keyboardShortcuts: false,
-            ...config
-        }
+    /**@type {HTMLDivElement | null} */
+    #ignorePanelEl = null;
+
+    /**
+     * CompatInspector constructor params
+     * @param {InspectorConfig} config 
+     * @param {BrowserXBus} bus
+     */
+    constructor(config, bus) {
+        /**@type {InspectorConfig} */
+        this.config = config
+
+        /**@type {BrowserXBus} */
+        this._bus = bus;
+
+        /**@type {boolean} */
         this.enableSwitching = false;
+
+        /**@type {HTMLDivElement | null} */
         this.inspectorEl = null;
+
+        /**@type {HTMLElement | null} */
         this.frozenTarget = null;
     }
 
+    /**
+     * Set inspector to ignore control panel div.
+     * @param {HTMLDivElement} el 
+     */
+    setIgnorePanel(el) {
+        this.#ignorePanelEl = el
+    }
+
+    /**
+     * Handler toggles inspector freezing on elements.
+     * @param {PointerEvent} e
+     */
     #handleToggleFreeze = e => {
+        if (e.composedPath().includes(/**@type {EventTarget} */ (this.#ignorePanelEl))) return;
+
         e.preventDefault()
         e.stopPropagation()
 
         if (!this.#freezeInspector) {
-            this.#freeze(e.target)
+            this.#freeze(/**@type {HTMLElement} */ (e.target))
             return;
         }
         if (this.#freezeInspector && e.target === this.frozenTarget) {
             this.#unfreeze()
             return;
         } else {
-            this.#switch(e.target)
+            this.#switch(/**@type {HTMLElement} */ (e.target))
         }
     }
 
+    /**
+     * Handler updates inspector to wrap target element.
+     * @param {PointerEvent} e
+     */
     #handlePointerOver = e => {
         if (this.#freezeInspector) return;
 
-        this.#update(e.target)
+        this.#update(/**@type {HTMLElement} */ (e.target))
     }
 
+    /**
+     * Handler responds to keyboard shortcuts.
+     * @param {KeyboardEvent} e
+     */
     #handleKeyboard = e => {
         const ctrlDown = e.ctrlKey
         const shiftDown = e.shiftKey
@@ -60,7 +102,13 @@ class CompatInspector {
         }
     }
 
+    /**
+     * Freezes inspector on selected target.
+     * @param {HTMLElement} target
+     */
     #freeze(target) {
+        if (!this.inspectorEl) return;
+
         this.#freezeInspector = true
         this.frozenTarget = target
 
@@ -69,7 +117,13 @@ class CompatInspector {
             outlineColor: 'rgb(255,0,0)'
         })
     }
+
+    /**
+     * Unfreezes inspector from selected element.
+     */
     #unfreeze() {
+        if (!this.inspectorEl) return;
+
         this.#freezeInspector = false
         this.frozenTarget = null
 
@@ -78,6 +132,11 @@ class CompatInspector {
             outlineColor: 'rgb(0,255,0)'
         })
     }
+
+    /**
+     * Switches inspector to target a different element.
+     * @param {HTMLElement} target 
+     */
     #switch(target) {
         if (this.enableSwitching) {
             this.#freezeInspector = true
@@ -87,6 +146,9 @@ class CompatInspector {
         }
     }
 
+    /**
+     * Creates the inspector element.
+     */
     #createInspector() {
         if (this.inspectorEl) return;
 
@@ -102,9 +164,9 @@ class CompatInspector {
             outlineColor: 'rgb(0, 255, 0)',
             outlineOffset: '4px',
             zIndex: '9999',
-            transitionProperty:'width, height, transform',
+            transitionProperty: 'width, height, transform',
             transitionDuration: '300ms',
-            transitionTimingFunction:'ease-out',
+            transitionTimingFunction: 'ease-out',
             willChange: 'width, height, transform',
             pointerEvents: 'none'
         })
@@ -112,14 +174,19 @@ class CompatInspector {
         document.body.appendChild(this.inspectorEl)
     }
 
+    /**
+     * Initializes event listeners on `window` and creates the inspector.
+     */
     async setup() {
         if (this.inspectorEl || this.config.disabled) return;
 
         await init()
 
-        greet('BrowserX')
+        const message = greet('BrowserX')
 
-        this.#inspectorController = this.#inspectorController === null && new AbortController()
+        console.log(message)
+
+        this.#inspectorController = new AbortController()
         const { signal } = this.#inspectorController
 
         window.addEventListener('pointerover', this.#handlePointerOver, { signal })
@@ -127,19 +194,29 @@ class CompatInspector {
         window.addEventListener('keydown', this.#handleKeyboard)
 
         this.#createInspector()
-        console.log(this.#inspectorController)
     }
 
+    /**
+     * Updates the position of the inspector when moving to a different element.
+     * @param {HTMLElement} target 
+     */
     #update(target) {
+        if (!this.inspectorEl) return;
+
         const { width, height, top, left } = target.getBoundingClientRect()
+        const scrollTop = window.scrollY
+        const scrollLeft = window.scrollX
 
         Object.assign(this.inspectorEl.style, {
             width: `${width}px`,
             height: `${height}px`,
-            transform: `translateX(${left}px) translateY(${top}px)`
+            transform: `translateX(${left + scrollLeft}px) translateY(${top + scrollTop}px)`
         })
     }
 
+    /**
+     * Resets the inspector.
+     */
     reset() {
         if (!this.inspectorEl) return;
         console.log("resetting inspector")
@@ -148,11 +225,16 @@ class CompatInspector {
         this.setup()
     }
 
+    /**
+     * Destroys the inspector.
+     */
     destroy() {
         if (!this.inspectorEl) return;
         console.log("destroying inspector")
 
-        this.#inspectorController.abort()
+        if (this.#inspectorController)
+            this.#inspectorController.abort()
+
         document.body.removeChild(this.inspectorEl)
         this.inspectorEl = null
         this.#inspectorController = null
@@ -163,4 +245,4 @@ class CompatInspector {
     }
 }
 
-export { CompatInspector }
+export default CompatInspector

@@ -12,7 +12,12 @@ export default defineConfig({
             fileName: 'browserx'
         },
         rollupOptions: {
-            external: [],
+            external: ['@mdn/browser-compat-data'],
+            output: {
+                globals: {
+                    '@mdn/browser-compat-data': 'mdnCompatData'
+                }
+            }
         }
     },
     server: {

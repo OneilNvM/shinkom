@@ -21,12 +21,11 @@
     "build": "npm run build:wasm && vite build",
     "build:wasm": "wasm-pack build browserx-core --target web --out-dir ../pkg",
     "preview": "vite preview",
-    "test": "vitest"
-  },
-  "dependencies": {
-    "@mdn/browser-compat-data": "^7.3.6"
+    "test": "vitest",
+    "type-check": "tsc --project tsconfig.json"
   },
   "devDependencies": {
+    "@mdn/browser-compat-data": "^7.3.6",
     "jest": "^30.2.0",
     "jsdom": "^28.1.0",
     "node": "^22.22.1",

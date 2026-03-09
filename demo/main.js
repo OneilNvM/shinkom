@@ -1,11 +1,12 @@
-import { CompatInspector } from "../src"
+import BrowserX from "../src/browserx/browserx"
 
 const config = {
+    disabled: false,
     keyboardShortcuts: true
 }
 
-const inspector = new CompatInspector(config)
+const browserx = new BrowserX(config)
 
-inspector.setup()
+browserx.init()
 
-console.log(`Inspector is ${inspector.config.disabled ? 'disabled' : 'enabled'}`)
+console.log(`Inspector is ${browserx.compatInspector.config.disabled ? 'disabled' : 'enabled'}`)
