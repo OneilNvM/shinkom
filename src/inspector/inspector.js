@@ -2,8 +2,6 @@
 /**@typedef {import('../../types/inspector.types').InspectorConfig} InspectorConfig */
 /**@typedef {import('../../types/browserx.types').BrowserXBus} BrowserXBus */
 
-import init, { greet } from '../../pkg/browserx_core'
-
 class CompatInspector {
     #freezeInspector = false;
 
@@ -179,12 +177,6 @@ class CompatInspector {
      */
     async setup() {
         if (this.inspectorEl || this.config.disabled) return;
-
-        await init()
-
-        const message = greet('BrowserX')
-
-        console.log(message)
 
         this.#inspectorController = new AbortController()
         const { signal } = this.#inspectorController

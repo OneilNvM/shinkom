@@ -4,6 +4,8 @@
 /**@typedef {import('../../types/inspector.types').InspectorConfig} InspectorConfig */
 import CompatInspector from '../inspector/inspector'
 import ControlPanel from '../control-panel/control-panel'
+import init, { CompatEngine } from '../../pkg/browserx_core'
+import bcd from '@mdn/browser-compat-data' with {type: 'json'}
 
 class BrowserX {
     /**
@@ -18,6 +20,9 @@ class BrowserX {
 
         /**@type {ControlPanel} */
         this.controlPanel = new ControlPanel(this.bus)
+
+        /**@type {CompatEngine | null} */
+        this.engine = null
 
         this.bus.addEventListener('ci:toggle', this.handleInspectorToggle)
     }
@@ -34,9 +39,22 @@ class BrowserX {
     }
 
     /**
+     * Initializes Rust/WASM engine
+     */
+    async initEngine() {
+        await init()
+
+        this.engine = new CompatEngine(bcd.html.elements, bcd.html.global_attributes)
+
+        console.dir(this.engine.check_element("<div id='div-elem' class='newStyle' radio='bare' align='center'></div>"))
+        console.dir(this.engine.check_element("<audio id='audio-elem' class='newStyle' controls='false' align='center'></span>"))
+    }
+
+    /**
      * Initializes `BrowserX`.
      */
     init() {
+        this.initEngine()
         this.compatInspector.setup()
         this.controlPanel.setup()
         if (this.controlPanel.shadowHost)
@@ -49,6 +67,7 @@ class BrowserX {
     destroy() {
         this.compatInspector.destroy()
         this.controlPanel.destroy()
+        this.engine?.free()
 
         this.bus.removeEventListener('ci:toggle', this.handleInspectorToggle)
     }

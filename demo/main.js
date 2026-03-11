@@ -1,7 +1,7 @@
-import BrowserX from "../src/browserx/browserx"
+import { BrowserX } from '../src/browserx'
 
 const config = {
-    disabled: false,
+    disabled: true,
     keyboardShortcuts: true
 }
 
