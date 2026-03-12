@@ -1,0 +1,1 @@
+export { default as CompatControlPanel } from './control-panel'

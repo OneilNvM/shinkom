@@ -1,7 +1,7 @@
-import { BrowserX } from '../src/browserx'
+import { BrowserX } from '../src'
 
 const config = {
-    disabled: true,
+    disabled: false,
     keyboardShortcuts: true
 }
 
@@ -9,4 +9,4 @@ const browserx = new BrowserX(config)
 
 browserx.init()
 
-console.log(`Inspector is ${browserx.compatInspector.config.disabled ? 'disabled' : 'enabled'}`)
+console.log(`Inspector is ${browserx.compatUI.compatInspector.config.disabled ? 'disabled' : 'enabled'}`)

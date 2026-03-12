@@ -1,11 +1,12 @@
 export interface BrowserXEventMap {
     'ci:toggle': CustomEvent<void>;
+    'ci:inspect': CustomEvent<string>;
 }
 
-export interface BrowserXBus extends EventTarget {
+export interface BrowserXEventBus extends EventTarget {
     addEventListener<K extends keyof BrowserXEventMap>(
         type: K,
-        listener: (this: BrowserXBus, ev: BrowserXEventMap[K]) => void,
+        listener: (this: BrowserXEventBus, ev: BrowserXEventMap[K]) => void,
         options?: boolean | AddEventListenerOptions
     ): void,
 
@@ -17,8 +18,8 @@ export interface BrowserXBus extends EventTarget {
 
     removeEventListener<K extends keyof BrowserXEventMap>(
         type: K,
-        listener: (this: BrowserXBus, ev: BrowserXEventMap[K]) => void,
-    ),
+        listener: (this: BrowserXEventBus, ev: BrowserXEventMap[K]) => void,
+    ): void,
 
     removeEventListener(
         type: string,
@@ -28,5 +29,5 @@ export interface BrowserXBus extends EventTarget {
 
     dispatchEvent<K extends keyof BrowserXEventMap>(
         event: BrowserXEventMap[K] 
-    )
+    ): boolean
 }

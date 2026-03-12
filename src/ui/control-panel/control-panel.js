@@ -1,16 +1,14 @@
-// @ts-check
+/**@typedef {import('../../../types/browserx.types').BrowserXEventBus} BrowserXEventBus */
 
-/**@typedef {import('../../types/browserx.types').BrowserXBus} BrowserXBus */
-
-class ControlPanel {
+class CompatControlPanel {
     /**@type {AbortController | null} */
     #panelController = null;
 
     /**
-     * @param {BrowserXBus} bus 
+     * @param {BrowserXEventBus} bus 
      */
     constructor(bus) {
-        /**@type {BrowserXBus} */
+        /**@type {BrowserXEventBus} */
         this._bus = bus;
 
         /**@type {HTMLDivElement | null} */
@@ -99,4 +97,4 @@ class ControlPanel {
     }
 }
 
-export default ControlPanel
+export default CompatControlPanel

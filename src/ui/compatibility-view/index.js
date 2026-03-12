@@ -1,0 +1,1 @@
+export { default as CompatView } from './compatibility-view'

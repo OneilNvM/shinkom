@@ -1,6 +1,5 @@
-// @ts-check
-/**@typedef {import('../../types/inspector.types').InspectorConfig} InspectorConfig */
-/**@typedef {import('../../types/browserx.types').BrowserXBus} BrowserXBus */
+/**@typedef {import('../../../types/inspector.types').InspectorConfig} InspectorConfig */
+/**@typedef {import('../../../types/browserx.types').BrowserXEventBus} BrowserXEventBus */
 
 class CompatInspector {
     #freezeInspector = false;
@@ -12,15 +11,14 @@ class CompatInspector {
     #ignorePanelEl = null;
 
     /**
-     * CompatInspector constructor params
      * @param {InspectorConfig} config 
-     * @param {BrowserXBus} bus
+     * @param {BrowserXEventBus | null} bus
      */
-    constructor(config, bus) {
+    constructor(config = { disabled: false, keyboardShorcuts: false }, bus = null) {
         /**@type {InspectorConfig} */
         this.config = config
 
-        /**@type {BrowserXBus} */
+        /**@type {BrowserXEventBus | null} */
         this._bus = bus;
 
         /**@type {boolean} */
@@ -46,20 +44,20 @@ class CompatInspector {
      * @param {PointerEvent} e
      */
     #handleToggleFreeze = e => {
-        if (e.composedPath().includes(/**@type {EventTarget} */ (this.#ignorePanelEl))) return;
+        if (e.composedPath().includes(/**@type {EventTarget} */(this.#ignorePanelEl))) return;
 
         e.preventDefault()
         e.stopPropagation()
 
         if (!this.#freezeInspector) {
-            this.#freeze(/**@type {HTMLElement} */ (e.target))
+            this.#freeze(/**@type {HTMLElement} */(e.target))
             return;
         }
         if (this.#freezeInspector && e.target === this.frozenTarget) {
             this.#unfreeze()
             return;
         } else {
-            this.#switch(/**@type {HTMLElement} */ (e.target))
+            this.#switch(/**@type {HTMLElement} */(e.target))
         }
     }
 
@@ -70,7 +68,7 @@ class CompatInspector {
     #handlePointerOver = e => {
         if (this.#freezeInspector) return;
 
-        this.#update(/**@type {HTMLElement} */ (e.target))
+        this.#update(/**@type {HTMLElement} */(e.target))
     }
 
     /**
@@ -110,6 +108,10 @@ class CompatInspector {
         this.#freezeInspector = true
         this.frozenTarget = target
 
+        console.log(this.frozenTarget.outerHTML)
+
+        this._bus?.dispatchEvent(new CustomEvent('ci:inspect', { detail: this.frozenTarget.outerHTML }))
+
         Object.assign(this.inspectorEl.style, {
             backgroundColor: 'rgba(255,0,0,.3)',
             outlineColor: 'rgb(255,0,0)'
@@ -139,6 +141,8 @@ class CompatInspector {
         if (this.enableSwitching) {
             this.#freezeInspector = true
             this.frozenTarget = target
+
+            this._bus?.dispatchEvent(new CustomEvent('ci:inspect', { detail: this.frozenTarget.outerHTML }))
 
             this.#update(target)
         }

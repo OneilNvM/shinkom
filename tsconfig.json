@@ -20,7 +20,10 @@
         "src/**/*.js",
         "tests/**/*.test.js",
         "types/**/*.d.ts",
-        "pkg/**/*.d.ts"
+        "pkg/**/*.d.ts",
+        "types/browserx.types.ts"
     ],
-    "exclude": ["node_modules"]
+    "exclude": [
+        "node_modules"
+    ]
 }
