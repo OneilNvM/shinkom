@@ -12,66 +12,145 @@ use crate::{
     schema::{CompatElement, CompatGlobalAttribs},
 };
 
-pub fn process_html(html: &str, depth_level: u32) -> String {
-    if depth_level == 0 || html.len() == 0 {
+/// HTML tags to ignore the body of when pre-processing HTML.
+const IGNORE_TAGS: [&str; 8] = [
+    "</script>",
+    "</style>",
+    "</textarea>",
+    "</title>",
+    "</noscript>",
+    "</noembed>",
+    "</iframe>",
+    "</xmp>",
+];
+
+/// Used for pre-processing HTML to return all of the elements down to the specified `depth_level`,
+/// which **must be greater than 0**.
+///
+/// The `depth_level` represents the amount of levels down in a nested HTML structure to go.
+/// The algorithm will then only return the HTML tags up to the specified depth.
+///
+/// ## Example
+///
+/// Say we have HTML that looks like this:
+///
+/// ```html
+/// <main>
+///     <section>
+///         <div>
+///             <h2>Grand example</h2>
+///             <p>This is a big example</p>
+///             <div class="inner-div">
+///                 <p>I will not be returned</p>
+///                 <p>Or will I?</p>
+///             </div>
+///         </div>
+///     </section>
+/// </main>
+/// ```
+/// If we call the function with a depth level of 3:
+///
+/// ```rust
+/// use browserx_core::helpers::pre_process_html;
+///
+/// let html = "example"; // Example html above
+///
+/// let val = pre_process_html(html, 3);
+/// ```
+/// The returned output would look like this:
+///
+/// ```html
+/// <main>
+/// <section>
+/// <div>
+/// <h2>
+/// <p>
+/// <div class="inner-div">
+/// ```
+/// Notice how the `<p>` tags in the `inner-div` were not returned.
+pub fn pre_process_html(html: &str, depth_level: u32) -> String {
+    let mut result: Vec<&str> = vec![];
+    let mut lines = html.lines();
+    if depth_level == 0 {
+        return String::new();
+    }
+    if let Some(line) = lines.next() {
+        result.push(line)
+    } else {
         return String::new();
     }
 
-    let mut open_tags = 0;
+    let mut cur_depth = 0;
     let mut close_tags: Vec<String> = vec![];
-    let mut lines = html.lines();
-    let mut result: Vec<&str> = vec![lines.next().unwrap()];
+    let mut parent = false;
+    let mut ignore_until_closed = false;
 
     let mut cur_line = lines.next();
     while cur_line.is_some() {
-        // if open_tags is greater than or equal to depth_level
-        //      if current line is equal to last close tag
-        //          decrement open_tags
-        //          pop last close tag from close_tags
-        //          continue to next iteration
-        //      else
-        //          continue to next iteration
-        // 
-        // if current line starts with "</"
-        //      continue to next iteration
-        //
-        // if write_close_tag is some
-        //      increment open_tags
-        //      push related close tag to close_tags
-        // 
-        //      if open_tags is less than depth_level
-        //          push new line character to result
-        //          push current line to result
-        // else
-        //      push new line character to result
-        //      push current line to result
-        
         let line = cur_line.unwrap();
-        println!("line: {line}");
-        println!("open_tags: {}, {:?}", open_tags, close_tags);
-        if open_tags >= depth_level {
+        if cur_depth < depth_level && parent {
+            parent = false;
+        }
+        if ignore_until_closed {
+            if let Some(close) = close_tags.last()
+                && line == close
+            {
+                cur_depth -= 1;
+                close_tags.pop();
+                ignore_until_closed = false;
+            }
+            cur_line = lines.next();
+            continue;
+        }
+        if cur_depth >= depth_level {
             if line == close_tags.last().unwrap() {
-                open_tags -= 1;
+                cur_depth -= 1;
                 close_tags.pop();
                 cur_line = lines.next();
                 continue;
             } else {
+                if parent && let Some(close_tag) = write_close_tag(line) {
+                    cur_depth += 1;
+                    close_tags.push(close_tag);
+                }
+
                 cur_line = lines.next();
                 continue;
             }
         }
 
         if line.starts_with("</") {
+            if cur_depth > 0 && line == close_tags.last().unwrap() {
+                cur_depth -= 1;
+                close_tags.pop();
+            }
+
             cur_line = lines.next();
             continue;
         }
 
         if let Some(close_tag) = write_close_tag(line) {
-            open_tags += 1;
-            close_tags.push(close_tag);
-            if open_tags < depth_level {
+            if IGNORE_TAGS.contains(&close_tag.as_str()) {
+                cur_depth += 1;
+                close_tags.push(close_tag);
                 result.push("\n");
                 result.push(line);
+                ignore_until_closed = true;
+            } else {
+                cur_depth += 1;
+                close_tags.push(close_tag);
+                if cur_depth < depth_level {
+                    result.push("\n");
+                    result.push(line);
+                } else {
+                    if depth_level == cur_depth {
+                        result.push("\n");
+                        result.push(line);
+                    }
+                    if !parent {
+                        parent = true
+                    }
+                }
             }
         } else {
             result.push("\n");
@@ -84,21 +163,58 @@ pub fn process_html(html: &str, depth_level: u32) -> String {
     result.into_iter().collect()
 }
 
+/// Uses the [`lol_html::rewrite_str`] function to return the close tag equivalent
+/// of the provided html.
+///
+/// `line` should be a string of html containing a **single tag name**,
+/// if multiple open tags names are provided with no close tag equivalents,
+/// the last open tag will have its close tag equivalent returned.
+///
+/// ## Examples
+///
+/// ```rust
+/// use browserx_core::helpers::write_close_tag;
+///
+/// // Single open tag
+///
+/// let open_div = "<div id='example-container' class='div-elem'>";
+///
+/// if let Some(close_tag) = write_close_tag(open_div) {
+///     println!("{}", close_tag) // prints "</div>"
+/// }
+///
+/// // Multiple open tags
+/// let open_tags = "<div><span><p>";
+///
+/// if let Some(close_tag) = write_close_tag(open_tags) {
+///     println!("{}", close_tag) // prints "</p>"
+/// }
+/// ```
 pub fn write_close_tag(line: &str) -> Option<String> {
     let end_tag = Rc::new(RefCell::new(None));
+    let open_tags: Rc<RefCell<HashMap<String, String>>> = Rc::new(RefCell::new(HashMap::new()));
     let _ = rewrite_str(
         line,
         RewriteStrSettings {
             element_content_handlers: vec![element!("*", |el: &mut Element| {
+                let open_tags_inner = Rc::clone(&open_tags);
+                let end_tag_inner = Rc::clone(&end_tag);
                 if el.can_have_content() {
+                    open_tags_inner
+                        .borrow_mut()
+                        .insert(el.tag_name(), format!("</{}>", el.tag_name()));
                     *end_tag.borrow_mut() = Some(format!("</{}>", el.tag_name()));
                 }
 
-                let inner = Rc::clone(&end_tag);
-
                 if let Some(handlers) = el.end_tag_handlers() {
-                    handlers.push(Box::new(move |_| {
-                        *inner.borrow_mut() = None;
+                    handlers.push(Box::new(move |end| {
+                        if open_tags_inner.borrow().contains_key(&end.name()) {
+                            open_tags_inner.borrow_mut().remove(&end.name());
+                            match open_tags_inner.borrow().iter().last() {
+                                Some(tag) => *end_tag_inner.borrow_mut() = Some(tag.1.to_string()),
+                                None => *end_tag_inner.borrow_mut() = None,
+                            }
+                        }
                         Ok(())
                     }))
                 }

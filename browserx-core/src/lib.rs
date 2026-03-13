@@ -1,14 +1,11 @@
+pub mod helpers;
 mod prelude;
 mod schema;
-pub mod helpers;
 use std::{cell::RefCell, rc::Rc};
 
+use crate::helpers::{compat_check, pre_process_html};
 use crate::prelude::*;
-use lol_html::{
-    RewriteStrSettings, element,
-    rewrite_str,
-};
-use crate::helpers::{compat_check, process_html};
+use lol_html::{RewriteStrSettings, element, rewrite_str};
 use wasm_bindgen::prelude::*;
 
 #[derive(Serialize, Deserialize, Default)]
@@ -73,6 +70,7 @@ impl CompatEngine {
         })
     }
 
+    /// Used for checking the compatibility of a single element and its attributes.
     #[wasm_bindgen]
     pub fn check_element(&self, html: &str) -> JsValue {
         let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
@@ -118,10 +116,17 @@ impl CompatEngine {
         })
     }
 
+    /// Used for checking the compatibility of multiple elements and their attributes
+    ///
+    /// `depth_level` is used to control how far down in a nested HTML structure to go before
+    /// returning element tags.
+    ///
+    /// See [`helpers::pre_process_html`] to learn more about how `depth_level` works.
+    #[wasm_bindgen]
     pub fn check_elements(&self, html: &str, depth_level: u32) -> JsValue {
         let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
 
-        let elements = process_html(html, depth_level);
+        let elements = pre_process_html(html, depth_level);
 
         let el_data = &self.el_data;
         let g_attrib_data = &self.g_attrib_data;

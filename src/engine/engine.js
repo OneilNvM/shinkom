@@ -25,7 +25,6 @@ class BXEngine {
         console.dir(this.engine?.check_element(element))
     }
 
-
     /**
      * Free WASM memory and dereference engine
      */

@@ -18,7 +18,7 @@ pub enum VersionValue {
 #[serde(untagged)]
 pub enum SupportData {
     Multiple(Vec<SupportDetails>),
-    Single(SupportDetails),
+    Single(Box<SupportDetails>),
     Simple(VersionValue),
     Unknown(serde_json::Value),
 }
