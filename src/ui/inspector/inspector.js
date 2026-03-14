@@ -179,7 +179,7 @@ class CompatInspector {
     /**
      * Initializes event listeners on `window` and creates the inspector.
      */
-    async setup() {
+    setup() {
         if (this.inspectorEl || this.config.disabled) return;
 
         this.#inspectorController = new AbortController()

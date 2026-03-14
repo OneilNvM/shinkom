@@ -16,19 +16,50 @@ class BrowserX {
 
         this.engine = new BXEngine()
 
-        this.bus.addEventListener('ci:toggle', this.handleInspectorToggle)
-        this.bus.addEventListener('ci:inspect', this.handleElementCheck)
+        this.bus.addEventListener('ci:toggle', this.handleCustomEvents)
+        this.bus.addEventListener('ci:inspect', this.handleCustomEvents)
+        this.bus.addEventListener('ci:switch', this.handleCustomEvents)
+        this.bus.addEventListener('ci:create', this.handleCustomEvents)
+        this.bus.addEventListener('ci:reset', this.handleCustomEvents)
+        this.bus.addEventListener('ci:destroy', this.handleCustomEvents)
     }
 
     /**
-     * Handler toggles the inspector.
+     * Handles the custom events sent from the bus.
+     * @param {CustomEvent<string | void>} e
      */
-    handleInspectorToggle = () => {
-        if (this.compatUI.compatInspector.inspectorEl) {
-            this.compatUI.compatInspector.destroy()
-        } else {
-            this.compatUI.compatInspector.setup()
+    handleCustomEvents = e => {
+        switch (e.type) {
+            case 'ci:toggle': {
+                if (this.compatUI.compatInspector.inspectorEl) {
+                    this.compatUI.compatInspector.destroy()
+                } else {
+                    this.compatUI.compatInspector.setup()
+                }
+                break;
+            }
+            case 'ci:inspect': 
+                if (typeof e.detail === 'string')
+                    this.engine.checkElement(e.detail)
+                break;
+            case 'ci:switch': 
+                const switchVal = this.compatUI.compatInspector.enableSwitching
+                this.compatUI.compatInspector.enableSwitching = !switchVal
+                break;
+            case 'ci:create': 
+                this.compatUI.compatInspector.setup()
+                break;
+            case 'ci:reset':
+                this.compatUI.compatInspector.reset()
+                break;
+            case 'ci:destroy':
+                this.compatUI.compatInspector.destroy()
+                break;
+            default:
+                console.error("Event type was invalid")
+                break;
         }
+
     }
 
     /**
@@ -36,8 +67,8 @@ class BrowserX {
      * @param {CustomEvent<string>} e
      */
     handleElementCheck = e => {
-        this.engine.checkElement(e.detail)
-    } 
+
+    }
 
     /**
      * Initialize BrowserX
@@ -54,8 +85,12 @@ class BrowserX {
         this.engine.destroy()
         this.compatUI.destroy()
 
-        this.bus.removeEventListener('ci:toggle', this.handleInspectorToggle)
-        this.bus.removeEventListener('ci:inspect', this.handleElementCheck)
+        this.bus.removeEventListener('ci:toggle', this.handleCustomEvents)
+        this.bus.removeEventListener('ci:inspect', this.handleCustomEvents)
+        this.bus.removeEventListener('ci:switch', this.handleCustomEvents)
+        this.bus.removeEventListener('ci:create', this.handleCustomEvents)
+        this.bus.removeEventListener('ci:reset', this.handleCustomEvents)
+        this.bus.removeEventListener('ci:destroy', this.handleCustomEvents)
     }
 }
 

@@ -1,6 +1,10 @@
 export interface BrowserXEventMap {
     'ci:toggle': CustomEvent<void>;
     'ci:inspect': CustomEvent<string>;
+    'ci:switch': CustomEvent<void>;
+    'ci:create': CustomEvent<void>;
+    'ci:reset': CustomEvent<void>;
+    'ci:destroy': CustomEvent<void>;
 }
 
 export interface BrowserXEventBus extends EventTarget {

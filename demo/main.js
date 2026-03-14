@@ -1,7 +1,7 @@
 import { BrowserX } from '../src'
 
 const config = {
-    disabled: true,
+    disabled: false,
     keyboardShortcuts: true
 }
 
