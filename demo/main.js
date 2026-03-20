@@ -1,12 +1,10 @@
-import { BrowserX } from '../src'
+import { Shinkom } from '../src'
 
 const config = {
     disabled: false,
     keyboardShortcuts: true
 }
 
-const browserx = new BrowserX(config)
+const shinkom = new Shinkom(config)
 
-browserx.init()
-
-console.log(`Inspector is ${browserx.compatUI.compatInspector.config.disabled ? 'disabled' : 'enabled'}`)
+shinkom.init()

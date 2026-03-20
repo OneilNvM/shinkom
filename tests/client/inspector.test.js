@@ -1,4 +1,4 @@
-/**@typedef {import('../../types/inspector.types').InspectorConfig} InspectorConfig */
+/**@typedef {import('../../src/types/index').InspectorConfig} InspectorConfig */
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { CompatInspector } from "../../src";
 
