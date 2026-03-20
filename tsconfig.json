@@ -1,29 +1,19 @@
 {
     "compilerOptions": {
-        "lib": [
-            "ESNext",
-            "DOM"
-        ],
-        "noEmit": true,
-        "isolatedModules": true,
-        "verbatimModuleSyntax": true,
-        "skipLibCheck": true,
         "target": "esnext",
         "module": "esnext",
+        "moduleResolution": "bundler",
         "strict": true,
-        "noImplicitAny": true,
         "allowJs": true,
-        "checkJs": true,
-        "moduleResolution": "bundler"
+        "checkJs": false,
+        "noEmit": true,
+        "declaration": true,
+        "emitDeclarationOnly": true,
+        "rootDir": "src",
+        "skipLibCheck": true,
     },
     "include": [
         "src/**/*.js",
-        "tests/**/*.test.js",
-        "types/**/*.d.ts",
-        "pkg/**/*.d.ts",
-        "types/browserx.types.ts"
     ],
-    "exclude": [
-        "node_modules"
-    ]
+    "exclude": ["node_modules"]
 }

@@ -1,5 +1,5 @@
 {
-  "name": "browserx",
+  "name": "shinkom",
   "version": "1.0.0",
   "description": "A cross-browser compatibility library for developers",
   "license": "MIT",
@@ -8,29 +8,71 @@
   "files": [
     "dist"
   ],
-  "main": "./dist/browserx.umd.cjs",
-  "module": "./dist/browserx.js",
+  "main": "./dist/modules/index.cjs",
+  "module": "./dist/bundles/index.js",
+  "types": "./dist/bundles/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/browserx.js",
-      "require": "./dist/browserx.umd.cjs"
+      "types": "./dist/bundles/index.d.ts",
+      "import": "./dist/bundles/index.js",
+      "require": "./dist/modules/index.cjs"
+    },
+    "./shinkom": {
+      "types": "./dist/bundles/shinkom/shinkom.d.ts",
+      "import": "./dist/bundles/shinkom/shinkom.js",
+      "require": "./dist/modules/shinkom/shinkom.cjs"
+    },
+    "./engine": {
+      "types": "./dist/bundles/engine/engine.d.ts",
+      "import": "./dist/bundles/engine/engine.js",
+      "require": "./dist/modules/engine/engine.cjs"
+    },
+    "./ui": {
+      "types": "./dist/bundles/ui/index.d.ts",
+      "import": "./dist/bundles/ui/index.js",
+      "require": "./dist/modules/ui/index.cjs"
+    },
+    "./ui/inspector": {
+      "types": "./dist/bundles/ui/inspector/inspector.d.ts",
+      "import": "./dist/bundles/ui/inspector/inspector.js",
+      "require": "./dist/modules/ui/inspector/inspector.cjs"
+    },
+    "./ui/control-panel": {
+      "types": "./dist/bundles/ui/control-panel/control-panel.d.ts",
+      "import": "./dist/bundles/ui/control-panel/control-panel.js",
+      "require": "./dist/modules/ui/control-panel/control-panel.cjs"
+    },
+    "./ui/compatibility-view": {
+      "types": "./dist/bundles/ui/compatibility-view/compatibility-view.d.ts",
+      "import": "./dist/bundles/ui/compatibility-view/compatibility-view.js",
+      "require": "./dist/modules/ui/compatibility-view/compatibility-view.cjs"
+    },
+    "./ui/compat-ui": {
+      "types": "./dist/bundles/ui/compat-ui/compat-ui.d.ts",
+      "import": "./dist/bundles/ui/compat-ui/compat-ui.js",
+      "require": "./dist/modules/ui/compat-ui/compat-ui.cjs"
     }
   },
   "scripts": {
     "dev": "npm run build:wasm && vite",
-    "build": "npm run build:wasm && vite build",
-    "build:wasm": "wasm-pack build browserx-core --target web --out-dir ../pkg",
+    "build": "npm run build:wasm && tsdown",
+    "build:wasm": "wasm-pack build shinkore --target web --out-dir ../pkg --release",
     "preview": "vite preview",
     "test": "vitest",
-    "type-check": "tsc --project tsconfig.json"
+    "type-check": "tsc --project tsconfig.json",
+    "gen:data": "tsx ./scripts/extract-compat.ts"
   },
   "devDependencies": {
-    "@mdn/browser-compat-data": "^7.3.6",
+    "@mdn/browser-compat-data": "7.3.6",
     "jest": "^30.2.0",
     "jsdom": "^28.1.0",
     "node": "^22.22.1",
+    "rolldown-plugin-wasm": "^0.2.1",
+    "tsdown": "^0.21.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
+    "vite-plugin-wasm": "^3.6.0",
     "vitest": "^4.0.18"
   }
 }
