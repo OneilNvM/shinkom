@@ -1,1 +1,1 @@
-export { default as CompatView } from './compatibility-view'
+export { CompatView } from './compatibility-view'

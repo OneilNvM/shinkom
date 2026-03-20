@@ -1,1 +1,1 @@
-export { default as BXEngine } from './engine'
+export { SKEngine } from './engine'

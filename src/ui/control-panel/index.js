@@ -1,1 +1,1 @@
-export { default as CompatControlPanel } from './control-panel'
+export { CompatControlPanel } from './control-panel'

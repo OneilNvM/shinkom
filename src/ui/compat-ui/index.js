@@ -1,1 +1,1 @@
-export { default as CompatUI } from './compat-ui'
+export { CompatUI } from './compat-ui'

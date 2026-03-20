@@ -1,0 +1,1 @@
+export { Shinkom } from './shinkom'

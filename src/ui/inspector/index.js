@@ -1,1 +1,1 @@
-export { default as CompatInspector } from './inspector'
+export { CompatInspector } from './inspector'
