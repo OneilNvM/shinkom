@@ -1,19 +1,19 @@
-/**@typedef {import('../../../types/inspector.types').InspectorConfig} InspectorConfig */
-/**@typedef {import('../../../types/browserx.types').BrowserXEventBus} BrowserXEventBus */
-import CompatInspector from '../inspector/inspector'
-import ControlPanel from '../control-panel/control-panel'
+/**@typedef {import('../../types/index').InspectorConfig} InspectorConfig */
+/**@typedef {import('../../types/index').ShinkomEventBus} ShinkomEventBus */
+import { CompatInspector } from '../inspector/inspector'
+import { CompatControlPanel } from '../control-panel/control-panel'
 
-class CompatUI {
+export class CompatUI {
     /**
-     * @param {BrowserXEventBus} bus
+     * @param {ShinkomEventBus} bus
      * @param {InspectorConfig | undefined} inspectorConfig
      */
     constructor(bus, inspectorConfig = undefined) {
         /**@type {CompatInspector} */
         this.compatInspector = new CompatInspector(inspectorConfig, bus)
 
-        /**@type {ControlPanel} */
-        this.controlPanel = new ControlPanel(bus)
+        /**@type {CompatControlPanel} */
+        this.controlPanel = new CompatControlPanel(bus)
     }
 
     /**
@@ -34,5 +34,3 @@ class CompatUI {
         this.controlPanel.destroy()
     }
 }
-
-export default CompatUI

@@ -1,64 +1,30 @@
-/**@typedef {import('../../../types/browserx.types').BrowserXEventBus} BrowserXEventBus */
+/**@typedef {import('../../types/index').ShinkomEventBus} ShinkomEventBus */
 
-class CompatControlPanel {
+export class CompatControlPanel {
     /**@type {AbortController | null} */
     #panelController = null;
 
     /**
-     * @param {BrowserXEventBus} bus 
+     * @param {ShinkomEventBus} bus 
      */
     constructor(bus) {
-        /**@type {BrowserXEventBus} */
-        this._bus = bus;
+        /**@type {ShinkomEventBus} */
+        this.bus = bus;
 
         /**@type {HTMLDivElement | null} */
         this.shadowHost = null;
 
         /**@type {ShadowRoot | null} */
         this.shadowRoot = null;
-    }
 
-    /**
-     * Handler sends custom event to BrowserX to toggle the inspector.
-     * @param {PointerEvent} e
-     */
-    #handleToggleClick = e => {
-        switch (/**@type {HTMLElement} */(e.target).id) {
-            case 'bx-toggle-inspector':
-                this._bus.dispatchEvent(new CustomEvent('ci:toggle'))
-                break;
-            case 'bx-toggle-switching':
-                this._bus.dispatchEvent(new CustomEvent('ci:switch'))
-                break;
-            case 'bx-create-inspector':
-                this._bus.dispatchEvent(new CustomEvent('ci:create'))
-                break;
-            case 'bx-reset-inspector':
-                this._bus.dispatchEvent(new CustomEvent('ci:reset'))
-                break;
-            case 'bx-destroy-inspector':
-                this._bus.dispatchEvent(new CustomEvent('ci:destroy'))
-                break;
-            default:
-                console.error("Could not dispatch an event")
-                break;
-        }
-    }
+        /**@type {HTMLInputElement | null} */
+        this.depthLevelInput = null
 
-    #handleShowPanel = () => {
-        const panel = this.shadowRoot?.getElementById('bx-control-panel')
+        /**@type {number} */
+        this.depthLevel = 0;
 
-        if (panel) {
-            panel.style.display = 'flex'
-        }
-    }
-
-    #handleClosePanel = () => {
-        const panel = this.shadowRoot?.getElementById('bx-control-panel')
-
-        if (panel) {
-            panel.style.display = 'none'
-        }
+        /**@type {boolean} */
+        this.multiElements = false;
     }
 
     /**
@@ -70,18 +36,27 @@ class CompatControlPanel {
                 position: 'fixed',
                 top: '2rem',
                 left: '2rem',
+                zIndex: '9999'
             })
+        else throw new Error("Shadow host is undefined or null.")
     }
 
     /**
      * Creates the control panel in a shadow root.
      */
     createPanel() {
-        if (this.shadowHost) return;
+        if (this.shadowHost) throw new Error("Shadow host element already exists")
 
         this.shadowHost = document.createElement('div')
         this.shadowHost.id = 'bx-shadow-host'
-        this.#applyHostStyles()
+
+        try {
+            this.#applyHostStyles()
+        } catch (error) {
+            this.shadowHost = null
+            throw error
+        }
+
         document.body.appendChild(this.shadowHost)
 
         this.shadowRoot = this.shadowHost.attachShadow({ mode: 'open' })
@@ -225,7 +200,7 @@ class CompatControlPanel {
         </style>
         <div style="position: relative">
             <button id="bx-show-panel" class="bx-button-style bx-show-panel">Show Panel</button>
-            <div id="bx-control-panel" class="bx-control-panel">
+            <div id="bx-control-panel" class="bx-control-panel" style="display: none;">
                 <div class="bx-page-buttons">
                     <button class="bx-button-style">Inspector</button>
                     <button class="bx-button-style">Compatibility View</button>
@@ -244,8 +219,8 @@ class CompatControlPanel {
                     <div class="bx-options">
                         <div class="bx-options-grid">
                             <p>Inspect multiple elements</p>
-                            <input class="bx-options-checkbox" type="checkbox">
-                            <input class="bx-options-input" type="text" placeholder="depth_level">
+                            <input id="bx-toggle-elements" class="bx-options-checkbox" type="checkbox">
+                            <input id="bx-depth-level" class="bx-options-input" type="text" placeholder="depth_level" disabled>
                         </div>
                         <div class="bx-options-grid">
                             <p>Toggle Switching</p>
@@ -267,7 +242,6 @@ class CompatControlPanel {
                 <hr class="bx-hr-line">
             </div>
         </div>
-
         `
     }
 
@@ -275,7 +249,12 @@ class CompatControlPanel {
      * Initializes event listeners and appends control panel.
      */
     setup() {
-        this.createPanel()
+        try {
+            this.createPanel()
+        } catch (error) {
+            console.error(error)
+            return;
+        }
 
         this.#panelController = new AbortController()
 
@@ -288,6 +267,8 @@ class CompatControlPanel {
         const destroyInspector = this.shadowRoot?.getElementById('bx-destroy-inspector')
         const showButton = this.shadowRoot?.getElementById('bx-show-panel')
         const closeButton = this.shadowRoot?.getElementById('bx-close-panel')
+        const toggleElements = this.shadowRoot?.getElementById('bx-toggle-elements')
+        const depthLevelInput = this.shadowRoot?.getElementById('bx-depth-level')
 
         toggleInspector?.addEventListener('click', this.#handleToggleClick, { signal })
         toggleSwitching?.addEventListener('click', this.#handleToggleClick, { signal })
@@ -296,6 +277,10 @@ class CompatControlPanel {
         destroyInspector?.addEventListener('click', this.#handleToggleClick, { signal })
         showButton?.addEventListener('click', this.#handleShowPanel, { signal })
         closeButton?.addEventListener('click', this.#handleClosePanel, { signal })
+        toggleElements.addEventListener('click', this.#handleToggleElements, { signal })
+        depthLevelInput.addEventListener('change', this.#handleDepthLevelValue, { signal })
+
+        this.depthLevelInput = depthLevelInput
     }
 
     /**
@@ -310,7 +295,80 @@ class CompatControlPanel {
         document.removeChild(this.shadowHost)
         this.shadowRoot = null;
         this.shadowHost = null;
+        this.depthLevelInput = null;
+        this.depthLevel = 0;
+        this.multiElements = false;
+    }
+
+    /**
+    * Handler sends custom event to Shinkom to toggle the inspector.
+    * @param {PointerEvent} e
+    */
+    #handleToggleClick = e => {
+        switch (/**@type {HTMLElement} */(e.target).id) {
+            case 'bx-toggle-inspector':
+                this.bus.dispatchEvent(new CustomEvent('ci:toggle'))
+                break;
+            case 'bx-toggle-switching':
+                this.bus.dispatchEvent(new CustomEvent('ci:switch'))
+                break;
+            case 'bx-create-inspector':
+                this.bus.dispatchEvent(new CustomEvent('ci:create'))
+                break;
+            case 'bx-reset-inspector':
+                this.bus.dispatchEvent(new CustomEvent('ci:reset'))
+                break;
+            case 'bx-destroy-inspector':
+                this.bus.dispatchEvent(new CustomEvent('ci:destroy'))
+                break;
+            default:
+                console.error("Could not dispatch an event")
+                break;
+        }
+    }
+
+    /**
+     * Shows the control panel
+     */
+    #handleShowPanel = () => {
+        const panel = this.shadowRoot?.getElementById('bx-control-panel')
+
+        if (panel) {
+            panel.style.display = 'flex'
+        }
+    }
+
+    /**
+     * Hides the control panel
+     */
+    #handleClosePanel = () => {
+        const panel = this.shadowRoot?.getElementById('bx-control-panel')
+
+        if (panel) {
+            panel.style.display = 'none'
+        }
+    }
+
+    /**
+     * Handles click event for the **'Inspect multiple elements'** checkbox input
+     */
+    #handleToggleElements = () => {
+        this.multiElements = !this.multiElements
+        if (this.multiElements) {
+            this.depthLevelInput.disabled = false
+        } else {
+            this.depthLevelInput.disabled = true
+        }
+    }
+
+    /**
+     * Handles the change event for the `depth_level` input 
+     * @param {Event} e 
+     */
+    #handleDepthLevelValue = e => {
+        const level = parseInt(/**@type {HTMLInputElement}*/(e.target).value, 10)
+        this.depthLevel = level
+
+        console.log(this.depthLevel)
     }
 }
-
-export default CompatControlPanel

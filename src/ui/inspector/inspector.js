@@ -1,7 +1,7 @@
-/**@typedef {import('../../../types/inspector.types').InspectorConfig} InspectorConfig */
-/**@typedef {import('../../../types/browserx.types').BrowserXEventBus} BrowserXEventBus */
+/**@typedef {import('../../types/index').InspectorConfig} InspectorConfig */
+/**@typedef {import('../../types/index').ShinkomEventBus} ShinkomEventBus */
 
-class CompatInspector {
+export class CompatInspector {
     #freezeInspector = false;
 
     /**@type {AbortController | null} */
@@ -12,13 +12,13 @@ class CompatInspector {
 
     /**
      * @param {InspectorConfig} config 
-     * @param {BrowserXEventBus | null} bus
+     * @param {ShinkomEventBus | null} bus
      */
     constructor(config = { disabled: false, keyboardShorcuts: false }, bus = null) {
         /**@type {InspectorConfig} */
         this.config = config
 
-        /**@type {BrowserXEventBus | null} */
+        /**@type {ShinkomEventBus | null} */
         this._bus = bus;
 
         /**@type {boolean} */
@@ -240,5 +240,3 @@ class CompatInspector {
         this.frozenTarget = null;
     }
 }
-
-export default CompatInspector

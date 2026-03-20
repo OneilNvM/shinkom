@@ -1,5 +1,3 @@
-class CompatView {
+export class CompatView {
 
 }
-
-export default CompatView

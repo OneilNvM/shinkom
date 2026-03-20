@@ -1,20 +1,21 @@
-/**@typedef {import("../ui/inspector/inspector").InspectorConfig} InspectorConfig */
-/**@typedef {import('../../types/browserx.types').BrowserXEventBus} BrowserXEventBus */
-import { BXEngine } from "../engine"
+/**@typedef {import("../types/index").InspectorConfig} InspectorConfig */
+/**@typedef {import('../types/index').ShinkomEventBus} ShinkomEventBus */
+import { SKEngine } from "../engine"
 import { CompatUI } from "../ui"
 
-class BrowserX {
+export class Shinkom {
     /**
      * @param {InspectorConfig | undefined} inspectorConfig 
      */
     constructor(inspectorConfig = undefined) {
-        /**@type {BrowserXEventBus} */
+        /**@type {ShinkomEventBus} */
         this.bus = new EventTarget()
 
         /**@type {CompatUI} */
         this.compatUI = new CompatUI(this.bus, inspectorConfig)
 
-        this.engine = new BXEngine()
+        /**@type {SKEngine} */
+        this.engine = new SKEngine()
 
         this.bus.addEventListener('ci:toggle', this.handleCustomEvents)
         this.bus.addEventListener('ci:inspect', this.handleCustomEvents)
@@ -38,15 +39,19 @@ class BrowserX {
                 }
                 break;
             }
-            case 'ci:inspect': 
+            case 'ci:inspect':
                 if (typeof e.detail === 'string')
-                    this.engine.checkElement(e.detail)
+                    if (this.compatUI.controlPanel.multiElements) {
+                        this.engine.checkElements(e.detail, this.compatUI.controlPanel.depthLevel)
+                    } else {
+                        this.engine.checkElement(e.detail)
+                    }
                 break;
-            case 'ci:switch': 
+            case 'ci:switch':
                 const switchVal = this.compatUI.compatInspector.enableSwitching
                 this.compatUI.compatInspector.enableSwitching = !switchVal
                 break;
-            case 'ci:create': 
+            case 'ci:create':
                 this.compatUI.compatInspector.setup()
                 break;
             case 'ci:reset':
@@ -63,15 +68,7 @@ class BrowserX {
     }
 
     /**
-     * 
-     * @param {CustomEvent<string>} e
-     */
-    handleElementCheck = e => {
-
-    }
-
-    /**
-     * Initialize BrowserX
+     * Initialize Shinkom
      */
     init() {
         this.engine.initEngine()
@@ -93,5 +90,3 @@ class BrowserX {
         this.bus.removeEventListener('ci:destroy', this.handleCustomEvents)
     }
 }
-
-export default BrowserX 
