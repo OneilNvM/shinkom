@@ -51,7 +51,7 @@ const IGNORE_TAGS: [&str; 8] = [
 /// If we call the function with a depth level of 3:
 ///
 /// ```rust
-/// use browserx_core::helpers::pre_process_html;
+/// use shinkore::helpers::pre_process_html;
 ///
 /// let html = "example"; // Example html above
 ///
@@ -173,7 +173,7 @@ pub fn pre_process_html(html: &str, depth_level: u32) -> String {
 /// ## Examples
 ///
 /// ```rust
-/// use browserx_core::helpers::write_close_tag;
+/// use shinkore::helpers::write_close_tag;
 ///
 /// // Single open tag
 ///

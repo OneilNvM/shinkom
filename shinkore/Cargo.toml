@@ -1,14 +1,18 @@
 [package]
-name = "browserx-core"
+name = "shinkore"
 version = "0.1.0"
 authors = ["OneilNvM <oneil324@outlook.com>"]
-description = "A parsing and data processing library for the BrowserX package using WebAssembly"
-repository = "https://github.com/OneilNvM/browserx"
+description = "A parsing and data processing library for the Shinkom package using WebAssembly"
+repository = "https://github.com/OneilNvM/shinkom"
 license = "MIT"
 edition = "2024"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+lto = true
+opt-level = 'z'
 
 [dependencies]
 lol_html = "2.7.2"

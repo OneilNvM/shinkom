@@ -1,4 +1,4 @@
-use browserx_core::helpers::{pre_process_html, write_close_tag};
+use shinkore::helpers::{pre_process_html, write_close_tag};
 
 #[test]
 fn should_pre_process_html() {
@@ -91,7 +91,7 @@ fn should_write_close_tag() {
     let val_5 = write_close_tag(html_5);
 
     let html_6 = "<div class='div-container'>
-    <h1>Welcome to BrowserX</h1>
+    <h1>Welcome to Shinkom</h1>
     <p>This library is a tool for web developers</p>";
     let val_6 = write_close_tag(html_6);
 
@@ -112,7 +112,7 @@ fn should_not_write_close_tag() {
     let val_2 = write_close_tag(html_2);
 
     let html_3 = "<div class='div-container'>
-    <h1>Welcome to BrowserX</h1>
+    <h1>Welcome to Shinkom</h1>
     <p>This library is a tool for web developers</p>
     </div>";
     let val_3 = write_close_tag(html_3);
