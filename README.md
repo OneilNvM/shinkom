@@ -1,7 +1,7 @@
-<h1 align="center">BrowserX</h1>
+<h1 align="center">Shinkom</h1>
 
 <p align="center">
-    <strong><em><span style="font-style:italic;">BrowserX</span></em> is a fast, intuitive and lightweight Javascript cross-browser compatibility library.<br>
+    <strong><em><span style="font-style:italic;">Shinkom</span></em> is a fast, intuitive and lightweight Javascript cross-browser compatibility library.<br>
     Powered by a Rust/WASM engine, it provides native speed HTML parsing and cross-browser compatibility data processing.</strong>
 </p>
 
