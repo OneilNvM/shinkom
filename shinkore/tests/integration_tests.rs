@@ -1,4 +1,4 @@
-use shinkore::helpers::{pre_process_html, write_close_tag};
+use shinkore::helpers::{format_html, pre_process_html, write_close_tag};
 
 #[test]
 fn should_pre_process_html() {
@@ -120,4 +120,25 @@ fn should_not_write_close_tag() {
     assert!(val_1.is_none());
     assert!(val_2.is_none());
     assert!(val_3.is_none());
+}
+
+#[test]
+fn should_format_html() {
+    let html =
+        "<main><section><div><h2>Heading 2</h2><p>This is some placeholder text</p></div></main>";
+
+    let formatted = format_html(html);
+
+    println!("{formatted}");
+
+    assert_eq!(
+        formatted,
+        "<main>
+<section>
+<div>
+<h2>Heading 2</h2>
+<p>This is some placeholder text</p>
+</div>
+</main>"
+    )
 }

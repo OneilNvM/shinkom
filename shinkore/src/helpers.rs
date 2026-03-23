@@ -1,10 +1,15 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{
+    cell::RefCell,
+    collections::{HashMap, HashSet},
+    rc::Rc,
+};
 
 use lol_html::{
     RewriteStrSettings, element,
     html_content::{Attribute, Element},
     rewrite_str,
 };
+use regex::Regex;
 use wasm_bindgen::JsValue;
 
 use crate::{
@@ -252,6 +257,33 @@ pub fn compat_check(
 
     overall_results
 }
+pub fn multi_compat_check(
+    tag_name: &str,
+    attributes: &[Attribute<'_>],
+    el_data: &HashMap<String, CompatElement>,
+    g_attrib_data: &HashMap<String, CompatGlobalAttribs>,
+    element_cache: &mut HashSet<String>,
+    attrib_cache: &mut HashSet<String>,
+) -> Vec<LookupResults> {
+    let mut overall_results: Vec<LookupResults> = vec![];
+    let mut attr_names: Vec<String> = vec![];
+
+    for attribute in attributes {
+        attr_names.push(attribute.name());
+    }
+
+    multi_lookup_element(tag_name, &mut overall_results, el_data, element_cache);
+    multi_lookup_attribs(
+        tag_name,
+        attr_names,
+        &mut overall_results,
+        el_data,
+        g_attrib_data,
+        attrib_cache,
+    );
+
+    overall_results
+}
 
 fn lookup_element(
     tag: &str,
@@ -281,6 +313,41 @@ fn lookup_element(
         web_sys::console::error_1(&JsValue::from_str(&format!("<{}> is not an element", tag)));
     }
 }
+
+fn multi_lookup_element(
+    tag: &str,
+    results: &mut Vec<LookupResults>,
+    el_data: &HashMap<String, CompatElement>,
+    element_cache: &mut HashSet<String>,
+) {
+    if let Some(el) = el_data.get(tag) {
+        if !element_cache.contains(tag) {
+            if let Some(status) = &el.compat.status {
+                if status.deprecated {
+                    results.push(LookupResults {
+                        description: format!("<{tag}> is deprecated"),
+                        deprecated: status.deprecated,
+                    });
+                } else {
+                    results.push(LookupResults {
+                        description: format!("<{tag}> is not deprecated"),
+                        deprecated: status.deprecated,
+                    });
+                }
+            } else {
+                web_sys::console::error_1(&JsValue::from_str(&format!(
+                    "Status is unavailable for tag <{}>",
+                    tag
+                )));
+            }
+
+            element_cache.insert(tag.to_string());
+        }
+    } else {
+        web_sys::console::error_1(&JsValue::from_str(&format!("<{}> is not an element", tag)));
+    }
+}
+
 fn lookup_attribs(
     tag: &str,
     attr_names: Vec<String>,
@@ -289,11 +356,7 @@ fn lookup_attribs(
     g_attrib_data: &HashMap<String, CompatGlobalAttribs>,
 ) {
     for attribute in attr_names {
-        let mut is_global = false;
-        let mut is_local = false;
-
         if let Some(g_attrib) = g_attrib_data.get(&attribute) {
-            is_global = true;
             if let Some(status) = &g_attrib.compat.status {
                 if status.deprecated {
                     results.push(LookupResults {
@@ -312,10 +375,10 @@ fn lookup_attribs(
                     attribute
                 )));
             }
+            continue;
         }
         if let Some(el) = el_data.get(tag) {
             if let Some(l_attrib) = el.sub_features.get(&attribute) {
-                is_local = true;
                 if let Some(status) = &l_attrib.compat.status {
                     if status.deprecated {
                         results.push(LookupResults {
@@ -334,16 +397,110 @@ fn lookup_attribs(
                         attribute
                     )));
                 }
+                continue;
+            } else {
+                if attribute.starts_with("data-") {
+                    results.push(LookupResults {
+                        description: format!("'{attribute}' is not deprecated"),
+                        deprecated: false,
+                    });
+
+                    continue;
+                }
             }
         } else {
             web_sys::console::error_1(&JsValue::from_str(&format!("<{}> is not an element", tag)));
         }
 
-        if !is_global && !is_local {
-            web_sys::console::error_1(&JsValue::from_str(&format!(
-                "{} is not an attribute",
-                attribute
-            )));
-        }
+        web_sys::console::error_1(&JsValue::from_str(&format!(
+            "{} is not an attribute",
+            attribute
+        )));
     }
+}
+
+fn multi_lookup_attribs(
+    tag: &str,
+    attr_names: Vec<String>,
+    results: &mut Vec<LookupResults>,
+    el_data: &HashMap<String, CompatElement>,
+    g_attrib_data: &HashMap<String, CompatGlobalAttribs>,
+    attrib_cache: &mut HashSet<String>,
+) {
+    for attribute in attr_names {
+        if let Some(g_attrib) = g_attrib_data.get(&attribute) {
+            if !attrib_cache.contains(&attribute) {
+                if let Some(status) = &g_attrib.compat.status {
+                    if status.deprecated {
+                        results.push(LookupResults {
+                            description: format!("'{attribute}' is deprecated"),
+                            deprecated: status.deprecated,
+                        })
+                    } else {
+                        results.push(LookupResults {
+                            description: format!("'{attribute}' is not deprecated"),
+                            deprecated: status.deprecated,
+                        })
+                    }
+                } else {
+                    web_sys::console::error_1(&JsValue::from_str(&format!(
+                        "Status is unavailable for global attribute '{}'",
+                        attribute
+                    )));
+                }
+                attrib_cache.insert(attribute);
+            }
+            continue;
+        }
+        if let Some(el) = el_data.get(tag) {
+            if let Some(l_attrib) = el.sub_features.get(&attribute) {
+                if !attrib_cache.contains(&attribute) {
+                    if let Some(status) = &l_attrib.compat.status {
+                        if status.deprecated {
+                            results.push(LookupResults {
+                                description: format!("'{attribute}' is deprecated"),
+                                deprecated: status.deprecated,
+                            })
+                        } else {
+                            results.push(LookupResults {
+                                description: format!("'{attribute}' is not deprecated"),
+                                deprecated: status.deprecated,
+                            })
+                        }
+                    } else {
+                        web_sys::console::error_1(&JsValue::from_str(&format!(
+                            "Status is unavailable for local attribute '{}'",
+                            attribute
+                        )));
+                    }
+                    attrib_cache.insert(attribute);
+                }
+                continue;
+            } else {
+                if attribute.starts_with("data-") {
+                    results.push(LookupResults {
+                        description: format!("'{attribute}' is not deprecated"),
+                        deprecated: false,
+                    });
+
+                    attrib_cache.insert(attribute);
+
+                    continue;
+                }
+            }
+        } else {
+            web_sys::console::error_1(&JsValue::from_str(&format!("<{}> is not an element", tag)));
+        }
+
+        web_sys::console::error_1(&JsValue::from_str(&format!(
+            "{} is not an attribute",
+            attribute
+        )));
+    }
+}
+
+pub fn format_html(html: &str) -> String {
+    let regex = Regex::new(r">\s*<").unwrap();
+
+    regex.replace_all(html, ">\n<").trim().to_string()
 }

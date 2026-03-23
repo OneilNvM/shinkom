@@ -1,9 +1,10 @@
 pub mod helpers;
 mod prelude;
 mod schema;
+use std::collections::HashSet;
 use std::{cell::RefCell, rc::Rc};
 
-use crate::helpers::{compat_check, pre_process_html};
+use crate::helpers::{compat_check, format_html, multi_compat_check, pre_process_html};
 use crate::prelude::*;
 use lol_html::{RewriteStrSettings, element, rewrite_str};
 use wasm_bindgen::prelude::*;
@@ -49,25 +50,6 @@ impl CompatEngine {
         }
 
         engine
-    }
-
-    #[wasm_bindgen]
-    pub fn return_element_data(&self) -> JsValue {
-        serde_wasm_bindgen::to_value(&self.el_data).unwrap_or_else(|e| {
-            web_sys::console::error_1(&JsValue::from_str(&format!(
-                "Error occurred retrieving element data: {e}"
-            )));
-            JsValue::null()
-        })
-    }
-    #[wasm_bindgen]
-    pub fn return_global_attrib_data(&self) -> JsValue {
-        serde_wasm_bindgen::to_value(&self.g_attrib_data).unwrap_or_else(|e| {
-            web_sys::console::error_1(&JsValue::from_str(&format!(
-                "Error occurred retrieving global attribute data: {e}"
-            )));
-            JsValue::null()
-        })
     }
 
     /// Used for checking the compatibility of a single element and its attributes.
@@ -126,10 +108,13 @@ impl CompatEngine {
     pub fn check_elements(&self, html: &str, depth_level: u32) -> JsValue {
         let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
 
-        let elements = pre_process_html(html, depth_level);
+        let elements = pre_process_html(&format_html(html), depth_level);
 
         let el_data = &self.el_data;
         let g_attrib_data = &self.g_attrib_data;
+
+        let mut element_cache: HashSet<String> = HashSet::new();
+        let mut attrib_cache: HashSet<String> = HashSet::new();
 
         let _ = rewrite_str(
             &elements,
@@ -138,11 +123,13 @@ impl CompatEngine {
                     let tag_name = el.tag_name();
                     let attributes = el.attributes();
 
-                    results.borrow_mut().extend(compat_check(
+                    results.borrow_mut().extend(multi_compat_check(
                         &tag_name,
                         attributes,
                         el_data,
                         g_attrib_data,
+                        &mut element_cache,
+                        &mut attrib_cache
                     ));
 
                     Ok(())
