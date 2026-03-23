@@ -5,6 +5,8 @@
     * @copyright 2026 - Oneil Achord
 */
 
+import { InspectorConfig as InspectorConfig$1, ShinkomEventBus as ShinkomEventBus$1 } from "../../types/index.js";
+
 //#region src/ui/inspector/inspector.d.ts
 /**@typedef {import('../../types/index').InspectorConfig} InspectorConfig */
 /**@typedef {import('../../types/index').ShinkomEventBus} ShinkomEventBus */
@@ -43,7 +45,7 @@ declare class CompatInspector {
   destroy(): void;
   #private;
 }
-type InspectorConfig = undefined;
-type ShinkomEventBus = undefined;
+type InspectorConfig = InspectorConfig$1;
+type ShinkomEventBus = ShinkomEventBus$1;
 //#endregion
 export { CompatInspector, InspectorConfig, ShinkomEventBus };

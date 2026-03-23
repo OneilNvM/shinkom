@@ -1,16 +1,19 @@
 import pkg from './package.json' with { type: 'json' }
 import { defineConfig } from "tsdown";
-import path, { dirname } from "node:path";
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import copyWasmPlugin from './plugins/copyWasmPlugin';
+import minifyJsonPlugin from './plugins/minifyJsonPlugin';
 
 const banner = (c: any) => {
     if (c.name.includes('.json')) return "";
 
+    const fileNames: string[] = c.fileName.split('/');
+
+    const fileName: string = fileNames.length > 1 ? fileNames[fileNames.length - 2] : c.name.split('.')[0]
+
     const date = new Date()
-    const chunkName = c.name.split('/')
+
     return `/**
-    * Shinkom - ${chunkName.length > 0 ? chunkName[chunkName.length - 1].includes('.') ? chunkName[chunkName.length - 1].split('.')[0] : chunkName[chunkName.length - 1] : c.name.includes('.') ? c.name.split('.')[0] : c.name}
+    * Shinkom - ${fileName}
     * @version ${pkg.version}
     * @license ${pkg.license}
     * @copyright ${date.getFullYear()} - Oneil Achord
@@ -29,7 +32,6 @@ export default defineConfig([
             'ui/compatibility-view/compatibility-view': './src/ui/compatibility-view/compatibility-view.js',
             'ui/compat-ui/compat-ui': './src/ui/compat-ui/compat-ui.js',
             'shinkom/shinkom': './src/shinkom/shinkom.js',
-            'types/index': './src/types/index.js'
         },
         platform: 'browser',
         outDir: './dist/bundles',
@@ -45,53 +47,7 @@ export default defineConfig([
         report: {
             gzip: false
         },
-        plugins: [
-            {
-                name: 'copy-wasm-asset',
-                closeBundle() {
-                    const __filename = fileURLToPath(import.meta.url)
-                    const __dirname = dirname(__filename)
-                    const wasmFile = path.resolve(__dirname, 'pkg/shinkore_bg.wasm')
-                    const distPath = path.resolve(__dirname, 'dist/bundles/pkg')
-                    const wasmDistFile = path.resolve(distPath, 'shinkore_bg.wasm')
-
-                    if (!existsSync(distPath)) {
-                        mkdirSync(distPath, { recursive: true })
-                    }
-
-                    if (existsSync(wasmFile)) {
-                        copyFileSync(wasmFile, wasmDistFile)
-
-                        console.log("Successfully copied wasm asset file to pkg!")
-                    } else {
-                        console.error("Could not find the wasm file at:", wasmFile)
-                    }
-                }
-            },
-            {
-                name: 'minify-json',
-                closeBundle() {
-                    const __filename = fileURLToPath(import.meta.url)
-                    const __dirname = dirname(__filename)
-                    const jsonPath = path.resolve(__dirname, 'dist/bundles/gen/compat-data.js')
-
-                    if (existsSync(jsonPath)) {
-                        let content = readFileSync(jsonPath, 'utf-8')
-
-                        const originalSize = (content.length / 1024).toFixed(2)
-                        content = content.replace(/\/\/#(endregion|region).*/g, '').replace(/\s+/g, " ").trim()
-
-                        writeFileSync(jsonPath, content)
-
-                        const newSize = (content.length / 1024).toFixed(2)
-
-                        console.log(`Minified JSON: ${originalSize}KB -> ${newSize}KB`)
-                    } else {
-                        console.error("Could not resolve dts path")
-                    }
-                }
-            },
-        ],
+        plugins: [copyWasmPlugin("bundles"), minifyJsonPlugin()],
     },
     {
         entry: {
@@ -103,7 +59,6 @@ export default defineConfig([
             'ui/compatibility-view/compatibility-view': './src/ui/compatibility-view/compatibility-view.js',
             'ui/compat-ui/compat-ui': './src/ui/compat-ui/compat-ui.js',
             'shinkom/shinkom': './src/shinkom/shinkom.js',
-            'types/index': './src/types/index.js'
         },
         platform: 'node',
         outDir: './dist/modules',
@@ -121,29 +76,6 @@ export default defineConfig([
         report: {
             gzip: false
         },
-        plugins: [
-            {
-                name: 'copy-wasm-asset',
-                closeBundle() {
-                    const __filename = fileURLToPath(import.meta.url)
-                    const __dirname = dirname(__filename)
-                    const wasmFile = path.resolve(__dirname, 'pkg/shinkore_bg.wasm')
-                    const distPath = path.resolve(__dirname, 'dist/modules/pkg')
-                    const wasmDistFile = path.resolve(distPath, 'shinkore_bg.wasm')
-
-                    if (!existsSync(distPath)) {
-                        mkdirSync(distPath, { recursive: true })
-                    }
-
-                    if (existsSync(wasmFile)) {
-                        copyFileSync(wasmFile, wasmDistFile)
-
-                        console.log("Successfully copied wasm asset file to pkg!")
-                    } else {
-                        console.error("Could not find the wasm file at:", wasmFile)
-                    }
-                }
-            }
-        ],
+        plugins: [copyWasmPlugin("modules")],
     },
 ])

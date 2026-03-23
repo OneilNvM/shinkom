@@ -7,6 +7,8 @@
 
 import { CompatUI } from "../ui/compat-ui/compat-ui.js";
 import { SKEngine } from "../engine/engine.js";
+import { InspectorConfig as InspectorConfig$1, ShinkomEventBus as ShinkomEventBus$1 } from "../types/index.js";
+
 //#region src/shinkom/shinkom.d.ts
 declare class Shinkom {
   /**
@@ -33,7 +35,7 @@ declare class Shinkom {
    */
   destroy(): void;
 }
-type InspectorConfig = undefined;
-type ShinkomEventBus = undefined;
+type InspectorConfig = InspectorConfig$1;
+type ShinkomEventBus = ShinkomEventBus$1;
 //#endregion
 export { InspectorConfig, Shinkom, ShinkomEventBus };

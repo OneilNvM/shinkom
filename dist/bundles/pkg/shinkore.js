@@ -1,5 +1,5 @@
 /**
-    * Shinkom - shinkore
+    * Shinkom - pkg
     * @version 1.0.0
     * @license MIT
     * @copyright 2026 - Oneil Achord

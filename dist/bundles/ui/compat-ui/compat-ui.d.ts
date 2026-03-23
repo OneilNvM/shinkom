@@ -7,6 +7,7 @@
 
 import { CompatInspector } from "../inspector/inspector.js";
 import { CompatControlPanel } from "../control-panel/control-panel.js";
+import { InspectorConfig as InspectorConfig$1, ShinkomEventBus as ShinkomEventBus$1 } from "../../types/index.js";
 
 //#region src/ui/compat-ui/compat-ui.d.ts
 declare class CompatUI {
@@ -28,7 +29,7 @@ declare class CompatUI {
    */
   destroy(): void;
 }
-type InspectorConfig = undefined;
-type ShinkomEventBus = undefined;
+type InspectorConfig = InspectorConfig$1;
+type ShinkomEventBus = ShinkomEventBus$1;
 //#endregion
 export { CompatUI, InspectorConfig, ShinkomEventBus };

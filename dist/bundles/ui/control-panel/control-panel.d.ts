@@ -5,6 +5,8 @@
     * @copyright 2026 - Oneil Achord
 */
 
+import { ShinkomEventBus as ShinkomEventBus$1 } from "../../types/index.js";
+
 //#region src/ui/control-panel/control-panel.d.ts
 /**@typedef {import('../../types/index').ShinkomEventBus} ShinkomEventBus */
 declare class CompatControlPanel {
@@ -38,6 +40,6 @@ declare class CompatControlPanel {
   destroy(): void;
   #private;
 }
-type ShinkomEventBus = undefined;
+type ShinkomEventBus = ShinkomEventBus$1;
 //#endregion
 export { CompatControlPanel, ShinkomEventBus };
