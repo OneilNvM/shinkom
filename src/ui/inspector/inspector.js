@@ -36,6 +36,9 @@ export class CompatInspector {
      * @param {HTMLDivElement} el 
      */
     setIgnorePanel(el) {
+        if (this.#ignorePanelEl)
+            throw new Error("Control panel is already ignored.")
+
         this.#ignorePanelEl = el
     }
 
@@ -68,7 +71,11 @@ export class CompatInspector {
     #handlePointerOver = e => {
         if (this.#freezeInspector) return;
 
-        this.#update(/**@type {HTMLElement} */(e.target))
+        try {
+            this.#update(/**@type {HTMLElement} */(e.target))
+        } catch (error) {
+            console.error(`Inspector pointerOver error: ${error}`)
+        }
     }
 
     /**
@@ -108,8 +115,6 @@ export class CompatInspector {
         this.#freezeInspector = true
         this.frozenTarget = target
 
-        console.log(this.frozenTarget.outerHTML)
-
         this._bus?.dispatchEvent(new CustomEvent('ci:inspect', { detail: this.frozenTarget.outerHTML }))
 
         Object.assign(this.inspectorEl.style, {
@@ -144,15 +149,22 @@ export class CompatInspector {
 
             this._bus?.dispatchEvent(new CustomEvent('ci:inspect', { detail: this.frozenTarget.outerHTML }))
 
-            this.#update(target)
+            try {
+                this.#update(target)
+            } catch (error) {
+                console.error(`Inspector switch error: ${error}`)
+            }
         }
     }
 
     /**
      * Creates the inspector element.
      */
-    #createInspector() {
-        if (this.inspectorEl) return;
+    createInspector() {
+        if (this.inspectorEl) {
+            console.warn("Inspector element already exists.")
+            return;
+        }
 
         this.inspectorEl = document.createElement('div')
 
@@ -180,7 +192,10 @@ export class CompatInspector {
      * Initializes event listeners on `window` and creates the inspector.
      */
     setup() {
-        if (this.inspectorEl || this.config.disabled) return;
+        if (this.inspectorEl || this.config.disabled) {
+            console.warn("Inspector is either disabled or already exists")
+            return;
+        }
 
         this.#inspectorController = new AbortController()
         const { signal } = this.#inspectorController
@@ -189,7 +204,7 @@ export class CompatInspector {
         window.addEventListener('click', this.#handleToggleFreeze, { signal, capture: true })
         window.addEventListener('keydown', this.#handleKeyboard)
 
-        this.#createInspector()
+        this.createInspector()
     }
 
     /**
@@ -197,7 +212,7 @@ export class CompatInspector {
      * @param {HTMLElement} target 
      */
     #update(target) {
-        if (!this.inspectorEl) return;
+        if (!this.inspectorEl) throw new Error("Failed to update inspector position and size as it does not exist.");
 
         const { width, height, top, left } = target.getBoundingClientRect()
         const scrollTop = window.scrollY
@@ -214,7 +229,11 @@ export class CompatInspector {
      * Resets the inspector.
      */
     reset() {
-        if (!this.inspectorEl) return;
+        if (!this.inspectorEl) {
+            console.warn("Cannot reset inspector as it does not exist.")
+            return;
+        };
+
         console.log("resetting inspector")
         this.destroy()
 
@@ -225,18 +244,26 @@ export class CompatInspector {
      * Destroys the inspector.
      */
     destroy() {
-        if (!this.inspectorEl) return;
-        console.log("destroying inspector")
+        try {
+            if (!this.inspectorEl) {
+                console.warn("Cannot destroy inspector as it does not exist.")
+                return;
+            }
 
-        if (this.#inspectorController)
-            this.#inspectorController.abort()
+            console.log("destroying inspector")
 
-        document.body.removeChild(this.inspectorEl)
-        this.inspectorEl = null
-        this.#inspectorController = null
+            if (this.#inspectorController)
+                this.#inspectorController.abort()
 
-        this.#freezeInspector = false;
-        this.enableSwitching = true;
-        this.frozenTarget = null;
+            this.inspectorEl.remove()
+            this.inspectorEl = null
+            this.#inspectorController = null
+
+            this.#freezeInspector = false;
+            this.enableSwitching = true;
+            this.frozenTarget = null;
+        } catch (error) {
+            console.error(`Inspector destroy error: ${error}`)
+        }
     }
 }

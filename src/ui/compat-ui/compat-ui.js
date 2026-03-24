@@ -20,10 +20,15 @@ export class CompatUI {
      * Initializes CompatUI components.
      */
     init() {
-        this.compatInspector.setup()
-        this.controlPanel.setup()
-        if (this.controlPanel.shadowHost)
-            this.compatInspector.setIgnorePanel(this.controlPanel.shadowHost)
+        try {
+            this.compatInspector.setup()
+            this.controlPanel.setup()
+
+            if (this.controlPanel.shadowHost)
+                this.compatInspector.setIgnorePanel(this.controlPanel.shadowHost)
+        } catch (error) {
+            console.error(`Compat UI initialization error: ${error}`)
+        }
     }
 
     /**
