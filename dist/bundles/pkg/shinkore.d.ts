@@ -33,14 +33,6 @@ declare class CompatEngine {
    * @returns {any}
    */
   check_elements(html: string, depth_level: number): any;
-  /**
-   * @returns {any}
-   */
-  return_element_data(): any;
-  /**
-   * @returns {any}
-   */
-  return_global_attrib_data(): any;
 }
 //#endregion
 export { CompatEngine };

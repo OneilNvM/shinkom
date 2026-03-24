@@ -21,7 +21,7 @@ var Shinkom = class {
 		/**@type {CompatUI} */
 		this.compatUI = new CompatUI(this.bus, inspectorConfig);
 		/**@type {SKEngine} */
-		this.engine = new SKEngine();
+		this.skEngine = new SKEngine();
 		this.bus.addEventListener("ci:toggle", this.handleCustomEvents);
 		this.bus.addEventListener("ci:inspect", this.handleCustomEvents);
 		this.bus.addEventListener("ci:switch", this.handleCustomEvents);
@@ -34,45 +34,51 @@ var Shinkom = class {
 	* @param {CustomEvent<string | void>} e
 	*/
 	handleCustomEvents = (e) => {
-		switch (e.type) {
-			case "ci:toggle":
-				if (this.compatUI.compatInspector.inspectorEl) this.compatUI.compatInspector.destroy();
-				else this.compatUI.compatInspector.setup();
-				break;
-			case "ci:inspect":
-				if (typeof e.detail === "string") if (this.compatUI.controlPanel.multiElements) this.engine.checkElements(e.detail, this.compatUI.controlPanel.depthLevel);
-				else this.engine.checkElement(e.detail);
-				break;
-			case "ci:switch":
-				const switchVal = this.compatUI.compatInspector.enableSwitching;
-				this.compatUI.compatInspector.enableSwitching = !switchVal;
-				break;
-			case "ci:create":
-				this.compatUI.compatInspector.setup();
-				break;
-			case "ci:reset":
-				this.compatUI.compatInspector.reset();
-				break;
-			case "ci:destroy":
-				this.compatUI.compatInspector.destroy();
-				break;
-			default:
-				console.error("Event type was invalid");
-				break;
+		try {
+			switch (e.type) {
+				case "ci:toggle":
+					if (this.compatUI.compatInspector.inspectorEl) this.compatUI.compatInspector.destroy();
+					else this.compatUI.compatInspector.setup();
+					break;
+				case "ci:inspect":
+					if (typeof e.detail === "string") if (this.compatUI.controlPanel.multiElements) this.skEngine.checkElements(e.detail, this.compatUI.controlPanel.depthLevel);
+					else this.skEngine.checkElement(e.detail);
+					break;
+				case "ci:switch":
+					const switchVal = this.compatUI.compatInspector.enableSwitching;
+					this.compatUI.compatInspector.enableSwitching = !switchVal;
+					break;
+				case "ci:create":
+					this.compatUI.compatInspector.setup();
+					break;
+				case "ci:reset":
+					this.compatUI.compatInspector.reset();
+					break;
+				case "ci:destroy":
+					this.compatUI.compatInspector.destroy();
+					break;
+				default: throw new Error("Event type was invalid");
+			}
+		} catch (error) {
+			console.error(`Shinkom customEvents error: ${error}`);
 		}
 	};
 	/**
 	* Initialize Shinkom
 	*/
-	init() {
-		this.engine.initEngine();
-		this.compatUI.init();
+	async init() {
+		try {
+			await this.skEngine.initEngine();
+			this.compatUI.init();
+		} catch (error) {
+			console.error(`Shinkom initialization error: ${error}`);
+		}
 	}
 	/**
 	* Destroy UI components and engine instance
 	*/
 	destroy() {
-		this.engine.destroy();
+		this.skEngine.destroy();
 		this.compatUI.destroy();
 		this.bus.removeEventListener("ci:toggle", this.handleCustomEvents);
 		this.bus.removeEventListener("ci:inspect", this.handleCustomEvents);

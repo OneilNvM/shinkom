@@ -52,18 +52,6 @@ var CompatEngine = class {
 		CompatEngineFinalization.register(this, this.__wbg_ptr, this);
 		return this;
 	}
-	/**
-	* @returns {any}
-	*/
-	return_element_data() {
-		return wasm.compatengine_return_element_data(this.__wbg_ptr);
-	}
-	/**
-	* @returns {any}
-	*/
-	return_global_attrib_data() {
-		return wasm.compatengine_return_global_attrib_data(this.__wbg_ptr);
-	}
 };
 if (Symbol.dispose) CompatEngine.prototype[Symbol.dispose] = CompatEngine.prototype.free;
 function __wbg_get_imports() {
@@ -107,9 +95,6 @@ function __wbg_get_imports() {
 		__wbg___wbindgen_is_object_781bc9f159099513: function(arg0) {
 			const val = arg0;
 			return typeof val === "object" && val !== null;
-		},
-		__wbg___wbindgen_is_string_7ef6b97b02428fae: function(arg0) {
-			return typeof arg0 === "string";
 		},
 		__wbg___wbindgen_is_undefined_52709e72fb9f179c: function(arg0) {
 			return arg0 === void 0;
@@ -207,9 +192,6 @@ function __wbg_get_imports() {
 		__wbg_length_ea16607d7b61445b: function(arg0) {
 			return arg0.length;
 		},
-		__wbg_new_49d5571bd3f0c4d4: function() {
-			return /* @__PURE__ */ new Map();
-		},
 		__wbg_new_5f486cdf45a04d78: function(arg0) {
 			return new Uint8Array(arg0);
 		},
@@ -236,22 +218,16 @@ function __wbg_get_imports() {
 		__wbg_set_6be42768c690e380: function(arg0, arg1, arg2) {
 			arg0[arg1] = arg2;
 		},
-		__wbg_set_bf7251625df30a02: function(arg0, arg1, arg2) {
-			return arg0.set(arg1, arg2);
-		},
 		__wbg_value_21fc78aab0322612: function(arg0) {
 			return arg0.value;
 		},
 		__wbindgen_cast_0000000000000001: function(arg0) {
 			return arg0;
 		},
-		__wbindgen_cast_0000000000000002: function(arg0) {
-			return arg0;
-		},
-		__wbindgen_cast_0000000000000003: function(arg0, arg1) {
+		__wbindgen_cast_0000000000000002: function(arg0, arg1) {
 			return getStringFromWasm0(arg0, arg1);
 		},
-		__wbindgen_cast_0000000000000004: function(arg0) {
+		__wbindgen_cast_0000000000000003: function(arg0) {
 			return BigInt.asUintN(64, arg0);
 		},
 		__wbindgen_init_externref_table: function() {

@@ -20,7 +20,7 @@ declare class Shinkom {
   /**@type {CompatUI} */
   compatUI: CompatUI;
   /**@type {SKEngine} */
-  engine: SKEngine;
+  skEngine: SKEngine;
   /**
    * Handles the custom events sent from the bus.
    * @param {CustomEvent<string | void>} e
@@ -29,7 +29,7 @@ declare class Shinkom {
   /**
    * Initialize Shinkom
    */
-  init(): void;
+  init(): Promise<void>;
   /**
    * Destroy UI components and engine instance
    */

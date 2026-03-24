@@ -32,6 +32,10 @@ declare class CompatInspector {
    */
   setIgnorePanel(el: HTMLDivElement): void;
   /**
+   * Creates the inspector element.
+   */
+  createInspector(): void;
+  /**
    * Initializes event listeners on `window` and creates the inspector.
    */
   setup(): void;

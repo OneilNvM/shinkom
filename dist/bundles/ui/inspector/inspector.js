@@ -38,6 +38,7 @@ var CompatInspector = class {
 	* @param {HTMLDivElement} el 
 	*/
 	setIgnorePanel(el) {
+		if (this.#ignorePanelEl) throw new Error("Control panel is already ignored.");
 		this.#ignorePanelEl = el;
 	}
 	/**
@@ -63,7 +64,11 @@ var CompatInspector = class {
 	*/
 	#handlePointerOver = (e) => {
 		if (this.#freezeInspector) return;
-		this.#update(e.target);
+		try {
+			this.#update(e.target);
+		} catch (error) {
+			console.error(`Inspector pointerOver error: ${error}`);
+		}
 	};
 	/**
 	* Handler responds to keyboard shortcuts.
@@ -98,7 +103,6 @@ var CompatInspector = class {
 		if (!this.inspectorEl) return;
 		this.#freezeInspector = true;
 		this.frozenTarget = target;
-		console.log(this.frozenTarget.outerHTML);
 		this._bus?.dispatchEvent(new CustomEvent("ci:inspect", { detail: this.frozenTarget.outerHTML }));
 		Object.assign(this.inspectorEl.style, {
 			backgroundColor: "rgba(255,0,0,.3)",
@@ -126,14 +130,21 @@ var CompatInspector = class {
 			this.#freezeInspector = true;
 			this.frozenTarget = target;
 			this._bus?.dispatchEvent(new CustomEvent("ci:inspect", { detail: this.frozenTarget.outerHTML }));
-			this.#update(target);
+			try {
+				this.#update(target);
+			} catch (error) {
+				console.error(`Inspector switch error: ${error}`);
+			}
 		}
 	}
 	/**
 	* Creates the inspector element.
 	*/
-	#createInspector() {
-		if (this.inspectorEl) return;
+	createInspector() {
+		if (this.inspectorEl) {
+			console.warn("Inspector element already exists.");
+			return;
+		}
 		this.inspectorEl = document.createElement("div");
 		this.inspectorEl.id = "compat-inspector";
 		Object.assign(this.inspectorEl.style, {
@@ -157,7 +168,10 @@ var CompatInspector = class {
 	* Initializes event listeners on `window` and creates the inspector.
 	*/
 	setup() {
-		if (this.inspectorEl || this.config.disabled) return;
+		if (this.inspectorEl || this.config.disabled) {
+			console.warn("Inspector is either disabled or already exists");
+			return;
+		}
 		this.#inspectorController = new AbortController();
 		const { signal } = this.#inspectorController;
 		window.addEventListener("pointerover", this.#handlePointerOver, { signal });
@@ -166,14 +180,14 @@ var CompatInspector = class {
 			capture: true
 		});
 		window.addEventListener("keydown", this.#handleKeyboard);
-		this.#createInspector();
+		this.createInspector();
 	}
 	/**
 	* Updates the position of the inspector when moving to a different element.
 	* @param {HTMLElement} target 
 	*/
 	#update(target) {
-		if (!this.inspectorEl) return;
+		if (!this.inspectorEl) throw new Error("Failed to update inspector position and size as it does not exist.");
 		const { width, height, top, left } = target.getBoundingClientRect();
 		const scrollTop = window.scrollY;
 		const scrollLeft = window.scrollX;
@@ -187,7 +201,10 @@ var CompatInspector = class {
 	* Resets the inspector.
 	*/
 	reset() {
-		if (!this.inspectorEl) return;
+		if (!this.inspectorEl) {
+			console.warn("Cannot reset inspector as it does not exist.");
+			return;
+		}
 		console.log("resetting inspector");
 		this.destroy();
 		this.setup();
@@ -196,15 +213,22 @@ var CompatInspector = class {
 	* Destroys the inspector.
 	*/
 	destroy() {
-		if (!this.inspectorEl) return;
-		console.log("destroying inspector");
-		if (this.#inspectorController) this.#inspectorController.abort();
-		document.body.removeChild(this.inspectorEl);
-		this.inspectorEl = null;
-		this.#inspectorController = null;
-		this.#freezeInspector = false;
-		this.enableSwitching = true;
-		this.frozenTarget = null;
+		try {
+			if (!this.inspectorEl) {
+				console.warn("Cannot destroy inspector as it does not exist.");
+				return;
+			}
+			console.log("destroying inspector");
+			if (this.#inspectorController) this.#inspectorController.abort();
+			this.inspectorEl.remove();
+			this.inspectorEl = null;
+			this.#inspectorController = null;
+			this.#freezeInspector = false;
+			this.enableSwitching = true;
+			this.frozenTarget = null;
+		} catch (error) {
+			console.error(`Inspector destroy error: ${error}`);
+		}
 	}
 };
 //#endregion

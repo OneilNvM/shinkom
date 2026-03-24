@@ -10,7 +10,8 @@ import { CompatEngine } from "../pkg/shinkore.js";
 //#region src/engine/engine.d.ts
 declare class SKEngine {
   /**@type {CompatEngine | null} */
-  engine: CompatEngine | null;
+  compatEngine: CompatEngine | null;
+  loadWasm(): Promise<void>;
   /**
    * Initializes Rust/WASM engine
    */

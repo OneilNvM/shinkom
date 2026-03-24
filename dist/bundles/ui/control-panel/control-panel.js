@@ -43,9 +43,12 @@ var CompatControlPanel = class {
 	* Creates the control panel in a shadow root.
 	*/
 	createPanel() {
-		if (this.shadowHost) throw new Error("Shadow host element already exists");
+		if (this.shadowHost) {
+			console.warn("Shadow host already exists.");
+			return;
+		}
 		this.shadowHost = document.createElement("div");
-		this.shadowHost.id = "bx-shadow-host";
+		this.shadowHost.id = "sk-shadow-host";
 		try {
 			this.#applyHostStyles();
 		} catch (error) {
@@ -56,7 +59,7 @@ var CompatControlPanel = class {
 		this.shadowRoot = this.shadowHost.attachShadow({ mode: "open" });
 		this.shadowRoot.innerHTML = `
         <style>
-            .bx-control-panel {
+            .sk-control-panel {
                 display: flex;
                 flex-direction: column;
                 justify-content: space-evenly;
@@ -70,13 +73,13 @@ var CompatControlPanel = class {
                 z-index: 2;
             }
 
-            .bx-control-panel * {
+            .sk-control-panel * {
                 transition-property: color, background-color, border-color;
                 transition-duration: 300ms;
                 transition-timing-function: ease-in-out;
             }
 
-            .bx-page-buttons {
+            .sk-page-buttons {
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
@@ -85,7 +88,7 @@ var CompatControlPanel = class {
                 flex: 1 1 0%;
             }
 
-            .bx-button-style {
+            .sk-button-style {
                 font-size: 1.225rem;
                 color: white;
                 background-color: #201a27;
@@ -96,13 +99,13 @@ var CompatControlPanel = class {
                 cursor: pointer;
             }
 
-            .bx-hr-line {
+            .sk-hr-line {
                 width: 100%;
                 border: 0px solid transparent;
                 border-top: 1px solid #8132ff;
             }
 
-            .bx-full-page-inspect {
+            .sk-full-page-inspect {
                 display: flex;
                 align-items: center;
                 justify-content: space-evenly;
@@ -110,7 +113,7 @@ var CompatControlPanel = class {
                 flex: 0.5 1 0%;
             }
 
-            .bx-options-container {
+            .sk-options-container {
                 display: flex;
                 flex-direction: column;
                 gap: .5rem;
@@ -120,18 +123,18 @@ var CompatControlPanel = class {
                 font-size: 1.25rem;
             }
 
-            .bx-options-header {
+            .sk-options-header {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
                 font-size: 1.5rem;
             }
 
-            .bx-options-header p:last-child {
+            .sk-options-header p:last-child {
                 font-size: 1rem;
             }
 
-            .bx-options {
+            .sk-options {
                 display: flex;
                 flex-direction: column;
                 justify-content: space-evenly;
@@ -139,7 +142,7 @@ var CompatControlPanel = class {
                 padding-left: .05rem;
             }
 
-            .bx-options-grid {
+            .sk-options-grid {
                 display: grid;
                 grid-template-columns: auto auto auto;
                 grid-template-rows: auto;
@@ -147,27 +150,27 @@ var CompatControlPanel = class {
                 align-items: center;
             }
 
-            .bx-options-grid:first-child {
+            .sk-options-grid:first-child {
                 column-gap: .5rem;
             }
 
-            .bx-options-grid .bx-button-style {
+            .sk-options-grid .sk-button-style {
                 justify-self: flex-end;
             }
 
-            .bx-options-grid .bx-options-input {
+            .sk-options-grid .sk-options-input {
                 justify-self: flex-end;
             }
 
-            .bx-options-grid .bx-options-input:disabled {
+            .sk-options-grid .sk-options-input:disabled {
                 opacity: .5;
             }
 
-            .bx-options-grid:nth-last-of-type(2), .bx-options-grid:nth-last-of-type(1) {
+            .sk-options-grid:nth-last-of-type(2), .sk-options-grid:nth-last-of-type(1) {
                 grid-template-columns: auto auto;
             }
 
-            .bx-options-input {
+            .sk-options-input {
                 width: 70%;
                 padding-block: .2rem;
                 padding-inline: .3rem;
@@ -177,13 +180,13 @@ var CompatControlPanel = class {
                 font-size: 1rem;
                 color: white;
             }
-            .bx-close {
+            .sk-close {
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 flex: 1 1 0%;
             }
-            .bx-show-panel {
+            .sk-show-panel {
                 width: 8rem;
                 position: absolute; 
                 top: 1rem; 
@@ -192,47 +195,47 @@ var CompatControlPanel = class {
             }
         </style>
         <div style="position: relative">
-            <button id="bx-show-panel" class="bx-button-style bx-show-panel">Show Panel</button>
-            <div id="bx-control-panel" class="bx-control-panel" style="display: none;">
-                <div class="bx-page-buttons">
-                    <button class="bx-button-style">Inspector</button>
-                    <button class="bx-button-style">Compatibility View</button>
+            <button id="sk-show-panel" class="sk-button-style sk-show-panel">Show Panel</button>
+            <div id="sk-control-panel" class="sk-control-panel" style="display: none;">
+                <div class="sk-page-buttons">
+                    <button class="sk-button-style">Inspector</button>
+                    <button class="sk-button-style">Compatibility View</button>
                 </div>
-                <hr class="bx-hr-line">
-                <div class="bx-full-page-inspect">
+                <hr class="sk-hr-line">
+                <div class="sk-full-page-inspect">
                     <p>Inspect Full Page</p>
-                    <button class="bx-button-style">Inspect</button>
+                    <button class="sk-button-style">Inspect</button>
                 </div>
-                <hr class="bx-hr-line">
-                <div class="bx-options-container">
-                    <div class="bx-options-header">
+                <hr class="sk-hr-line">
+                <div class="sk-options-container">
+                    <div class="sk-options-header">
                         <p>Inspector Options</p>
                         <p>Inspector Status: Active</p>
                     </div>
-                    <div class="bx-options">
-                        <div class="bx-options-grid">
+                    <div class="sk-options">
+                        <div class="sk-options-grid">
                             <p>Inspect multiple elements</p>
-                            <input id="bx-toggle-elements" class="bx-options-checkbox" type="checkbox">
-                            <input id="bx-depth-level" class="bx-options-input" type="text" placeholder="depth_level" disabled>
+                            <input id="sk-toggle-elements" class="sk-options-checkbox" type="checkbox">
+                            <input id="sk-depth-level" class="sk-options-input" type="text" placeholder="depth_level" disabled>
                         </div>
-                        <div class="bx-options-grid">
+                        <div class="sk-options-grid">
                             <p>Toggle Switching</p>
-                            <input id="bx-toggle-switching" class="bx-button-style" type="button" value="Enabled">
+                            <input id="sk-toggle-switching" class="sk-button-style" type="button" value="Enabled">
                         </div>
-                        <div class="bx-options-grid">
+                        <div class="sk-options-grid">
                             <p>Toggle Inspector</p>
-                            <input id="bx-toggle-inspector" class="bx-button-style" type="button" value="Active">
+                            <input id="sk-toggle-inspector" class="sk-button-style" type="button" value="Active">
                         </div>
-                        <button id="bx-create-inspector" class="bx-button-style">Create Inspector</button>
-                        <button id="bx-reset-inspector" class="bx-button-style">Reset Inspector</button>
-                        <button id="bx-destroy-inspector" class="bx-button-style">Destroy Inspector</button>
+                        <button id="sk-create-inspector" class="sk-button-style">Create Inspector</button>
+                        <button id="sk-reset-inspector" class="sk-button-style">Reset Inspector</button>
+                        <button id="sk-destroy-inspector" class="sk-button-style">Destroy Inspector</button>
                     </div>
                 </div>
-                <hr class="bx-hr-line">
-                <div class="bx-close">
-                    <button id="bx-close-panel" class="bx-button-style">Close</button>
+                <hr class="sk-hr-line">
+                <div class="sk-close">
+                    <button id="sk-close-panel" class="sk-button-style">Close</button>
                 </div>
-                <hr class="bx-hr-line">
+                <hr class="sk-hr-line">
             </div>
         </div>
         `;
@@ -244,20 +247,19 @@ var CompatControlPanel = class {
 		try {
 			this.createPanel();
 		} catch (error) {
-			console.error(error);
-			return;
+			throw error;
 		}
 		this.#panelController = new AbortController();
 		const { signal } = this.#panelController;
-		const toggleInspector = this.shadowRoot?.getElementById("bx-toggle-inspector");
-		const toggleSwitching = this.shadowRoot?.getElementById("bx-toggle-switching");
-		const createInspector = this.shadowRoot?.getElementById("bx-create-inspector");
-		const resetInspector = this.shadowRoot?.getElementById("bx-reset-inspector");
-		const destroyInspector = this.shadowRoot?.getElementById("bx-destroy-inspector");
-		const showButton = this.shadowRoot?.getElementById("bx-show-panel");
-		const closeButton = this.shadowRoot?.getElementById("bx-close-panel");
-		const toggleElements = this.shadowRoot?.getElementById("bx-toggle-elements");
-		const depthLevelInput = this.shadowRoot?.getElementById("bx-depth-level");
+		const toggleInspector = this.shadowRoot?.getElementById("sk-toggle-inspector");
+		const toggleSwitching = this.shadowRoot?.getElementById("sk-toggle-switching");
+		const createInspector = this.shadowRoot?.getElementById("sk-create-inspector");
+		const resetInspector = this.shadowRoot?.getElementById("sk-reset-inspector");
+		const destroyInspector = this.shadowRoot?.getElementById("sk-destroy-inspector");
+		const showButton = this.shadowRoot?.getElementById("sk-show-panel");
+		const closeButton = this.shadowRoot?.getElementById("sk-close-panel");
+		const toggleElements = this.shadowRoot?.getElementById("sk-toggle-elements");
+		const depthLevelInput = this.shadowRoot?.getElementById("sk-depth-level");
 		toggleInspector?.addEventListener("click", this.#handleToggleClick, { signal });
 		toggleSwitching?.addEventListener("click", this.#handleToggleClick, { signal });
 		createInspector?.addEventListener("click", this.#handleToggleClick, { signal });
@@ -273,15 +275,19 @@ var CompatControlPanel = class {
 	* Destroys the control panel instance
 	*/
 	destroy() {
-		if (!this.shadowHost) return;
-		if (this.#panelController) this.#panelController.abort();
-		this.#panelController = null;
-		document.removeChild(this.shadowHost);
-		this.shadowRoot = null;
-		this.shadowHost = null;
-		this.depthLevelInput = null;
-		this.depthLevel = 0;
-		this.multiElements = false;
+		try {
+			if (!this.shadowHost) return;
+			if (this.#panelController) this.#panelController.abort();
+			this.#panelController = null;
+			this.shadowHost.remove();
+			this.shadowRoot = null;
+			this.shadowHost = null;
+			this.depthLevelInput = null;
+			this.depthLevel = 0;
+			this.multiElements = false;
+		} catch (error) {
+			console.error(`Control panel destroy error: ${error}`);
+		}
 	}
 	/**
 	* Handler sends custom event to Shinkom to toggle the inspector.
@@ -289,23 +295,23 @@ var CompatControlPanel = class {
 	*/
 	#handleToggleClick = (e) => {
 		switch (e.target.id) {
-			case "bx-toggle-inspector":
+			case "sk-toggle-inspector":
 				this.bus.dispatchEvent(new CustomEvent("ci:toggle"));
 				break;
-			case "bx-toggle-switching":
+			case "sk-toggle-switching":
 				this.bus.dispatchEvent(new CustomEvent("ci:switch"));
 				break;
-			case "bx-create-inspector":
+			case "sk-create-inspector":
 				this.bus.dispatchEvent(new CustomEvent("ci:create"));
 				break;
-			case "bx-reset-inspector":
+			case "sk-reset-inspector":
 				this.bus.dispatchEvent(new CustomEvent("ci:reset"));
 				break;
-			case "bx-destroy-inspector":
+			case "sk-destroy-inspector":
 				this.bus.dispatchEvent(new CustomEvent("ci:destroy"));
 				break;
 			default:
-				console.error("Could not dispatch an event");
+				console.error(`Could not dispatch an event for element of unknown id: ${id}`);
 				break;
 		}
 	};
@@ -313,14 +319,16 @@ var CompatControlPanel = class {
 	* Shows the control panel
 	*/
 	#handleShowPanel = () => {
-		const panel = this.shadowRoot?.getElementById("bx-control-panel");
+		if (!this.shadowRoot) return;
+		const panel = this.shadowRoot.getElementById("sk-control-panel");
 		if (panel) panel.style.display = "flex";
 	};
 	/**
 	* Hides the control panel
 	*/
 	#handleClosePanel = () => {
-		const panel = this.shadowRoot?.getElementById("bx-control-panel");
+		if (!this.shadowRoot) return;
+		const panel = this.shadowRoot.getElementById("sk-control-panel");
 		if (panel) panel.style.display = "none";
 	};
 	/**
@@ -341,7 +349,6 @@ var CompatControlPanel = class {
 			e.target.value,
 			10
 		);
-		console.log(this.depthLevel);
 	};
 };
 //#endregion
