@@ -258,6 +258,7 @@ export class CompatInspector {
             this.inspectorEl.remove()
             this.inspectorEl = null
             this.#inspectorController = null
+            this.#ignorePanelEl = null
 
             this.#freezeInspector = false;
             this.enableSwitching = true;

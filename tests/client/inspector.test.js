@@ -68,8 +68,6 @@ describe('Compatibility Inspector Keyboard Shortcuts', () => {
     let target;
 
     beforeEach(() => {
-        inspector.destroy()
-
         document.body.innerHTML = `
         <div id='div-elem' class="div-elem">
             <span id='nested-span'>Nested span element</span>
@@ -83,7 +81,9 @@ describe('Compatibility Inspector Keyboard Shortcuts', () => {
     })
 
     afterEach(() => {
-        inspector.destroy()
+        if (inspector.inspectorEl) {
+            inspector.destroy()
+        }
     })
 
     test('should change switching to true', () => {

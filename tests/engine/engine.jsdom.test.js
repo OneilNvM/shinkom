@@ -7,13 +7,13 @@ const shinkom = new Shinkom()
 
 describe("Power the Shinkore WASM engine", () => {
     afterEach(() => {
-        shinkom.engine.destroy()
+        shinkom.skEngine.destroy()
     })
 
     test("should set the CompatEngine in Browser environment", async () => {
-        await shinkom.engine.initEngine()
+        await shinkom.skEngine.initEngine()
 
-        expect(shinkom.engine.engine).not.toBeNull()
+        expect(shinkom.skEngine.compatEngine).not.toBeNull()
     })
 })
 
