@@ -4,6 +4,8 @@ import { SKEngine } from "../engine"
 import { CompatUI } from "../ui"
 
 export class Shinkom {
+    /**@type {AbortController | null} */
+    #shinkomController = null
     /**
      * @param {InspectorConfig | undefined} inspectorConfig 
      */
@@ -16,13 +18,6 @@ export class Shinkom {
 
         /**@type {SKEngine} */
         this.skEngine = new SKEngine()
-
-        this.bus.addEventListener('ci:toggle', this.handleCustomEvents)
-        this.bus.addEventListener('ci:inspect', this.handleCustomEvents)
-        this.bus.addEventListener('ci:switch', this.handleCustomEvents)
-        this.bus.addEventListener('ci:create', this.handleCustomEvents)
-        this.bus.addEventListener('ci:reset', this.handleCustomEvents)
-        this.bus.addEventListener('ci:destroy', this.handleCustomEvents)
     }
 
     /**
@@ -48,9 +43,8 @@ export class Shinkom {
                             this.skEngine.checkElement(e.detail)
                         }
                     break;
-                case 'ci:switch':
-                    const switchVal = this.compatUI.compatInspector.enableSwitching
-                    this.compatUI.compatInspector.enableSwitching = !switchVal
+                case 'full:inspect':
+                    this.skEngine.fullInspect()
                     break;
                 case 'ci:create':
                     this.compatUI.compatInspector.setup()
@@ -76,6 +70,18 @@ export class Shinkom {
         try {
             await this.skEngine.initEngine()
             this.compatUI.init()
+
+            this.#shinkomController = new AbortController()
+
+            const { signal } = this.#shinkomController
+
+            this.bus.addEventListener('ci:toggle', this.handleCustomEvents, { signal })
+            this.bus.addEventListener('ci:inspect', this.handleCustomEvents, { signal })
+            this.bus.addEventListener('ci:switch', this.handleCustomEvents, { signal })
+            this.bus.addEventListener('ci:create', this.handleCustomEvents, { signal })
+            this.bus.addEventListener('ci:reset', this.handleCustomEvents, { signal })
+            this.bus.addEventListener('ci:destroy', this.handleCustomEvents, { signal })
+            this.bus.addEventListener('full:inspect', this.handleCustomEvents, { signal })
         } catch (error) {
             console.error(`Shinkom initialization error: ${error}`)
         }
@@ -88,11 +94,9 @@ export class Shinkom {
         this.skEngine.destroy()
         this.compatUI.destroy()
 
-        this.bus.removeEventListener('ci:toggle', this.handleCustomEvents)
-        this.bus.removeEventListener('ci:inspect', this.handleCustomEvents)
-        this.bus.removeEventListener('ci:switch', this.handleCustomEvents)
-        this.bus.removeEventListener('ci:create', this.handleCustomEvents)
-        this.bus.removeEventListener('ci:reset', this.handleCustomEvents)
-        this.bus.removeEventListener('ci:destroy', this.handleCustomEvents)
+        if (this.#shinkomController)
+            this.#shinkomController.abort()
+
+        this.#shinkomController = null
     }
 }

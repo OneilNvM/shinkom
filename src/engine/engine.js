@@ -68,6 +68,10 @@ export class SKEngine {
         console.dir(this.compatEngine?.check_elements(html, depthLevel))
     }
 
+    fullInspect() {
+        console.dir(this.compatEngine.full_inspect(document.documentElement.outerHTML))
+    }
+
     /**
      * Free WASM memory and dereference engine
      */
