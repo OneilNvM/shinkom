@@ -29,6 +29,27 @@ const extractData = () => {
             }
         }
 
+        if (tag === "input") {
+            for (const [inputAttr, inputData] of Object.entries(htmlData.elements.input)) {
+                const inputCompat = getCompatData(inputData)
+
+                if (inputCompat) {
+                    output.elements[tag][inputAttr] = {
+                        __compat: {
+                            description: inputCompat.description,
+                            mdn_url: inputCompat.mdn_url,
+                            source_file: inputCompat.source_file,
+                            spec_url: inputCompat.spec_url,
+                            status: inputCompat.status,
+                            support: inputCompat.support,
+                            tags: inputCompat.tags,
+                        },
+                    }
+                }
+            }
+            continue
+        }
+
         for (const [attr, attrData] of Object.entries(tagData)) {
             if (attr === "__compat") continue;
 
@@ -71,7 +92,7 @@ const extractData = () => {
         }
     }
 
-    const outDir = path.resolve("./src/gen")
+    const outDir = path.resolve("./gen")
     if (!existsSync(outDir)) mkdirSync(outDir)
 
     writeFileSync(path.join(outDir, 'compat-data.json'), JSON.stringify(output))
