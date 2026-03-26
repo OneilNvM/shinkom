@@ -240,16 +240,16 @@ pub fn compat_check(
     g_attrib_data: &HashMap<String, CompatGlobalAttribs>,
 ) -> Vec<LookupResults> {
     let mut overall_results: Vec<LookupResults> = vec![];
-    let mut attr_names: Vec<String> = vec![];
+    let mut attribs: HashMap<String, String> = HashMap::new();
 
     for attribute in attributes {
-        attr_names.push(attribute.name());
+        attribs.insert(attribute.name(), attribute.value());
     }
 
     lookup_element(tag_name, &mut overall_results, el_data);
     lookup_attribs(
         tag_name,
-        attr_names,
+        attribs,
         &mut overall_results,
         el_data,
         g_attrib_data,
@@ -257,6 +257,7 @@ pub fn compat_check(
 
     overall_results
 }
+
 pub fn multi_compat_check(
     tag_name: &str,
     attributes: &[Attribute<'_>],
@@ -266,16 +267,16 @@ pub fn multi_compat_check(
     attrib_cache: &mut HashSet<String>,
 ) -> Vec<LookupResults> {
     let mut overall_results: Vec<LookupResults> = vec![];
-    let mut attr_names: Vec<String> = vec![];
+    let mut attribs: HashMap<String, String> = HashMap::new();
 
     for attribute in attributes {
-        attr_names.push(attribute.name());
+        attribs.insert(attribute.name(), attribute.value());
     }
 
     multi_lookup_element(tag_name, &mut overall_results, el_data, element_cache);
     multi_lookup_attribs(
         tag_name,
-        attr_names,
+        attribs,
         &mut overall_results,
         el_data,
         g_attrib_data,
@@ -350,140 +351,83 @@ fn multi_lookup_element(
 
 fn lookup_attribs(
     tag: &str,
-    attr_names: Vec<String>,
+    attribs: HashMap<String, String>,
     results: &mut Vec<LookupResults>,
     el_data: &HashMap<String, CompatElement>,
     g_attrib_data: &HashMap<String, CompatGlobalAttribs>,
 ) {
-    for attribute in attr_names {
-        if let Some(g_attrib) = g_attrib_data.get(&attribute) {
+    for (name, value) in attribs {
+        if let Some(g_attrib) = g_attrib_data.get(&name) {
             if let Some(status) = &g_attrib.compat.status {
                 if status.deprecated {
                     results.push(LookupResults {
-                        description: format!("'{attribute}' is deprecated"),
+                        description: format!("'{name}' is deprecated"),
                         deprecated: status.deprecated,
                     })
                 } else {
                     results.push(LookupResults {
-                        description: format!("'{attribute}' is not deprecated"),
+                        description: format!("'{name}' is not deprecated"),
                         deprecated: status.deprecated,
                     })
                 }
             } else {
                 web_sys::console::error_1(&JsValue::from_str(&format!(
                     "Status is unavailable for global attribute '{}'",
-                    attribute
+                    name
                 )));
             }
             continue;
         }
         if let Some(el) = el_data.get(tag) {
-            if let Some(l_attrib) = el.sub_features.get(&attribute) {
-                if let Some(status) = &l_attrib.compat.status {
-                    if status.deprecated {
-                        results.push(LookupResults {
-                            description: format!("'{attribute}' is deprecated"),
-                            deprecated: status.deprecated,
-                        })
-                    } else {
-                        results.push(LookupResults {
-                            description: format!("'{attribute}' is not deprecated"),
-                            deprecated: status.deprecated,
-                        })
-                    }
-                } else {
-                    web_sys::console::error_1(&JsValue::from_str(&format!(
-                        "Status is unavailable for local attribute '{}'",
-                        attribute
-                    )));
-                }
-                continue;
-            } else {
-                if attribute.starts_with("data-") {
-                    results.push(LookupResults {
-                        description: format!("'{attribute}' is not deprecated"),
-                        deprecated: false,
-                    });
-
-                    continue;
-                }
-            }
-        } else {
-            web_sys::console::error_1(&JsValue::from_str(&format!("<{}> is not an element", tag)));
-        }
-
-        web_sys::console::error_1(&JsValue::from_str(&format!(
-            "{} is not an attribute",
-            attribute
-        )));
-    }
-}
-
-fn multi_lookup_attribs(
-    tag: &str,
-    attr_names: Vec<String>,
-    results: &mut Vec<LookupResults>,
-    el_data: &HashMap<String, CompatElement>,
-    g_attrib_data: &HashMap<String, CompatGlobalAttribs>,
-    attrib_cache: &mut HashSet<String>,
-) {
-    for attribute in attr_names {
-        if let Some(g_attrib) = g_attrib_data.get(&attribute) {
-            if !attrib_cache.contains(&attribute) {
-                if let Some(status) = &g_attrib.compat.status {
-                    if status.deprecated {
-                        results.push(LookupResults {
-                            description: format!("'{attribute}' is deprecated"),
-                            deprecated: status.deprecated,
-                        })
-                    } else {
-                        results.push(LookupResults {
-                            description: format!("'{attribute}' is not deprecated"),
-                            deprecated: status.deprecated,
-                        })
-                    }
-                } else {
-                    web_sys::console::error_1(&JsValue::from_str(&format!(
-                        "Status is unavailable for global attribute '{}'",
-                        attribute
-                    )));
-                }
-                attrib_cache.insert(attribute);
-            }
-            continue;
-        }
-        if let Some(el) = el_data.get(tag) {
-            if let Some(l_attrib) = el.sub_features.get(&attribute) {
-                if !attrib_cache.contains(&attribute) {
-                    if let Some(status) = &l_attrib.compat.status {
+            if tag == "input" {
+                if let Some(input_attrib) = el.sub_features.get(&format!("type_{value}")) {
+                    if let Some(status) = &input_attrib.compat.status {
                         if status.deprecated {
                             results.push(LookupResults {
-                                description: format!("'{attribute}' is deprecated"),
+                                description: format!("'type_{value}' is deprecated"),
                                 deprecated: status.deprecated,
                             })
                         } else {
                             results.push(LookupResults {
-                                description: format!("'{attribute}' is not deprecated"),
+                                description: format!("'type_{value}' is not deprecated"),
                                 deprecated: status.deprecated,
                             })
                         }
                     } else {
                         web_sys::console::error_1(&JsValue::from_str(&format!(
                             "Status is unavailable for local attribute '{}'",
-                            attribute
+                            format!("type_{value}")
                         )));
                     }
-                    attrib_cache.insert(attribute);
+                    continue;
+                }
+            }
+            if let Some(l_attrib) = el.sub_features.get(&name) {
+                if let Some(status) = &l_attrib.compat.status {
+                    if status.deprecated {
+                        results.push(LookupResults {
+                            description: format!("'{name}' is deprecated"),
+                            deprecated: status.deprecated,
+                        })
+                    } else {
+                        results.push(LookupResults {
+                            description: format!("'{name}' is not deprecated"),
+                            deprecated: status.deprecated,
+                        })
+                    }
+                } else {
+                    web_sys::console::error_1(&JsValue::from_str(&format!(
+                        "Status is unavailable for local attribute '{}'",
+                        name
+                    )));
                 }
                 continue;
             } else {
-                if attribute.starts_with("data-") {
+                if name.starts_with("data-") {
                     results.push(LookupResults {
-                        description: format!("'{attribute}' is not deprecated"),
+                        description: format!("'{name}' is not deprecated"),
                         deprecated: false,
                     });
-
-                    attrib_cache.insert(attribute);
 
                     continue;
                 }
@@ -492,10 +436,110 @@ fn multi_lookup_attribs(
             web_sys::console::error_1(&JsValue::from_str(&format!("<{}> is not an element", tag)));
         }
 
-        web_sys::console::error_1(&JsValue::from_str(&format!(
-            "{} is not an attribute",
-            attribute
-        )));
+        web_sys::console::error_1(&JsValue::from_str(&format!("{} is not an attribute", name)));
+    }
+}
+
+fn multi_lookup_attribs(
+    tag: &str,
+    attribs: HashMap<String, String>,
+    results: &mut Vec<LookupResults>,
+    el_data: &HashMap<String, CompatElement>,
+    g_attrib_data: &HashMap<String, CompatGlobalAttribs>,
+    attrib_cache: &mut HashSet<String>,
+) {
+    for (name, value) in attribs {
+        if let Some(g_attrib) = g_attrib_data.get(&name) {
+            if !attrib_cache.contains(&name) {
+                if let Some(status) = &g_attrib.compat.status {
+                    if status.deprecated {
+                        results.push(LookupResults {
+                            description: format!("'{name}' is deprecated"),
+                            deprecated: status.deprecated,
+                        })
+                    } else {
+                        results.push(LookupResults {
+                            description: format!("'{name}' is not deprecated"),
+                            deprecated: status.deprecated,
+                        })
+                    }
+                } else {
+                    web_sys::console::error_1(&JsValue::from_str(&format!(
+                        "Status is unavailable for global attribute '{}'",
+                        name
+                    )));
+                }
+                attrib_cache.insert(name);
+            }
+            continue;
+        }
+        if let Some(el) = el_data.get(tag) {
+            if tag == "input" {
+                if let Some(input_attrib) = el.sub_features.get(&format!("type_{value}")) {
+                    if !attrib_cache.contains(&format!("type_{value}")) {
+                        if let Some(status) = &input_attrib.compat.status {
+                            if status.deprecated {
+                                results.push(LookupResults {
+                                    description: format!("'type_{value}' is deprecated"),
+                                    deprecated: status.deprecated,
+                                })
+                            } else {
+                                results.push(LookupResults {
+                                    description: format!("'type_{value}' is not deprecated"),
+                                    deprecated: status.deprecated,
+                                })
+                            }
+                        } else {
+                            web_sys::console::error_1(&JsValue::from_str(&format!(
+                                "Status is unavailable for local attribute '{}'",
+                                format!("type_{value}")
+                            )));
+                        }
+                        attrib_cache.insert(format!("type_{value}"));
+                    }
+                    continue;
+                }
+            }
+            if let Some(l_attrib) = el.sub_features.get(&name) {
+                if !attrib_cache.contains(&name) {
+                    if let Some(status) = &l_attrib.compat.status {
+                        if status.deprecated {
+                            results.push(LookupResults {
+                                description: format!("'{name}' is deprecated"),
+                                deprecated: status.deprecated,
+                            })
+                        } else {
+                            results.push(LookupResults {
+                                description: format!("'{name}' is not deprecated"),
+                                deprecated: status.deprecated,
+                            })
+                        }
+                    } else {
+                        web_sys::console::error_1(&JsValue::from_str(&format!(
+                            "Status is unavailable for local attribute '{}'",
+                            name
+                        )));
+                    }
+                    attrib_cache.insert(name);
+                }
+                continue;
+            } else {
+                if name.starts_with("data-") {
+                    results.push(LookupResults {
+                        description: format!("'{name}' is not deprecated"),
+                        deprecated: false,
+                    });
+
+                    attrib_cache.insert(name);
+
+                    continue;
+                }
+            }
+        } else {
+            web_sys::console::error_1(&JsValue::from_str(&format!("<{}> is not an element", tag)));
+        }
+
+        web_sys::console::error_1(&JsValue::from_str(&format!("{} is not an attribute", name)));
     }
 }
 

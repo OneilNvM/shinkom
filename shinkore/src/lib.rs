@@ -129,7 +129,51 @@ impl CompatEngine {
                         el_data,
                         g_attrib_data,
                         &mut element_cache,
-                        &mut attrib_cache
+                        &mut attrib_cache,
+                    ));
+
+                    Ok(())
+                })],
+                ..Default::default()
+            },
+        );
+
+        let final_results = results.borrow();
+
+        serde_wasm_bindgen::to_value(&*final_results).unwrap_or_else(|e| {
+            web_sys::console::error_1(&JsValue::from_str(&format!(
+                "Error occurred parsing lookup results: {e}"
+            )));
+            JsValue::null()
+        })
+    }
+
+    #[wasm_bindgen]
+    pub fn full_inspect(&self, html: &str) -> JsValue {
+        let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
+
+        let formatted = format_html(html);
+
+        let el_data = &self.el_data;
+        let g_attrib_data = &self.g_attrib_data;
+
+        let mut element_cache: HashSet<String> = HashSet::new();
+        let mut attrib_cache: HashSet<String> = HashSet::new();
+
+        let _ = rewrite_str(
+            &formatted,
+            RewriteStrSettings {
+                element_content_handlers: vec![element!("*", |el| {
+                    let tag_name = el.tag_name();
+                    let attributes = el.attributes();
+
+                    results.borrow_mut().extend(multi_compat_check(
+                        &tag_name,
+                        attributes,
+                        el_data,
+                        g_attrib_data,
+                        &mut element_cache,
+                        &mut attrib_cache,
                     ));
 
                     Ok(())
