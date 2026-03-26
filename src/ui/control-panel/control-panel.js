@@ -1,13 +1,16 @@
 /**@typedef {import('../../types/index').ShinkomEventBus} ShinkomEventBus */
+/**@typedef {import('../../types/index').UISharedState} UISharedState */
 
 export class CompatControlPanel {
+    /**@type {UISharedState} */
+    #stateBind = null
     /**@type {AbortController | null} */
     #panelController = null;
 
     /**
-     * @param {ShinkomEventBus} bus 
+     * @param {ShinkomEventBus | null} bus 
      */
-    constructor(bus) {
+    constructor(bus = null) {
         /**@type {ShinkomEventBus} */
         this.bus = bus;
 
@@ -19,6 +22,12 @@ export class CompatControlPanel {
 
         /**@type {HTMLInputElement | null} */
         this.depthLevelInput = null
+        /**@type {HTMLInputElement | null} */
+        this.ciStatusEl = null
+        /**@type {HTMLInputElement | null} */
+        this.toggleSwitchingEl = null
+        /**@type {HTMLInputElement | null} */
+        this.toggleInspectorEl = null
 
         /**@type {number} */
         this.depthLevel = 0;
@@ -38,7 +47,7 @@ export class CompatControlPanel {
                 left: '2rem',
                 zIndex: '9999'
             })
-        else 
+        else
             throw new Error("Shadow host is undefined or null.")
     }
 
@@ -46,7 +55,7 @@ export class CompatControlPanel {
      * Creates the control panel in a shadow root.
      */
     createPanel() {
-        if (this.shadowHost){
+        if (this.shadowHost) {
             console.warn("Shadow host already exists.")
             return;
         }
@@ -212,13 +221,13 @@ export class CompatControlPanel {
                 <hr class="sk-hr-line">
                 <div class="sk-full-page-inspect">
                     <p>Inspect Full Page</p>
-                    <button class="sk-button-style">Inspect</button>
+                    <button id="sk-full-inspect" class="sk-button-style">Inspect</button>
                 </div>
                 <hr class="sk-hr-line">
                 <div class="sk-options-container">
                     <div class="sk-options-header">
                         <p>Inspector Options</p>
-                        <p>Inspector Status: Active</p>
+                        <p id="sk-inspector-status">Inspector Status: Active</p>
                     </div>
                     <div class="sk-options">
                         <div class="sk-options-grid">
@@ -228,11 +237,11 @@ export class CompatControlPanel {
                         </div>
                         <div class="sk-options-grid">
                             <p>Toggle Switching</p>
-                            <input id="sk-toggle-switching" class="sk-button-style" type="button" value="Enabled">
+                            <button id="sk-toggle-switching" class="sk-button-style">Disabled</button>
                         </div>
                         <div class="sk-options-grid">
                             <p>Toggle Inspector</p>
-                            <input id="sk-toggle-inspector" class="sk-button-style" type="button" value="Active">
+                            <button id="sk-toggle-inspector" class="sk-button-style">Active</button>
                         </div>
                         <button id="sk-create-inspector" class="sk-button-style">Create Inspector</button>
                         <button id="sk-reset-inspector" class="sk-button-style">Reset Inspector</button>
@@ -247,6 +256,36 @@ export class CompatControlPanel {
             </div>
         </div>
         `
+    }
+
+    /**
+     * Sets the `stateBind` to the parameter state.
+     * 
+     * `state` must be a Proxy to listen for changes.
+     * @param {UISharedState} state 
+     */
+    bindState(state) {
+        if (!this.#stateBind)
+            this.#stateBind = state
+    }
+
+    /**
+     * Notify control panel of a state change in the `stateBind`.
+     * @param {string} prop 
+     * @param {any} val 
+     */
+    onStateChange(prop, val) {
+        switch (prop) {
+            case "inspectorSwitching":
+                this.toggleSwitchingEl.innerHTML = val ? "Enabled" : "Disabled"
+                break;
+            case "inspectorActive":
+                this.toggleInspectorEl.innerHTML = val ? "Active" : "Deactive"
+                this.ciStatusEl.innerHTML = val ? "Inspector Status: Active" : "Inspector Status: Deactive"
+                break;
+            default:
+                break;
+        }
     }
 
     /** 
@@ -272,6 +311,7 @@ export class CompatControlPanel {
         const closeButton = this.shadowRoot?.getElementById('sk-close-panel')
         const toggleElements = this.shadowRoot?.getElementById('sk-toggle-elements')
         const depthLevelInput = this.shadowRoot?.getElementById('sk-depth-level')
+        const fullInspectButton = this.shadowRoot?.getElementById('sk-full-inspect')
 
         toggleInspector?.addEventListener('click', this.#handleToggleClick, { signal })
         toggleSwitching?.addEventListener('click', this.#handleToggleClick, { signal })
@@ -280,10 +320,14 @@ export class CompatControlPanel {
         destroyInspector?.addEventListener('click', this.#handleToggleClick, { signal })
         showButton?.addEventListener('click', this.#handleShowPanel, { signal })
         closeButton?.addEventListener('click', this.#handleClosePanel, { signal })
-        toggleElements.addEventListener('click', this.#handleToggleElements, { signal })
-        depthLevelInput.addEventListener('change', this.#handleDepthLevelValue, { signal })
+        toggleElements?.addEventListener('click', this.#handleToggleElements, { signal })
+        depthLevelInput?.addEventListener('change', this.#handleDepthLevelValue, { signal })
+        fullInspectButton?.addEventListener('click', this.#handleToggleClick, { signal })
 
         this.depthLevelInput = depthLevelInput
+        this.toggleInspectorEl = toggleInspector
+        this.toggleSwitchingEl = toggleSwitching
+        this.ciStatusEl = this.shadowRoot.getElementById('sk-inspector-status')
     }
 
     /**
@@ -295,6 +339,7 @@ export class CompatControlPanel {
 
             if (this.#panelController)
                 this.#panelController.abort()
+
             this.#panelController = null
             this.shadowHost.remove()
             this.shadowRoot = null;
@@ -317,7 +362,7 @@ export class CompatControlPanel {
                 this.bus.dispatchEvent(new CustomEvent('ci:toggle'))
                 break;
             case 'sk-toggle-switching':
-                this.bus.dispatchEvent(new CustomEvent('ci:switch'))
+                this.#stateBind.inspectorSwitching = !this.#stateBind.inspectorSwitching
                 break;
             case 'sk-create-inspector':
                 this.bus.dispatchEvent(new CustomEvent('ci:create'))
@@ -328,9 +373,24 @@ export class CompatControlPanel {
             case 'sk-destroy-inspector':
                 this.bus.dispatchEvent(new CustomEvent('ci:destroy'))
                 break;
+            case 'sk-full-inspect':
+                this.bus.dispatchEvent(new CustomEvent('full:inspect'))
+                break;
             default:
                 console.error(`Could not dispatch an event for element of unknown id: ${id}`)
                 break;
+        }
+    }
+
+    /**
+     * Handles click event for the **'Inspect multiple elements'** checkbox input
+     */
+    #handleToggleElements = () => {
+        this.multiElements = !this.multiElements
+        if (this.multiElements) {
+            this.depthLevelInput.disabled = false
+        } else {
+            this.depthLevelInput.disabled = true
         }
     }
 
@@ -355,18 +415,6 @@ export class CompatControlPanel {
 
         if (panel) {
             panel.style.display = 'none'
-        }
-    }
-
-    /**
-     * Handles click event for the **'Inspect multiple elements'** checkbox input
-     */
-    #handleToggleElements = () => {
-        this.multiElements = !this.multiElements
-        if (this.multiElements) {
-            this.depthLevelInput.disabled = false
-        } else {
-            this.depthLevelInput.disabled = true
         }
     }
 
