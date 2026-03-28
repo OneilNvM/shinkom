@@ -1,18 +1,23 @@
-/**@typedef {import('../../types/index').ShinkomEventBus} ShinkomEventBus */
+// @ts-check
+
 /**@typedef {import('../../types/index').UISharedState} UISharedState */
+/**@typedef {import('../../types/index').UISharedStateProps} UISharedStateProps */
+
+import { ShinkomBus, ShinkomState } from '../../core'; 
 
 export class CompatControlPanel {
-    /**@type {UISharedState} */
+    /**@type {UISharedState | null} */
     #stateBind = null
     /**@type {AbortController | null} */
     #panelController = null;
 
     /**
-     * @param {ShinkomEventBus | null} bus 
+     * @param {ShinkomBus} bus 
+     * @param {ShinkomState} stateService 
      */
-    constructor(bus = null) {
-        /**@type {ShinkomEventBus} */
-        this.bus = bus;
+    constructor(bus, stateService) {
+        /**@type {ShinkomBus} */
+        this.bus = bus
 
         /**@type {HTMLDivElement | null} */
         this.shadowHost = null;
@@ -22,11 +27,11 @@ export class CompatControlPanel {
 
         /**@type {HTMLInputElement | null} */
         this.depthLevelInput = null
-        /**@type {HTMLInputElement | null} */
+        /**@type {HTMLParagraphElement | null} */
         this.ciStatusEl = null
-        /**@type {HTMLInputElement | null} */
+        /**@type {HTMLButtonElement | null} */
         this.toggleSwitchingEl = null
-        /**@type {HTMLInputElement | null} */
+        /**@type {HTMLButtonElement | null} */
         this.toggleInspectorEl = null
 
         /**@type {number} */
@@ -34,6 +39,10 @@ export class CompatControlPanel {
 
         /**@type {boolean} */
         this.multiElements = false;
+
+        stateService.subscribe((prop, val) => {
+            this.#onStateChange(prop, val)
+        })
     }
 
     /**
@@ -259,45 +268,58 @@ export class CompatControlPanel {
     }
 
     /**
-     * Sets the `stateBind` to the parameter state.
+     * Used to bind state from a proxy to a UI component instance.
      * 
-     * `state` must be a Proxy to listen for changes.
+     * Sets any initial state defined by the component.
      * @param {UISharedState} state 
      */
     bindState(state) {
         if (!this.#stateBind)
             this.#stateBind = state
+
+        this.#stateBind.ignorePanelEl = this.shadowHost
     }
 
     /**
-     * Notify control panel of a state change in the `stateBind`.
-     * @param {string} prop 
+     * Notify UI component of a state change in the `stateBind`
+     * @param {UISharedStateProps} prop 
      * @param {any} val 
      */
-    onStateChange(prop, val) {
+    #onStateChange(prop, val) {
         switch (prop) {
             case "inspectorSwitching":
-                this.toggleSwitchingEl.innerHTML = val ? "Enabled" : "Disabled"
+                if (this.toggleSwitchingEl)
+                    this.toggleSwitchingEl.innerHTML = val ? "Enabled" : "Disabled"
                 break;
             case "inspectorActive":
-                this.toggleInspectorEl.innerHTML = val ? "Active" : "Deactive"
-                this.ciStatusEl.innerHTML = val ? "Inspector Status: Active" : "Inspector Status: Deactive"
+                if (this.toggleInspectorEl)
+                    this.toggleInspectorEl.innerHTML = val ? "Active" : "Deactive"
+
+                if (this.ciStatusEl)
+                    this.ciStatusEl.innerHTML = val ? "Inspector Status: Active" : "Inspector Status: Deactive"
                 break;
             default:
                 break;
         }
     }
 
-    /** 
-     * Initializes event listeners and appends control panel.
+    /**
+     * Mount UI component to the DOM
      */
-    setup() {
+    mount() {
         try {
             this.createPanel()
         } catch (error) {
             throw error
         }
 
+        this.#setupShadowListeners()
+    }
+
+    /**
+     * Setup event listeners on `shadowRoot` element.
+     */
+    #setupShadowListeners() {
         this.#panelController = new AbortController()
 
         const { signal } = this.#panelController
@@ -312,118 +334,141 @@ export class CompatControlPanel {
         const toggleElements = this.shadowRoot?.getElementById('sk-toggle-elements')
         const depthLevelInput = this.shadowRoot?.getElementById('sk-depth-level')
         const fullInspectButton = this.shadowRoot?.getElementById('sk-full-inspect')
+        const ciStatusEl = this.shadowRoot?.getElementById('sk-inspector-status')
 
         toggleInspector?.addEventListener('click', this.#handleToggleClick, { signal })
         toggleSwitching?.addEventListener('click', this.#handleToggleClick, { signal })
         createInspector?.addEventListener('click', this.#handleToggleClick, { signal })
         resetInspector?.addEventListener('click', this.#handleToggleClick, { signal })
         destroyInspector?.addEventListener('click', this.#handleToggleClick, { signal })
-        showButton?.addEventListener('click', this.#handleShowPanel, { signal })
-        closeButton?.addEventListener('click', this.#handleClosePanel, { signal })
-        toggleElements?.addEventListener('click', this.#handleToggleElements, { signal })
+        showButton?.addEventListener('click', this.#handleToggleClick, { signal })
+        closeButton?.addEventListener('click', this.#handleToggleClick, { signal })
+        toggleElements?.addEventListener('click', this.#handleToggleClick, { signal })
         depthLevelInput?.addEventListener('change', this.#handleDepthLevelValue, { signal })
         fullInspectButton?.addEventListener('click', this.#handleToggleClick, { signal })
 
-        this.depthLevelInput = depthLevelInput
-        this.toggleInspectorEl = toggleInspector
-        this.toggleSwitchingEl = toggleSwitching
-        this.ciStatusEl = this.shadowRoot.getElementById('sk-inspector-status')
+        if (depthLevelInput) {
+            this.depthLevelInput = /**@type {HTMLInputElement} */ (depthLevelInput)
+        }
+        if (toggleInspector) {
+            this.toggleInspectorEl = /**@type {HTMLButtonElement} */ (toggleInspector)
+        }
+        if (toggleSwitching) {
+            this.toggleSwitchingEl = /**@type {HTMLButtonElement} */ (toggleSwitching)
+        }
+        if (ciStatusEl) {
+            this.ciStatusEl = /**@type {HTMLParagraphElement} */ (ciStatusEl)
+        }
     }
 
     /**
-     * Destroys the control panel instance
+     * Unmount UI component from the DOM.
      */
-    destroy() {
+    unmount() {
         try {
             if (!this.shadowHost) return;
 
-            if (this.#panelController)
-                this.#panelController.abort()
-
-            this.#panelController = null
             this.shadowHost.remove()
-            this.shadowRoot = null;
             this.shadowHost = null;
-            this.depthLevelInput = null;
-            this.depthLevel = 0;
-            this.multiElements = false;
+
+            this.#resetInternalState()
         } catch (error) {
             console.error(`Control panel destroy error: ${error}`)
         }
     }
 
     /**
-    * Handler sends custom event to Shinkom to toggle the inspector.
+     * Reset internal state of the instance and any related state
+     * in the `stateBind`.
+     */
+    #resetInternalState() {
+        if (this.#panelController)
+            this.#panelController.abort()
+
+        this.#panelController = null
+        this.shadowRoot = null;
+        this.depthLevelInput = null;
+        this.depthLevel = 0;
+        this.multiElements = false;
+
+        if (this.#stateBind) {
+            this.#stateBind.depthLevel = 0
+            this.#stateBind.multiElements = false
+        }
+
+    }
+
+    /**
+    * Handles click events within the control panel.
     * @param {PointerEvent} e
     */
     #handleToggleClick = e => {
         switch (/**@type {HTMLElement} */(e.target).id) {
+            case 'sk-show-panel': {
+                if (!this.shadowRoot) return;
+                const panel = this.shadowRoot.getElementById('sk-control-panel')
+
+                if (panel) {
+                    panel.style.display = 'flex'
+                }
+                break;
+            }
+            case 'sk-close-panel': {
+                if (!this.shadowRoot) return;
+                const panel = this.shadowRoot.getElementById('sk-control-panel')
+
+                if (panel) {
+                    panel.style.display = 'none'
+                }
+                break;
+            }
             case 'sk-toggle-inspector':
-                this.bus.dispatchEvent(new CustomEvent('ci:toggle'))
+                this.bus.emit('ci:toggle')
+                console.log("emitted")
+                break;
+            case 'sk-toggle-elements':
+                this.multiElements = !this.multiElements
+                if (this.depthLevelInput) {
+                    if (this.multiElements) {
+                        this.depthLevelInput.disabled = false
+                    } else {
+                        this.depthLevelInput.disabled = true
+                    }
+                }
+                if (this.#stateBind)
+                    this.#stateBind.multiElements = this.multiElements
                 break;
             case 'sk-toggle-switching':
-                this.#stateBind.inspectorSwitching = !this.#stateBind.inspectorSwitching
+                if (this.#stateBind)
+                    this.#stateBind.inspectorSwitching = !this.#stateBind.inspectorSwitching
                 break;
             case 'sk-create-inspector':
-                this.bus.dispatchEvent(new CustomEvent('ci:create'))
+                this.bus.emit('ci:create')
                 break;
             case 'sk-reset-inspector':
-                this.bus.dispatchEvent(new CustomEvent('ci:reset'))
+                this.bus.emit('ci:reset')
                 break;
             case 'sk-destroy-inspector':
-                this.bus.dispatchEvent(new CustomEvent('ci:destroy'))
+                this.bus.emit('ci:destroy')
                 break;
             case 'sk-full-inspect':
-                this.bus.dispatchEvent(new CustomEvent('full:inspect'))
+                this.bus.emit('engine:full')
                 break;
             default:
-                console.error(`Could not dispatch an event for element of unknown id: ${id}`)
+                console.error(`Could not dispatch an event for element of unknown id: ${/**@type {HTMLElement} */(e.target).id}`)
                 break;
         }
     }
 
     /**
-     * Handles click event for the **'Inspect multiple elements'** checkbox input
-     */
-    #handleToggleElements = () => {
-        this.multiElements = !this.multiElements
-        if (this.multiElements) {
-            this.depthLevelInput.disabled = false
-        } else {
-            this.depthLevelInput.disabled = true
-        }
-    }
-
-    /**
-     * Shows the control panel
-     */
-    #handleShowPanel = () => {
-        if (!this.shadowRoot) return;
-        const panel = this.shadowRoot.getElementById('sk-control-panel')
-
-        if (panel) {
-            panel.style.display = 'flex'
-        }
-    }
-
-    /**
-     * Hides the control panel
-     */
-    #handleClosePanel = () => {
-        if (!this.shadowRoot) return;
-        const panel = this.shadowRoot.getElementById('sk-control-panel')
-
-        if (panel) {
-            panel.style.display = 'none'
-        }
-    }
-
-    /**
-     * Handles the change event for the `depth_level` input 
+     * Handles the change event for the `depth_level` input.
      * @param {Event} e 
      */
     #handleDepthLevelValue = e => {
         const level = parseInt(/**@type {HTMLInputElement}*/(e.target).value, 10)
         this.depthLevel = level
+
+        if (this.#stateBind)
+            this.#stateBind.depthLevel = level
     }
 }

@@ -1,20 +1,29 @@
 export type ShinkomEventMap = {
     "ci:toggle": CustomEvent<void>
-    "ci:inspect": CustomEvent<string>
+    "engine:inspect": CustomEvent<CustomEventEngineDetail>
     "ci:switch": CustomEvent<void>
     "ci:create": CustomEvent<void>
     "ci:reset": CustomEvent<void>
     "ci:destroy": CustomEvent<void>,
-    "full:inspect": CustomEvent<void>
+    "engine:full": CustomEvent<CustomEventEngineDetail>
 }
 
-export type ShinkomEventBus = {
-    addEventListener: <K extends keyof ShinkomEventMap>(type: K, listener: ShinkomEventListener<K>, options?: boolean | AddEventListenerOptions) => void;
-    removeEventListener: <K extends keyof ShinkomEventMap>(type: K, listener: ShinkomEventListener<K>) => void;
+export interface ShinkomEventTarget extends EventTarget {
+    addEventListener<K extends keyof ShinkomEventMap>(
+        type: K,
+        listener: ShinkomEventListener<K>,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        type: string,
+        callback: EventListenerOrEventListenerObject | null,
+        options?: EventListenerOptions | boolean
+    ): void;
+    removeEventListener: <K extends keyof ShinkomEventMap>(type: K | string, callback: ShinkomEventListener<K> | EventListenerOrEventListenerObject | null) => void;
     dispatchEvent: <K extends keyof ShinkomEventMap>(event: ShinkomEventMap[K]) => boolean;
 }
 
-export type ShinkomEventListener<K extends keyof ShinkomEventMap> = (this: ShinkomEventBus, ev: ShinkomEventMap[K]) => void
+export type ShinkomEventListener<K extends keyof ShinkomEventMap> = (this: ShinkomEventTarget, ev: ShinkomEventMap[K]) => void
 
 export type InspectorConfig = {
     disabled: boolean;
@@ -24,4 +33,15 @@ export type InspectorConfig = {
 export type UISharedState = {
     inspectorSwitching: boolean,
     inspectorActive: boolean,
+    ignorePanelEl: HTMLDivElement | null,
+    multiElements: boolean,
+    depthLevel: number
 }
+
+export type CustomEventEngineDetail = {
+    elem: string,
+    depthLevel: number,
+    multiElements: boolean
+}
+
+export type UISharedStateProps = keyof UISharedState

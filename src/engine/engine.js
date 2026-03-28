@@ -1,12 +1,40 @@
+// @ts-check
+/**@typedef {import('../types/index').CustomEventEngineDetail} CustomEventEngineDetail*/
+
 import init, { CompatEngine } from '../../pkg/shinkore'
 import compatData from '../../gen/compat-data.json'
+import { ShinkomBus } from '../core'
 
 export class SKEngine {
-    constructor() {
+    /**
+     * @param {ShinkomBus | null} bus 
+     */
+    constructor(bus = null) {
         /**@type {CompatEngine | null} */
         this.compatEngine = null
+
+        /**@type {ShinkomBus | null} */
+        this.bus = bus
+
+        if (this.bus) {
+            this.bus.on('engine:inspect', (/**@type {CustomEventEngineDetail} */e) => {
+                if (typeof e === 'object') {
+                    if (e.multiElements) {
+                        this.checkElements(e.elem, e.depthLevel)
+                    } else {
+                        this.checkElement(e.elem)
+                    }
+                }
+            })
+            this.bus.on('engine:full', () => {
+                this.fullInspect()
+            })
+        }
     }
 
+    /**
+     * Loads WASM for the Browser or Node.
+     */
     async loadWasm() {
         const isNode = typeof window === "undefined"
 
@@ -22,11 +50,11 @@ export class SKEngine {
                 let wasmBuffer;
 
                 if (fs.existsSync(wasmPath)) {
-                    wasmBuffer = await fs.readFileSync(wasmPath)
+                    wasmBuffer = fs.readFileSync(wasmPath)
                 } else {
                     wasmPath = path.resolve(__dirname, '../../pkg/shinkore_bg.wasm')
 
-                    wasmBuffer = await fs.readFileSync(wasmPath)
+                    wasmBuffer = fs.readFileSync(wasmPath)
                 }
                 await init({ module_or_path: wasmBuffer })
             } else {
@@ -53,6 +81,7 @@ export class SKEngine {
     }
 
     /**
+     * Used for checking the compatibility of a single element.
      * @param {string} element 
      */
     checkElement(element) {
@@ -60,7 +89,7 @@ export class SKEngine {
     }
 
     /**
-     * 
+     * Used for checking the compatibility of a multiple elements, depending on `depthLevel`.
      * @param {string} html 
      * @param {number} depthLevel 
      */
@@ -68,8 +97,11 @@ export class SKEngine {
         console.dir(this.compatEngine?.check_elements(html, depthLevel))
     }
 
+    /**
+     * Used for checking the compatibility of a full page.
+     */
     fullInspect() {
-        console.dir(this.compatEngine.full_inspect(document.documentElement.outerHTML))
+        console.dir(this.compatEngine?.full_inspect(document.documentElement.outerHTML))
     }
 
     /**

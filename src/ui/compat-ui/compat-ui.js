@@ -1,44 +1,22 @@
+// @ts-check
+
 /**@typedef {import('../../types/index').InspectorConfig} InspectorConfig */
-/**@typedef {import('../../types/index').ShinkomEventBus} ShinkomEventBus */
-import { CompatInspector } from '../inspector/inspector'
-import { CompatControlPanel } from '../control-panel/control-panel'
+/**@typedef {import('../../types/index').UISharedStateProps} UISharedStateProps */
+/**@typedef {import('../../types/index').UISharedState} UISharedState */
+import { ShinkomBus, ShinkomState } from '../../core' 
 
 const internalState = new WeakMap()
 
 export class CompatUI {
     /**
-     * @param {ShinkomEventBus} bus
-     * @param {InspectorConfig | undefined} inspectorConfig
+     * @param {ShinkomBus} _bus
+     * @param {ShinkomState} stateService
+     * @param {any[]} components
      */
-    constructor(bus, inspectorConfig = undefined) {
-        /**@type {CompatInspector} */
-        this.compatInspector = new CompatInspector(inspectorConfig, bus)
+    constructor(_bus, stateService, components = []) {
+        this.components = components
 
-        /**@type {CompatControlPanel} */
-        this.controlPanel = new CompatControlPanel(bus)
-
-        const compatInspector = this.compatInspector
-        const controlPanel = this.controlPanel
-
-        const stateProxy = new Proxy({
-            inspectorSwitching: false,
-            inspectorActive: false,
-        }, {
-            get(obj, prop) {
-                return obj[prop]
-            },
-            set(obj, prop, val) {
-                obj[prop] = val
-                console.log(`Setting ${prop} -> ${val}`)
-
-                compatInspector.onStateChange(prop, val)
-                controlPanel.onStateChange(prop, val)
-
-                return true
-            }
-        })
-
-        internalState.set(this, stateProxy)
+        internalState.set(this, stateService.getState())
     }
 
     /**
@@ -47,8 +25,7 @@ export class CompatUI {
     #bindState() {
         const state = internalState.get(this)
 
-        this.compatInspector.bindState(state)
-        this.controlPanel.bindState(state)
+        this.components.forEach(comp => comp.bindState(state))
     }
 
     /**
@@ -56,11 +33,7 @@ export class CompatUI {
      */
     init() {
         try {
-            this.compatInspector.setup()
-            this.controlPanel.setup()
-
-            if (this.controlPanel.shadowHost)
-                this.compatInspector.setIgnorePanel(this.controlPanel.shadowHost)
+            this.components.forEach(comp => comp.mount())
 
             this.#bindState()
         } catch (error) {
@@ -72,7 +45,9 @@ export class CompatUI {
      * Destroys CompatUI component instances.
      */
     destroy() {
-        this.compatInspector.destroy()
-        this.controlPanel.destroy()
+        this.components.forEach(comp => {
+            comp.unmount()
+            this.components.splice(this.components.indexOf(comp), 1)
+        })
     }
 }

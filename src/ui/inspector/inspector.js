@@ -1,6 +1,10 @@
+// @ts-check
+
 /**@typedef {import('../../types/index').InspectorConfig} InspectorConfig */
-/**@typedef {import('../../types/index').ShinkomEventBus} ShinkomEventBus */
 /**@typedef {import('../../types/index').UISharedState} UISharedState */
+/**@typedef {import('../../types/index').UISharedStateProps} UISharedStateProps */
+
+import { ShinkomBus, ShinkomState } from '../../core';
 
 export class CompatInspector {
     /**@type {UISharedState | null}  */
@@ -16,14 +20,15 @@ export class CompatInspector {
 
     /**
      * @param {InspectorConfig} config 
-     * @param {ShinkomEventBus | null} bus
+     * @param {ShinkomState} stateService
+     * @param {ShinkomBus} bus
      */
-    constructor(config = { disabled: false, keyboardShorcuts: false }, bus = null) {
+    constructor(bus, stateService, config = { disabled: false, keyboardShorcuts: false }) {
+        /**@type {ShinkomBus} */
+        this.bus = bus
+
         /**@type {InspectorConfig} */
         this.config = config
-
-        /**@type {ShinkomEventBus | null} */
-        this.bus = bus;
 
         /**@type {boolean} */
         this.enableSwitching = false;
@@ -33,6 +38,28 @@ export class CompatInspector {
 
         /**@type {HTMLElement | null} */
         this.frozenTarget = null;
+
+        this.bus.on('ci:toggle', () => {
+            console.log(this.inspectorEl)
+            if (this.#stateBind?.inspectorActive) {
+                this.unmount()
+            } else {
+                this.mount()
+            }
+        })
+        this.bus.on('ci:create', () => {
+            this.mount()
+        })
+        this.bus.on('ci:reset', () => {
+            this.reset()
+        })
+        this.bus.on('ci:destroy', () => {
+            this.unmount()
+        })
+
+        stateService.subscribe((prop, val) => {
+            this.#onStateChange(prop, val)
+        })
     }
 
     /**
@@ -45,7 +72,7 @@ export class CompatInspector {
         const altDown = e.altKey
 
         if (!this.inspectorEl && ctrlDown && altDown && e.key === 'c') {
-            this.setup()
+            this.mount()
             return;
         }
         if (this.inspectorEl && ctrlDown && shiftDown && e.key === '|') {
@@ -53,7 +80,7 @@ export class CompatInspector {
             return;
         }
         if (this.inspectorEl && ctrlDown && altDown && e.key === '\\') {
-            this.destroy()
+            this.unmount()
             return;
         }
         if (ctrlDown && e.key === '\\') {
@@ -97,12 +124,26 @@ export class CompatInspector {
         this.#freezeInspector = true
         this.frozenTarget = target
 
-        this.bus?.dispatchEvent(new CustomEvent('ci:inspect', { detail: this.frozenTarget.outerHTML }))
+        this.#inspect(this.frozenTarget.outerHTML)
 
         Object.assign(this.inspectorEl.style, {
             backgroundColor: 'rgba(255,0,0,.3)',
             outlineColor: 'rgb(255,0,0)'
         })
+    }
+
+    /**@param {string} frozenTarget  */
+    #inspect(frozenTarget) {
+        if (this.#stateBind) {
+            this.bus.emit('engine:inspect', {
+                detail: {
+                    elem: frozenTarget,
+                    multiElements: this.#stateBind.multiElements,
+                    depthLevel: this.#stateBind.depthLevel
+                }
+            })
+        }
+
     }
 
     /**
@@ -143,7 +184,7 @@ export class CompatInspector {
             this.#freezeInspector = true
             this.frozenTarget = target
 
-            this.bus?.dispatchEvent(new CustomEvent('ci:inspect', { detail: this.frozenTarget.outerHTML }))
+            this.#inspect(this.frozenTarget.outerHTML)
 
             try {
                 this.#update(target)
@@ -214,25 +255,30 @@ export class CompatInspector {
     }
 
     /**
-     * Sets the `stateBind` to the parameter state.
+     * Used to bind state from a proxy to a UI component instance.
      * 
-     * `state` must be a Proxy to listen for changes.
+     * Sets any initial state defined by the component.
      * @param {UISharedState} state 
      */
     bindState(state) {
         if (!this.#stateBind)
             this.#stateBind = state
+
+        this.#stateBind.inspectorActive = this.inspectorEl !== null
     }
 
     /**
-     * Notify Inspector of a state change in the `stateBind`.
-     * @param {string} prop 
+     * Notify UI component of a state change in the `stateBind`
+     * @param {UISharedStateProps} prop 
      * @param {any} val 
      */
-    onStateChange(prop, val) {
+    #onStateChange(prop, val) {
         switch (prop) {
             case "inspectorSwitching":
                 this.enableSwitching = val
+                break;
+            case "ignorePanelEl":
+                this.setIgnorePanel(val)
                 break;
             default:
                 break;
@@ -240,25 +286,31 @@ export class CompatInspector {
     }
 
     /**
-     * Initializes event listeners on `window` and creates the inspector.
+     * Mount UI component to the DOM
      */
-    setup() {
+    mount() {
         if (this.inspectorEl || this.config.disabled) {
             console.warn("Inspector is either disabled or already exists")
             return;
         }
 
+        this.createInspector()
+        this.#setupGlobalListeners()
+
+        if (this.#stateBind)
+            this.#stateBind.inspectorActive = this.inspectorEl !== null
+    }
+
+    /**
+     * Setup event listeners on `window` object.
+     */
+    #setupGlobalListeners() {
         this.#inspectorController = new AbortController()
         const { signal } = this.#inspectorController
 
         window.addEventListener('pointerover', this.#handlePointerOver, { signal })
         window.addEventListener('click', this.#handleToggleFreeze, { signal, capture: true })
         window.addEventListener('keydown', this.#handleKeyboard)
-
-        this.createInspector()
-
-        if (this.#stateBind)
-            this.#stateBind.inspectorActive = this.inspectorEl !== null
     }
 
     /**
@@ -269,40 +321,49 @@ export class CompatInspector {
             console.warn("Cannot reset inspector as it does not exist.")
             return;
         };
+        console.log("Resetting inspector")
 
-        console.log("resetting inspector")
-        this.destroy()
-
-        this.setup()
+        this.unmount()
+        this.mount()
     }
 
     /**
-     * Destroys the inspector.
+     * Unmount UI component from the DOM.
      */
-    destroy() {
+    unmount() {
         try {
             if (!this.inspectorEl) {
                 console.warn("Cannot destroy inspector as it does not exist.")
                 return;
             }
-
-            console.log("destroying inspector")
-
-            if (this.#inspectorController)
-                this.#inspectorController.abort()
+            console.log("Destroying inspector")
 
             this.inspectorEl.remove()
             this.inspectorEl = null
-            this.#inspectorController = null
 
-            this.#freezeInspector = false;
-            this.enableSwitching = false;
-            this.frozenTarget = null;
-
-            if (this.#stateBind)
-                this.#stateBind.inspectorActive = false
+            this.#resetInternalState()
         } catch (error) {
             console.error(`Inspector destroy error: ${error}`)
+        }
+    }
+
+    /**
+     * Reset internal state of the instance and any related state
+     * in the `stateBind`.
+     */
+    #resetInternalState() {
+        if (this.#inspectorController)
+            this.#inspectorController.abort()
+
+        this.#inspectorController = null
+
+        this.#freezeInspector = false;
+        this.enableSwitching = false;
+        this.frozenTarget = null;
+
+        if (this.#stateBind) {
+            this.#stateBind.inspectorActive = false
+            this.#stateBind.inspectorSwitching = false
         }
     }
 }
