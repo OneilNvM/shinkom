@@ -1,11 +1,14 @@
 // @vitest-environment jsdom
+//@ts-check
 
 import { afterEach, describe, expect, it, test, beforeEach, vi } from "vitest";
-import { Shinkom } from "../../src";
+import { CompatControlPanel, CompatInspector, CompatUI, Shinkom, SKEngine } from "../../src";
+import { ShinkomBus, ShinkomState } from "../../src/core";
 
-const shinkom = new Shinkom()
+
 
 describe("Power the Shinkore WASM engine", () => {
+    const shinkom = new Shinkom()
     afterEach(() => {
         shinkom.skEngine.destroy()
     })
@@ -18,12 +21,24 @@ describe("Power the Shinkore WASM engine", () => {
 })
 
 describe("Analyze compatibility of HTML elements and attributes", () => {
+    const shinkomBus = new ShinkomBus()
+    const state = new ShinkomState()
+    const inspector = new CompatInspector(shinkomBus, state)
+    const controlPanel = new CompatControlPanel(shinkomBus, state)
+    const skEngine = new SKEngine(shinkomBus)
+    const compatUI = new CompatUI(shinkomBus, state, [
+        inspector,
+        controlPanel
+    ])
+
     beforeEach(async () => {
-        await shinkom.init()
+        await skEngine.initEngine()
+        compatUI.init()
     })
 
     afterEach(() => {
-        shinkom.destroy()
+        skEngine.destroy()
+        compatUI.destroy()
         document.body.innerHTML = ""
     })
 
@@ -69,8 +84,8 @@ describe("Analyze compatibility of HTML elements and attributes", () => {
 
     it("should console.dir <main> <h1> <p> <div> <button> and all of their attributes", () => {
         const dirSpy = vi.spyOn(console, 'dir')
-        shinkom.compatUI.controlPanel.multiElements = true
-        shinkom.compatUI.controlPanel.depthLevel = 1
+        controlPanel.multiElements = true
+        controlPanel.depthLevel = 1
 
         document.body.innerHTML = `
             <main id="main-container">
@@ -85,7 +100,7 @@ describe("Analyze compatibility of HTML elements and attributes", () => {
 
         const main = document.getElementById('main-container')
 
-        main.dispatchEvent(new PointerEvent('click', {
+        main?.dispatchEvent(new PointerEvent('click', {
             bubbles: true,
             cancelable: true,
             pointerType: 'mouse'
@@ -96,8 +111,8 @@ describe("Analyze compatibility of HTML elements and attributes", () => {
 
     it("should console.dir all elements and their attributes", () => {
         const dirSpy = vi.spyOn(console, 'dir')
-        shinkom.compatUI.controlPanel.multiElements = true
-        shinkom.compatUI.controlPanel.depthLevel = 2
+        controlPanel.multiElements = true
+        controlPanel.depthLevel = 2
 
         document.body.innerHTML = `
             <main id="main-container">
@@ -112,7 +127,7 @@ describe("Analyze compatibility of HTML elements and attributes", () => {
 
         const main = document.getElementById('main-container')
 
-        main.dispatchEvent(new PointerEvent('click', {
+        main?.dispatchEvent(new PointerEvent('click', {
             bubbles: true,
             cancelable: true,
             pointerType: 'mouse'

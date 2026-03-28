@@ -1,4 +1,5 @@
 // @vitest-environment node
+// @ts-check
 
 import { afterEach, beforeEach, describe, expect, it, test, vi } from "vitest";
 import { SKEngine } from "../../src";
@@ -13,7 +14,7 @@ describe("Power the Shinkore WASM engine", () => {
     test("should initiate WASM in Node.js environment", async () => {
         await skEngine.initEngine()
 
-        expect(skEngine.engine).not.toBeNull()
+        expect(skEngine.compatEngine).not.toBeNull()
     })
 })
 

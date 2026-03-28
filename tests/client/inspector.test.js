@@ -1,9 +1,12 @@
+//@ts-check
+
 /**@typedef {import('../../src/types/index').InspectorConfig} InspectorConfig */
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { CompatInspector } from "../../src";
+import { CompatInspector } from '../../src'
+import { ShinkomBus, ShinkomState } from "../../src/core";
 
 describe('Compatibility Inspector Logic', () => {
-    let inspector = new CompatInspector(/**@type {InspectorConfig} */({}), null)
+    let inspector = new CompatInspector(new ShinkomBus(), new ShinkomState())
 
     /**@type {HTMLElement | null} */
     let target;
@@ -18,11 +21,11 @@ describe('Compatibility Inspector Logic', () => {
 
         target = document.getElementById('div-elem')
 
-        inspector.setup()
+        inspector.mount()
     })
 
     afterEach(() => {
-        inspector.destroy()
+        inspector.unmount()
     })
 
     test('should freeze inspector on target', () => {
@@ -36,6 +39,8 @@ describe('Compatibility Inspector Logic', () => {
     })
 
     test('should switch inspector to span element and unfreeze when clicking same target', () => {
+        inspector.enableSwitching = true
+
         target?.dispatchEvent(new PointerEvent('click', {
             bubbles: true,
             cancelable: true,
@@ -62,7 +67,7 @@ describe('Compatibility Inspector Logic', () => {
 })
 
 describe('Compatibility Inspector Keyboard Shortcuts', () => {
-    let inspector = new CompatInspector(/**@type {InspectorConfig} */({ keyboardShorcuts: true }), null)
+    let inspector = new CompatInspector(new ShinkomBus(), new ShinkomState(), { disabled: false, keyboardShorcuts: true })
 
     /**@type {HTMLElement | null} */
     let target;
@@ -77,12 +82,12 @@ describe('Compatibility Inspector Keyboard Shortcuts', () => {
 
         target = document.getElementById('nested-span')
 
-        inspector.setup()
+        inspector.mount()
     })
 
     afterEach(() => {
         if (inspector.inspectorEl) {
-            inspector.destroy()
+            inspector.unmount()
         }
     })
 
@@ -106,7 +111,7 @@ describe('Compatibility Inspector Keyboard Shortcuts', () => {
     })
 
     test('should reset the inspector to default configuration', () => {
-        const destroySpy = vi.spyOn(CompatInspector.prototype, 'destroy')
+        const destroySpy = vi.spyOn(CompatInspector.prototype, 'unmount')
         target?.dispatchEvent(new PointerEvent('click', {
             bubbles: true,
             cancelable: true,
