@@ -9,6 +9,7 @@
         "noEmit": true,
         "declaration": true,
         "emitDeclarationOnly": true,
+        "declarationMap": true,
         "rootDir": "src",
         "skipLibCheck": true,
     },
