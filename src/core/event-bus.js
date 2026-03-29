@@ -1,8 +1,6 @@
-// @ts-check
-
-/**@typedef {import('../types/index').ShinkomEventTarget} ShinkomEventTarget */
-/**@typedef {import('../types/index').ShinkomEventMap} ShinkomEventMap */
-/**@typedef {import('../types/index').ShinkomEventListener<keyof ShinkomEventMap>} ShinkomEventListener */
+/**@typedef {import("../types/public").ShinkomEventTarget} ShinkomEventTarget */
+/**@typedef {import("../types/public").ShinkomEventMap} ShinkomEventMap */
+/**@typedef {import("../types/public").ShinkomEventListener<keyof ShinkomEventMap>} ShinkomEventListener */
 
 export class ShinkomBus {
     /**@type {ShinkomEventTarget} */
@@ -20,7 +18,7 @@ export class ShinkomBus {
 
     /**
      * Registers a listener on the event bus.
-     * @param {keyof import('../types/index').ShinkomEventMap} eventName 
+     * @param {keyof ShinkomEventMap} eventName 
      * @param {Function} cb
      */
     on(eventName, cb) {

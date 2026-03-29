@@ -1,9 +1,4 @@
-// @ts-check
-
-/**@typedef {import('../../types/index').InspectorConfig} InspectorConfig */
-/**@typedef {import('../../types/index').UISharedStateProps} UISharedStateProps */
-/**@typedef {import('../../types/index').UISharedState} UISharedState */
-import { ShinkomBus, ShinkomState } from '../../core' 
+import { ShinkomBus, ShinkomState, UIComponent } from '../../core' 
 
 const internalState = new WeakMap()
 
@@ -11,9 +6,10 @@ export class CompatUI {
     /**
      * @param {ShinkomBus} _bus
      * @param {ShinkomState} stateService
-     * @param {any[]} components
+     * @param {UIComponent[]} components
      */
     constructor(_bus, stateService, components = []) {
+        /**@type {UIComponent[]} */
         this.components = components
 
         internalState.set(this, stateService.getState())
@@ -47,7 +43,6 @@ export class CompatUI {
     destroy() {
         this.components.forEach(comp => {
             comp.unmount()
-            this.components.splice(this.components.indexOf(comp), 1)
         })
     }
 }

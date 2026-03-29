@@ -1,6 +1,3 @@
-// @ts-check
-
-/**@typedef {import("./types/index").InspectorConfig} InspectorConfig */
 import { ShinkomBus, ShinkomState } from "./core"
 import { SKEngine } from "./engine"
 import { CompatControlPanel, CompatInspector, CompatUI } from "./ui"
@@ -24,7 +21,7 @@ export class Shinkom {
     }
 
     /**
-     * Initialize Shinkom
+     * Initialize Shinkom.
      */
     async init() {
         try {
@@ -37,7 +34,7 @@ export class Shinkom {
     }
 
     /**
-     * Destroy UI components and engine instance
+     * Destroy UI components and engine instance.
      */
     destroy() {
         this.skEngine.destroy()

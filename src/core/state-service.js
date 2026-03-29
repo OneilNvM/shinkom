@@ -1,7 +1,5 @@
-// @ts-check
-/**@typedef {import("../types").UISharedState} UISharedState */
-/**@typedef {import("../types").UISharedStateProps} UISharedStateProps */
-
+/**@typedef {import('../types/public').UISharedState} UISharedState */
+/**@typedef {import('../types/public').UISharedStateProps} UISharedStateProps */
 import { DEFAULT_STATE } from "./constants";
 
 export class ShinkomState {

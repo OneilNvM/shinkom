@@ -1,12 +1,10 @@
-// @ts-check
+/**@typedef {import('../../types/public').UISharedState} UISharedState */
+/**@typedef {import('../../types/public').InspectorConfig} InspectorConfig */
+/**@typedef {import('../../types/public').UISharedStateProps} UISharedStateProps */
+import { ShinkomBus, ShinkomState, UIComponent } from '../../core';
 
-/**@typedef {import('../../types/index').InspectorConfig} InspectorConfig */
-/**@typedef {import('../../types/index').UISharedState} UISharedState */
-/**@typedef {import('../../types/index').UISharedStateProps} UISharedStateProps */
-
-import { ShinkomBus, ShinkomState } from '../../core';
-
-export class CompatInspector {
+/**@extends {UIComponent} */
+export class CompatInspector extends UIComponent {
     /**@type {UISharedState | null}  */
     #stateBind = null;
 
@@ -19,13 +17,12 @@ export class CompatInspector {
     #ignorePanelEl = null;
 
     /**
-     * @param {InspectorConfig} config 
-     * @param {ShinkomState} stateService
      * @param {ShinkomBus} bus
+     * @param {ShinkomState} stateService
+     * @param {InspectorConfig} config 
      */
     constructor(bus, stateService, config = { disabled: false, keyboardShorcuts: false }) {
-        /**@type {ShinkomBus} */
-        this.bus = bus
+        super(bus, stateService)
 
         /**@type {InspectorConfig} */
         this.config = config
@@ -40,7 +37,6 @@ export class CompatInspector {
         this.frozenTarget = null;
 
         this.bus.on('ci:toggle', () => {
-            console.log(this.inspectorEl)
             if (this.#stateBind?.inspectorActive) {
                 this.unmount()
             } else {
@@ -57,9 +53,9 @@ export class CompatInspector {
             this.unmount()
         })
 
-        stateService.subscribe((prop, val) => {
-            this.#onStateChange(prop, val)
-        })
+        // stateService.subscribe((prop, val) => {
+        //     this.#onStateChange(prop, val)
+        // })
     }
 
     /**
@@ -245,19 +241,16 @@ export class CompatInspector {
 
     /**
      * Set inspector to ignore control panel div.
-     * @param {HTMLDivElement} el 
+     * @param {HTMLDivElement | null} el 
      */
-    setIgnorePanel(el) {
-        if (this.#ignorePanelEl)
-            throw new Error("Control panel is already ignored.")
+    #setIgnorePanel(el) {
+        if (!(el instanceof HTMLDivElement) && el !== null)
+            throw new Error("el must be of type HTMLDivElement or null")
 
         this.#ignorePanelEl = el
     }
 
     /**
-     * Used to bind state from a proxy to a UI component instance.
-     * 
-     * Sets any initial state defined by the component.
      * @param {UISharedState} state 
      */
     bindState(state) {
@@ -268,26 +261,22 @@ export class CompatInspector {
     }
 
     /**
-     * Notify UI component of a state change in the `stateBind`
      * @param {UISharedStateProps} prop 
      * @param {any} val 
      */
-    #onStateChange(prop, val) {
+    onStateChange(prop, val) {
         switch (prop) {
             case "inspectorSwitching":
                 this.enableSwitching = val
                 break;
             case "ignorePanelEl":
-                this.setIgnorePanel(val)
+                this.#setIgnorePanel(val)
                 break;
             default:
                 break;
         }
     }
 
-    /**
-     * Mount UI component to the DOM
-     */
     mount() {
         if (this.inspectorEl || this.config.disabled) {
             console.warn("Inspector is either disabled or already exists")
@@ -327,9 +316,6 @@ export class CompatInspector {
         this.mount()
     }
 
-    /**
-     * Unmount UI component from the DOM.
-     */
     unmount() {
         try {
             if (!this.inspectorEl) {

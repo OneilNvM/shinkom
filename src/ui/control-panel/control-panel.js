@@ -1,11 +1,9 @@
-// @ts-check
+/**@typedef {import('../../types/public').UISharedState} UISharedState */
+/**@typedef {import('../../types/public').UISharedStateProps} UISharedStateProps */
+import { ShinkomBus, ShinkomState, UIComponent } from '../../core'; 
 
-/**@typedef {import('../../types/index').UISharedState} UISharedState */
-/**@typedef {import('../../types/index').UISharedStateProps} UISharedStateProps */
-
-import { ShinkomBus, ShinkomState } from '../../core'; 
-
-export class CompatControlPanel {
+/**@extends {UIComponent} */
+export class CompatControlPanel extends UIComponent {
     /**@type {UISharedState | null} */
     #stateBind = null
     /**@type {AbortController | null} */
@@ -16,8 +14,7 @@ export class CompatControlPanel {
      * @param {ShinkomState} stateService 
      */
     constructor(bus, stateService) {
-        /**@type {ShinkomBus} */
-        this.bus = bus
+        super(bus, stateService)
 
         /**@type {HTMLDivElement | null} */
         this.shadowHost = null;
@@ -41,7 +38,7 @@ export class CompatControlPanel {
         this.multiElements = false;
 
         stateService.subscribe((prop, val) => {
-            this.#onStateChange(prop, val)
+            this.onStateChange(prop, val)
         })
     }
 
@@ -268,9 +265,6 @@ export class CompatControlPanel {
     }
 
     /**
-     * Used to bind state from a proxy to a UI component instance.
-     * 
-     * Sets any initial state defined by the component.
      * @param {UISharedState} state 
      */
     bindState(state) {
@@ -281,11 +275,10 @@ export class CompatControlPanel {
     }
 
     /**
-     * Notify UI component of a state change in the `stateBind`
      * @param {UISharedStateProps} prop 
      * @param {any} val 
      */
-    #onStateChange(prop, val) {
+    onStateChange(prop, val) {
         switch (prop) {
             case "inspectorSwitching":
                 if (this.toggleSwitchingEl)
@@ -303,9 +296,6 @@ export class CompatControlPanel {
         }
     }
 
-    /**
-     * Mount UI component to the DOM
-     */
     mount() {
         try {
             this.createPanel()
@@ -361,9 +351,6 @@ export class CompatControlPanel {
         }
     }
 
-    /**
-     * Unmount UI component from the DOM.
-     */
     unmount() {
         try {
             if (!this.shadowHost) return;
@@ -394,6 +381,7 @@ export class CompatControlPanel {
         if (this.#stateBind) {
             this.#stateBind.depthLevel = 0
             this.#stateBind.multiElements = false
+            this.#stateBind.ignorePanelEl = null
         }
 
     }
@@ -424,7 +412,6 @@ export class CompatControlPanel {
             }
             case 'sk-toggle-inspector':
                 this.bus.emit('ci:toggle')
-                console.log("emitted")
                 break;
             case 'sk-toggle-elements':
                 this.multiElements = !this.multiElements
