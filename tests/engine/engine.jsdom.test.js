@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-//@ts-check
 
 import { afterEach, describe, expect, it, test, beforeEach, vi } from "vitest";
 import { CompatControlPanel, CompatInspector, CompatUI, Shinkom, SKEngine } from "../../src";

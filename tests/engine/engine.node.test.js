@@ -1,5 +1,4 @@
 // @vitest-environment node
-// @ts-check
 
 import { afterEach, beforeEach, describe, expect, it, test, vi } from "vitest";
 import { SKEngine } from "../../src";
