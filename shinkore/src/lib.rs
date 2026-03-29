@@ -57,7 +57,9 @@ impl CompatEngine {
     pub fn check_element(&self, html: &str) -> JsValue {
         let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
 
-        let first_line = html.lines().next().unwrap();
+        let formatted = format_html(html);
+
+        let first_line = formatted.lines().next().unwrap();
 
         let el_data = &self.el_data;
         let g_attrib_data = &self.g_attrib_data;
