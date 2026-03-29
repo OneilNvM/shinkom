@@ -1,0 +1,1 @@
+const e={inspectorSwitching:!1,inspectorActive:!1,ignorePanelEl:null,multiElements:!1,depthLevel:0};exports.DEFAULT_STATE=e;

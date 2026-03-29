@@ -5,21 +5,22 @@
     * @copyright 2026 - Oneil Achord
 */
 
-import { InspectorConfig as InspectorConfig$1, ShinkomEventBus as ShinkomEventBus$1 } from "../../types/index.js";
+import { ShinkomBus } from "../../core/event-bus.js";
+import { ShinkomState } from "../../core/state-service.js";
+import { UIComponent } from "../../core/ui-component.js";
+import { InspectorConfig as InspectorConfig$1, UISharedState as UISharedState$1, UISharedStateProps as UISharedStateProps$1 } from "../../types/public.js";
 
 //#region src/ui/inspector/inspector.d.ts
-/**@typedef {import('../../types/index').InspectorConfig} InspectorConfig */
-/**@typedef {import('../../types/index').ShinkomEventBus} ShinkomEventBus */
-declare class CompatInspector {
+/**@extends {UIComponent} */
+declare class CompatInspector extends UIComponent {
   /**
+   * @param {ShinkomBus} bus
+   * @param {ShinkomState} stateService
    * @param {InspectorConfig} config
-   * @param {ShinkomEventBus | null} bus
    */
-  constructor(config?: InspectorConfig, bus?: ShinkomEventBus | null);
+  constructor(bus: ShinkomBus, stateService: ShinkomState, config?: InspectorConfig);
   /**@type {InspectorConfig} */
   config: InspectorConfig;
-  /**@type {ShinkomEventBus | null} */
-  _bus: ShinkomEventBus | null;
   /**@type {boolean} */
   enableSwitching: boolean;
   /**@type {HTMLDivElement | null} */
@@ -27,29 +28,17 @@ declare class CompatInspector {
   /**@type {HTMLElement | null} */
   frozenTarget: HTMLElement | null;
   /**
-   * Set inspector to ignore control panel div.
-   * @param {HTMLDivElement} el
-   */
-  setIgnorePanel(el: HTMLDivElement): void;
-  /**
    * Creates the inspector element.
    */
   createInspector(): void;
   /**
-   * Initializes event listeners on `window` and creates the inspector.
-   */
-  setup(): void;
-  /**
    * Resets the inspector.
    */
   reset(): void;
-  /**
-   * Destroys the inspector.
-   */
-  destroy(): void;
   #private;
 }
+type UISharedState = UISharedState$1;
 type InspectorConfig = InspectorConfig$1;
-type ShinkomEventBus = ShinkomEventBus$1;
+type UISharedStateProps = UISharedStateProps$1;
 //#endregion
-export { CompatInspector, InspectorConfig, ShinkomEventBus };
+export { CompatInspector, InspectorConfig, UISharedState, UISharedStateProps };

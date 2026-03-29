@@ -1,0 +1,1 @@
+var e=class{#e=new EventTarget;emit(e,t=void 0){this.#e.dispatchEvent(new CustomEvent(e,t))}on(e,t){let n=e=>t(e.detail);return this.#e.addEventListener(e,n),()=>this.#e.removeEventListener(e,n)}};exports.ShinkomBus=e;

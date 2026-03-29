@@ -1,0 +1,1 @@
+const e=require(`./constants.cjs`);var t=class{#e;#t=[];constructor(t=e.DEFAULT_STATE){let n=(e,t)=>{this.#t.forEach(n=>n(e,t))};this.#e=new Proxy(t,{get(e,t){return e[t]},set(e,t,r){return e[t]===r?!0:(n(t,r),e[t]=r,console.log(`Setting ${t} -> ${r}`),!0)}})}subscribe(e){return this.#t.push(e),()=>{this.#t=this.#t.filter(t=>t!==e)}}getState=()=>this.#e};exports.ShinkomState=t;

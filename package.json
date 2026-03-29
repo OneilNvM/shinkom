@@ -52,11 +52,12 @@
       "types": "./dist/bundles/ui/compat-ui/compat-ui.d.ts",
       "import": "./dist/bundles/ui/compat-ui/compat-ui.js",
       "require": "./dist/modules/ui/compat-ui/compat-ui.cjs"
-    }
+    },
+    "./@types": "./dist/bundles/types/public.d.ts"
   },
   "scripts": {
     "dev": "npm run build:wasm && vite",
-    "build": "npm run build:wasm && tsdown --config-loader unrun",
+    "build": "npm run build:wasm && tsdown --config-loader unrun && cp src/types/public.d.ts dist/bundles/types/public.d.ts",
     "build:wasm": "wasm-pack build shinkore --target web --out-dir ../pkg --release",
     "preview": "vite preview",
     "test": "vitest",
@@ -65,15 +66,12 @@
   },
   "devDependencies": {
     "@mdn/browser-compat-data": "7.3.6",
-    "jest": "^30.2.0",
     "jsdom": "^28.1.0",
     "node": "^22.22.1",
-    "rolldown-plugin-wasm": "^0.2.1",
     "tsdown": "^0.21.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
-    "vite-plugin-wasm": "^3.6.0",
     "vitest": "^4.0.18"
   }
 }

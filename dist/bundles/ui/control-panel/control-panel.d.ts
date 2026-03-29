@@ -5,23 +5,24 @@
     * @copyright 2026 - Oneil Achord
 */
 
-import { ShinkomEventBus as ShinkomEventBus$1 } from "../../types/index.js";
+import { UIComponent } from "../../core/ui-component.js";
+import { UISharedState as UISharedState$1, UISharedStateProps as UISharedStateProps$1 } from "../../types/public.js";
 
 //#region src/ui/control-panel/control-panel.d.ts
-/**@typedef {import('../../types/index').ShinkomEventBus} ShinkomEventBus */
-declare class CompatControlPanel {
-  /**
-   * @param {ShinkomEventBus} bus
-   */
-  constructor(bus: ShinkomEventBus);
-  /**@type {ShinkomEventBus} */
-  bus: ShinkomEventBus;
+/**@extends {UIComponent} */
+declare class CompatControlPanel extends UIComponent {
   /**@type {HTMLDivElement | null} */
   shadowHost: HTMLDivElement | null;
   /**@type {ShadowRoot | null} */
   shadowRoot: ShadowRoot | null;
   /**@type {HTMLInputElement | null} */
   depthLevelInput: HTMLInputElement | null;
+  /**@type {HTMLParagraphElement | null} */
+  ciStatusEl: HTMLParagraphElement | null;
+  /**@type {HTMLButtonElement | null} */
+  toggleSwitchingEl: HTMLButtonElement | null;
+  /**@type {HTMLButtonElement | null} */
+  toggleInspectorEl: HTMLButtonElement | null;
   /**@type {number} */
   depthLevel: number;
   /**@type {boolean} */
@@ -30,16 +31,9 @@ declare class CompatControlPanel {
    * Creates the control panel in a shadow root.
    */
   createPanel(): void;
-  /**
-   * Initializes event listeners and appends control panel.
-   */
-  setup(): void;
-  /**
-   * Destroys the control panel instance
-   */
-  destroy(): void;
   #private;
 }
-type ShinkomEventBus = ShinkomEventBus$1;
+type UISharedState = UISharedState$1;
+type UISharedStateProps = UISharedStateProps$1;
 //#endregion
-export { CompatControlPanel, ShinkomEventBus };
+export { CompatControlPanel, UISharedState, UISharedStateProps };

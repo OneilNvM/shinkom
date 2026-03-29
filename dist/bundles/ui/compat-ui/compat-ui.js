@@ -5,30 +5,33 @@
     * @copyright 2026 - Oneil Achord
 */
 
-import { CompatInspector } from "../inspector/inspector.js";
-import { CompatControlPanel } from "../control-panel/control-panel.js";
 //#region src/ui/compat-ui/compat-ui.js
-/**@typedef {import('../../types/index').InspectorConfig} InspectorConfig */
-/**@typedef {import('../../types/index').ShinkomEventBus} ShinkomEventBus */
+const internalState = /* @__PURE__ */ new WeakMap();
 var CompatUI = class {
 	/**
-	* @param {ShinkomEventBus} bus
-	* @param {InspectorConfig | undefined} inspectorConfig
+	* @param {ShinkomBus} _bus
+	* @param {ShinkomState} stateService
+	* @param {UIComponent[]} components
 	*/
-	constructor(bus, inspectorConfig = void 0) {
-		/**@type {CompatInspector} */
-		this.compatInspector = new CompatInspector(inspectorConfig, bus);
-		/**@type {CompatControlPanel} */
-		this.controlPanel = new CompatControlPanel(bus);
+	constructor(_bus, stateService, components = []) {
+		/**@type {UIComponent[]} */
+		this.components = components;
+		internalState.set(this, stateService.getState());
+	}
+	/**
+	* Bind state proxy to UI components.
+	*/
+	#bindState() {
+		const state = internalState.get(this);
+		this.components.forEach((comp) => comp.bindState(state));
 	}
 	/**
 	* Initializes CompatUI components.
 	*/
 	init() {
 		try {
-			this.compatInspector.setup();
-			this.controlPanel.setup();
-			if (this.controlPanel.shadowHost) this.compatInspector.setIgnorePanel(this.controlPanel.shadowHost);
+			this.components.forEach((comp) => comp.mount());
+			this.#bindState();
 		} catch (error) {
 			console.error(`Compat UI initialization error: ${error}`);
 		}
@@ -37,8 +40,9 @@ var CompatUI = class {
 	* Destroys CompatUI component instances.
 	*/
 	destroy() {
-		this.compatInspector.destroy();
-		this.controlPanel.destroy();
+		this.components.forEach((comp) => {
+			comp.unmount();
+		});
 	}
 };
 //#endregion

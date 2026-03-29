@@ -5,21 +5,20 @@
     * @copyright 2026 - Oneil Achord
 */
 
-import { CompatInspector } from "../inspector/inspector.js";
-import { CompatControlPanel } from "../control-panel/control-panel.js";
-import { InspectorConfig as InspectorConfig$1, ShinkomEventBus as ShinkomEventBus$1 } from "../../types/index.js";
+import { ShinkomBus } from "../../core/event-bus.js";
+import { ShinkomState } from "../../core/state-service.js";
+import { UIComponent } from "../../core/ui-component.js";
 
 //#region src/ui/compat-ui/compat-ui.d.ts
 declare class CompatUI {
   /**
-   * @param {ShinkomEventBus} bus
-   * @param {InspectorConfig | undefined} inspectorConfig
+   * @param {ShinkomBus} _bus
+   * @param {ShinkomState} stateService
+   * @param {UIComponent[]} components
    */
-  constructor(bus: ShinkomEventBus, inspectorConfig?: InspectorConfig | undefined);
-  /**@type {CompatInspector} */
-  compatInspector: CompatInspector;
-  /**@type {CompatControlPanel} */
-  controlPanel: CompatControlPanel;
+  constructor(_bus: ShinkomBus, stateService: ShinkomState, components?: UIComponent[]);
+  /**@type {UIComponent[]} */
+  components: UIComponent[];
   /**
    * Initializes CompatUI components.
    */
@@ -28,8 +27,7 @@ declare class CompatUI {
    * Destroys CompatUI component instances.
    */
   destroy(): void;
+  #private;
 }
-type InspectorConfig = InspectorConfig$1;
-type ShinkomEventBus = ShinkomEventBus$1;
 //#endregion
-export { CompatUI, InspectorConfig, ShinkomEventBus };
+export { CompatUI };

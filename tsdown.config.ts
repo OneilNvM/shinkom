@@ -25,13 +25,14 @@ export default defineConfig([
     {
         entry: {
             'index': './src/index.js',
+            'shinkom': './src/shinkom.js',
+            'core/index': './src/core/index.js',
             'engine/engine': './src/engine/engine.js',
             'ui/index': './src/ui/index.js',
             'ui/inspector/inspector': './src/ui/inspector/inspector.js',
             'ui/control-panel/control-panel': './src/ui/control-panel/control-panel.js',
             'ui/compatibility-view/compatibility-view': './src/ui/compatibility-view/compatibility-view.js',
             'ui/compat-ui/compat-ui': './src/ui/compat-ui/compat-ui.js',
-            'shinkom/shinkom': './src/shinkom/shinkom.js',
         },
         platform: 'browser',
         outDir: './dist/bundles',
@@ -52,13 +53,14 @@ export default defineConfig([
     {
         entry: {
             'index': './src/index.js',
+            'shinkom': './src/shinkom.js',
+            'core/index': './src/core/index.js',
             'engine/engine': './src/engine/engine.js',
             'ui/index': './src/ui/index.js',
             'ui/inspector/inspector': './src/ui/inspector/inspector.js',
             'ui/control-panel/control-panel': './src/ui/control-panel/control-panel.js',
             'ui/compatibility-view/compatibility-view': './src/ui/compatibility-view/compatibility-view.js',
             'ui/compat-ui/compat-ui': './src/ui/compat-ui/compat-ui.js',
-            'shinkom/shinkom': './src/shinkom/shinkom.js',
         },
         platform: 'node',
         outDir: './dist/modules',

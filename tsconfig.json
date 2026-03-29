@@ -5,16 +5,15 @@
         "moduleResolution": "bundler",
         "strict": true,
         "allowJs": true,
-        "checkJs": false,
+        "checkJs": true,
         "noEmit": true,
         "declaration": true,
         "emitDeclarationOnly": true,
-        "declarationMap": true,
         "rootDir": "src",
         "skipLibCheck": true,
     },
     "include": [
-        "src/**/*.js",
+        "src/**/*.js"
     ],
     "exclude": ["node_modules"]
 }

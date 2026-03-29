@@ -8,11 +8,29 @@
 import { CompatEngine, __wbg_init } from "../pkg/shinkore.js";
 import { elements, global_attributes } from "../gen/compat-data.js";
 //#region src/engine/engine.js
+/**@typedef {import('../types/public').CustomEventEngineDetail} CustomEventEngineDetail */
 var SKEngine = class {
-	constructor() {
+	/**
+	* @param {ShinkomBus | null} bus 
+	*/
+	constructor(bus = null) {
 		/**@type {CompatEngine | null} */
 		this.compatEngine = null;
+		/**@type {ShinkomBus | null} */
+		this.bus = bus;
+		if (this.bus) {
+			this.bus.on("engine:inspect", (e) => {
+				if (typeof e === "object") if (e.multiElements) this.checkElements(e.elem, e.depthLevel);
+				else this.checkElement(e.elem);
+			});
+			this.bus.on("engine:full", () => {
+				this.fullInspect();
+			});
+		}
 	}
+	/**
+	* Loads WASM for the Browser or Node.
+	*/
 	async loadWasm() {
 		const isNode = typeof window === "undefined";
 		try {
@@ -23,10 +41,10 @@ var SKEngine = class {
 				const __dirname = path.dirname(__filename);
 				let wasmPath = path.resolve(__dirname, "../pkg/shinkore_bg.wasm");
 				let wasmBuffer;
-				if (fs.existsSync(wasmPath)) wasmBuffer = await fs.readFileSync(wasmPath);
+				if (fs.existsSync(wasmPath)) wasmBuffer = fs.readFileSync(wasmPath);
 				else {
 					wasmPath = path.resolve(__dirname, "../../pkg/shinkore_bg.wasm");
-					wasmBuffer = await fs.readFileSync(wasmPath);
+					wasmBuffer = fs.readFileSync(wasmPath);
 				}
 				await __wbg_init({ module_or_path: wasmBuffer });
 			} else await __wbg_init();
@@ -35,7 +53,7 @@ var SKEngine = class {
 		}
 	}
 	/**
-	* Initializes Rust/WASM engine
+	* Initializes Rust/WASM engine.
 	*/
 	async initEngine() {
 		try {
@@ -48,13 +66,14 @@ var SKEngine = class {
 		}
 	}
 	/**
+	* Used for checking the compatibility of a single element.
 	* @param {string} element 
 	*/
 	checkElement(element) {
 		console.dir(this.compatEngine?.check_element(element));
 	}
 	/**
-	* 
+	* Used for checking the compatibility of a multiple elements, depending on `depthLevel`.
 	* @param {string} html 
 	* @param {number} depthLevel 
 	*/
@@ -62,7 +81,13 @@ var SKEngine = class {
 		console.dir(this.compatEngine?.check_elements(html, depthLevel));
 	}
 	/**
-	* Free WASM memory and dereference engine
+	* Used for checking the compatibility of a full page.
+	*/
+	fullInspect() {
+		console.dir(this.compatEngine?.full_inspect(document.documentElement.outerHTML));
+	}
+	/**
+	* Free WASM memory and dereference engine.
 	*/
 	destroy() {
 		if (!this.compatEngine) {

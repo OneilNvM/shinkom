@@ -44,6 +44,15 @@ var CompatEngine = class {
 		return wasm.compatengine_check_elements(this.__wbg_ptr, ptr0, len0, depth_level);
 	}
 	/**
+	* @param {string} html
+	* @returns {any}
+	*/
+	full_inspect(html) {
+		const ptr0 = passStringToWasm0(html, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+		const len0 = WASM_VECTOR_LEN;
+		return wasm.compatengine_full_inspect(this.__wbg_ptr, ptr0, len0);
+	}
+	/**
 	* @param {any} bcd_elem_data
 	* @param {any} bcd_g_attrib_data
 	*/
