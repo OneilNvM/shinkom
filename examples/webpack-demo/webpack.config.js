@@ -1,7 +1,9 @@
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import pkg from 'webpack'
 
+const { NormalModuleReplacementPlugin } = pkg
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -21,11 +23,29 @@ export default {
     },
     plugins: [
         new HtmlWebpackPlugin({
-            title: 'Development',
+            title: 'Shinkom Demo',
             template: 'src/index.html'
         }),
+        new NormalModuleReplacementPlugin(
+            /^node:/,
+            (resource) => {
+                resource.request = resource.request.replace(/^node:/, '');
+            },
+        ),
     ],
     optimization: {
         runtimeChunk: 'single'
+    },
+    externals: {
+        "node:fs": "commonjs node:fs",
+        "node:path": "commonjs node:path",
+        "node:url": "commonjs node:url"
+    },
+    resolve: {
+        fallback: {
+            fs: false,
+            url: false,
+            path: false
+        }
     }
 };
