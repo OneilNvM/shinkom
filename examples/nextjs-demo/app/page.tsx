@@ -11,6 +11,7 @@ export default function Home() {
 
     shinkom.init()
 
+    return () => shinkom.destroy()
   }, [])
 
   return (
