@@ -38,9 +38,9 @@ export class CompatInspector extends UIComponent {
 
         this.bus.on('ci:toggle', () => {
             if (this.#stateBind?.inspectorActive) {
-                this.unmount()
+                this.#removeGlobalListeners()
             } else {
-                this.mount()
+                this.#setupGlobalListeners()
             }
         })
         this.bus.on('ci:create', () => {
@@ -258,6 +258,7 @@ export class CompatInspector extends UIComponent {
             this.#stateBind = state
 
         this.#stateBind.inspectorActive = this.inspectorEl !== null
+        this.#stateBind.inspectorExists = this.inspectorEl !== null
     }
 
     /**
@@ -286,20 +287,45 @@ export class CompatInspector extends UIComponent {
         this.createInspector()
         this.#setupGlobalListeners()
 
-        if (this.#stateBind)
+        if (this.#stateBind) {
             this.#stateBind.inspectorActive = this.inspectorEl !== null
+            this.#stateBind.inspectorExists = this.inspectorEl !== null
+        }
     }
 
     /**
      * Setup event listeners on `window` object.
      */
     #setupGlobalListeners() {
+        if (!this.inspectorEl) {
+            console.warn("Cannot activate inspector as it does not exist.")
+            return;
+        }
+
         this.#inspectorController = new AbortController()
         const { signal } = this.#inspectorController
 
         window.addEventListener('pointerover', this.#handlePointerOver, { signal })
         window.addEventListener('click', this.#handleToggleFreeze, { signal, capture: true })
         window.addEventListener('keydown', this.#handleKeyboard)
+
+        if (this.#stateBind)
+            this.#stateBind.inspectorActive = true
+    }
+
+    #removeGlobalListeners() {
+        if (!this.inspectorEl) {
+            console.warn("Cannot deactivate inspector as it does not exist.")
+            return;
+        }
+
+        if (this.#inspectorController)
+            this.#inspectorController.abort()
+
+        this.#inspectorController = null
+
+        if (this.#stateBind)
+            this.#stateBind.inspectorActive = false
     }
 
     /**
@@ -310,6 +336,7 @@ export class CompatInspector extends UIComponent {
             console.warn("Cannot reset inspector as it does not exist.")
             return;
         };
+
         console.log("Resetting inspector")
 
         this.unmount()
@@ -322,12 +349,12 @@ export class CompatInspector extends UIComponent {
                 console.warn("Cannot destroy inspector as it does not exist.")
                 return;
             }
+
             console.log("Destroying inspector")
 
+            this.#resetInternalState()
             this.inspectorEl.remove()
             this.inspectorEl = null
-
-            this.#resetInternalState()
         } catch (error) {
             console.error(`Inspector destroy error: ${error}`)
         }
@@ -338,10 +365,7 @@ export class CompatInspector extends UIComponent {
      * in the `stateBind`.
      */
     #resetInternalState() {
-        if (this.#inspectorController)
-            this.#inspectorController.abort()
-
-        this.#inspectorController = null
+        this.#removeGlobalListeners()
 
         this.#freezeInspector = false;
         this.enableSwitching = false;
@@ -349,6 +373,7 @@ export class CompatInspector extends UIComponent {
 
         if (this.#stateBind) {
             this.#stateBind.inspectorActive = false
+            this.#stateBind.inspectorExists = false
             this.#stateBind.inspectorSwitching = false
         }
     }
