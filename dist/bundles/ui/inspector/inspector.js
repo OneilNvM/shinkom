@@ -38,8 +38,8 @@ var CompatInspector = class extends UIComponent {
 		/**@type {HTMLElement | null} */
 		this.frozenTarget = null;
 		this.bus.on("ci:toggle", () => {
-			if (this.#stateBind?.inspectorActive) this.unmount();
-			else this.mount();
+			if (this.#stateBind?.inspectorActive) this.#removeGlobalListeners();
+			else this.#setupGlobalListeners();
 		});
 		this.bus.on("ci:create", () => {
 			this.mount();
@@ -212,6 +212,7 @@ var CompatInspector = class extends UIComponent {
 	bindState(state) {
 		if (!this.#stateBind) this.#stateBind = state;
 		this.#stateBind.inspectorActive = this.inspectorEl !== null;
+		this.#stateBind.inspectorExists = this.inspectorEl !== null;
 	}
 	/**
 	* @param {UISharedStateProps} prop 
@@ -235,12 +236,19 @@ var CompatInspector = class extends UIComponent {
 		}
 		this.createInspector();
 		this.#setupGlobalListeners();
-		if (this.#stateBind) this.#stateBind.inspectorActive = this.inspectorEl !== null;
+		if (this.#stateBind) {
+			this.#stateBind.inspectorActive = this.inspectorEl !== null;
+			this.#stateBind.inspectorExists = this.inspectorEl !== null;
+		}
 	}
 	/**
 	* Setup event listeners on `window` object.
 	*/
 	#setupGlobalListeners() {
+		if (!this.inspectorEl) {
+			console.warn("Cannot activate inspector as it does not exist.");
+			return;
+		}
 		this.#inspectorController = new AbortController();
 		const { signal } = this.#inspectorController;
 		window.addEventListener("pointerover", this.#handlePointerOver, { signal });
@@ -249,6 +257,16 @@ var CompatInspector = class extends UIComponent {
 			capture: true
 		});
 		window.addEventListener("keydown", this.#handleKeyboard);
+		if (this.#stateBind) this.#stateBind.inspectorActive = true;
+	}
+	#removeGlobalListeners() {
+		if (!this.inspectorEl) {
+			console.warn("Cannot deactivate inspector as it does not exist.");
+			return;
+		}
+		if (this.#inspectorController) this.#inspectorController.abort();
+		this.#inspectorController = null;
+		if (this.#stateBind) this.#stateBind.inspectorActive = false;
 	}
 	/**
 	* Resets the inspector.
@@ -269,9 +287,9 @@ var CompatInspector = class extends UIComponent {
 				return;
 			}
 			console.log("Destroying inspector");
+			this.#resetInternalState();
 			this.inspectorEl.remove();
 			this.inspectorEl = null;
-			this.#resetInternalState();
 		} catch (error) {
 			console.error(`Inspector destroy error: ${error}`);
 		}
@@ -281,13 +299,13 @@ var CompatInspector = class extends UIComponent {
 	* in the `stateBind`.
 	*/
 	#resetInternalState() {
-		if (this.#inspectorController) this.#inspectorController.abort();
-		this.#inspectorController = null;
+		this.#removeGlobalListeners();
 		this.#freezeInspector = false;
 		this.enableSwitching = false;
 		this.frozenTarget = null;
 		if (this.#stateBind) {
 			this.#stateBind.inspectorActive = false;
+			this.#stateBind.inspectorExists = false;
 			this.#stateBind.inspectorSwitching = false;
 		}
 	}

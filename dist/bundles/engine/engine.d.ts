@@ -40,6 +40,8 @@ declare class SKEngine {
   checkElements(html: string, depthLevel: number): void;
   /**
    * Used for checking the compatibility of a full page.
+   *
+   * Only available in `browser` environments.
    */
   fullInspect(): void;
   /**

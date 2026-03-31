@@ -82,9 +82,12 @@ var SKEngine = class {
 	}
 	/**
 	* Used for checking the compatibility of a full page.
+	* 
+	* Only available in `browser` environments.
 	*/
 	fullInspect() {
-		console.dir(this.compatEngine?.full_inspect(document.documentElement.outerHTML));
+		if (!document) console.warn("fullInspect is only available in browser environments");
+		else console.dir(this.compatEngine?.full_inspect(document.documentElement.outerHTML));
 	}
 	/**
 	* Free WASM memory and dereference engine.

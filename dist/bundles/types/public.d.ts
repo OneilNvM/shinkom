@@ -28,8 +28,9 @@ export type InspectorConfig = {
 }
 
 export type UISharedState = {
-    inspectorSwitching: boolean;
+    inspectorExists: boolean;
     inspectorActive: boolean;
+    inspectorSwitching: boolean;
     multiElements: boolean;
     depthLevel: number;
     ignorePanelEl: HTMLDivElement | null;

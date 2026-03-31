@@ -1,5 +1,5 @@
 /**
-    * Shinkom - core\constants
+    * Shinkom - core
     * @version 1.0.0
     * @license MIT
     * @copyright 2026 - Oneil Achord
@@ -9,8 +9,9 @@
 /**@typedef {import('../types/public').UISharedState} UISharedState */
 /**@type {UISharedState} */
 const DEFAULT_STATE = {
-	inspectorSwitching: false,
+	inspectorExists: false,
 	inspectorActive: false,
+	inspectorSwitching: false,
 	ignorePanelEl: null,
 	multiElements: false,
 	depthLevel: 0
