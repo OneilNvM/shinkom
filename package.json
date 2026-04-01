@@ -12,6 +12,17 @@
   "main": "./dist/modules/index.cjs",
   "module": "./dist/bundles/index.js",
   "types": "./dist/bundles/index.d.ts",
+  "keywords": [
+    "html",
+    "css",
+    "javascript",
+    "typescript",
+    "rust",
+    "wasm",
+    "cross-browser",
+    "compatibility",
+    "compat"
+  ],
   "exports": {
     ".": {
       "types": "./dist/bundles/index.d.ts",
