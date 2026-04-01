@@ -1,6 +1,6 @@
-/**@typedef {import("~/types/public").ShinkomEventTarget} ShinkomEventTarget */
-/**@typedef {import("~/types/public").ShinkomEventMap} ShinkomEventMap */
-/**@typedef {import("~/types/public").ShinkomEventListener<keyof ShinkomEventMap>} ShinkomEventListener */
+/**@typedef {import("../types/public").ShinkomEventTarget} ShinkomEventTarget */
+/**@typedef {import("../types/public").ShinkomEventMap} ShinkomEventMap */
+/**@typedef {import("../types/public").ShinkomEventListener<keyof ShinkomEventMap>} ShinkomEventListener */
 
 export class ShinkomBus {
     /**@type {ShinkomEventTarget} */

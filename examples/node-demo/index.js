@@ -6,9 +6,9 @@ const startEngine = async () => {
     await shinkomEngine.initEngine()
 }
 
-const run = async () => {
-    await startEngine()
+await startEngine()
 
+const run = () => {
     const html = `
     <div id="container" class="demo-container" align="center" random="0.7">
         <p>Hello Shinkom</p>

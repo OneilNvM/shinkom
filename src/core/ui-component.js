@@ -1,5 +1,5 @@
-/**@typedef {import("~/types/public").UISharedState} UISharedState */
-/**@typedef {import("~/types/public").UISharedStateProps} UISharedStateProps */
+/**@typedef {import("../types/public").UISharedState} UISharedState */
+/**@typedef {import("../types/public").UISharedStateProps} UISharedStateProps */
 import { ShinkomBus } from "./event-bus";
 import { ShinkomState } from "./state-service";
 

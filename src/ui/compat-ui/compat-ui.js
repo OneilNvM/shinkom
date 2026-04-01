@@ -1,4 +1,4 @@
-import { ShinkomBus, ShinkomState, UIComponent } from '~/core' 
+import { ShinkomBus, ShinkomState, UIComponent } from '../../core' 
 
 const internalState = new WeakMap()
 

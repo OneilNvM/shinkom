@@ -1,7 +1,7 @@
-/**@typedef {import('~/types/public').CustomEventEngineDetail} CustomEventEngineDetail */
-import init, { CompatEngine } from '@/pkg/shinkore'
-import compatData from '@/gen/compat-data.json'
-import { ShinkomBus } from '~/core'
+/**@typedef {import('../types/public').CustomEventEngineDetail} CustomEventEngineDetail */
+import init, { CompatEngine } from '../../pkg/shinkore'
+import compatData from '../../gen/compat-data.json'
+import { ShinkomBus } from '../core'
 
 export class SKEngine {
     /**

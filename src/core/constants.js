@@ -1,4 +1,4 @@
-/**@typedef {import('~/types/public').UISharedState} UISharedState */
+/**@typedef {import('../types/public').UISharedState} UISharedState */
 
 /**@type {UISharedState} */
 export const DEFAULT_STATE = {

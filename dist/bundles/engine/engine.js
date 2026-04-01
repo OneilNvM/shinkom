@@ -86,8 +86,11 @@ var SKEngine = class {
 	* Only available in `browser` environments.
 	*/
 	fullInspect() {
-		if (!document) console.warn("fullInspect is only available in browser environments");
-		else console.dir(this.compatEngine?.full_inspect(document.documentElement.outerHTML));
+		try {
+			console.dir(this.compatEngine?.full_inspect(document.documentElement.outerHTML));
+		} catch (_error) {
+			console.error("fullInspect is only available in browser environments");
+		}
 	}
 	/**
 	* Free WASM memory and dereference engine.
