@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 
 const htmlData = bcd.html
+const svgData = bcd.svg
 
 const output = {
     elements: {} as Record<string, Record<string, any>>,
@@ -12,6 +13,19 @@ const output = {
 const getCompatData = (data: any): CompatStatement | undefined => (data as Identifier).__compat
 
 const extractData = () => {
+    extractHTMLElements()
+    extractSVGElements()
+    extractHTMLGlobalAttributes()
+
+    const outDir = path.resolve("./gen")
+    if (!existsSync(outDir)) mkdirSync(outDir)
+
+    writeFileSync(path.join(outDir, 'compat-data.json'), JSON.stringify(output))
+
+    console.log("Successfully generated compat-data JSON file.")
+}
+
+const extractHTMLElements = () => {
     for (const [tag, tagData] of Object.entries(htmlData.elements)) {
         const elCompat = getCompatData(tagData)
 
@@ -73,7 +87,56 @@ const extractData = () => {
             }
         }
     }
+}
 
+const extractSVGElements = () => {
+    for (const [svg, tagData] of Object.entries(svgData.elements)) {
+        const elCompat = getCompatData(tagData)
+
+        if (elCompat) {
+            if (svg === "a") {
+                continue
+            } else {
+                output.elements[svg] = {
+                    __compat: {
+                        description: elCompat.description,
+                        mdn_url: elCompat.mdn_url,
+                        source_file: elCompat.source_file,
+                        spec_url: elCompat.spec_url,
+                        status: elCompat.status,
+                        support: elCompat.support,
+                        tags: elCompat.tags,
+                    }
+                }
+            }
+        }
+
+        for (const [attr, attrData] of Object.entries(tagData)) {
+            if (attr === "__compat") continue;
+
+            const attrCompat = getCompatData(attrData)
+
+            if (attrCompat) {
+                output.elements[svg] = {
+                    ...output.elements[svg],
+                    [attr]: {
+                        __compat: {
+                            description: attrCompat.description,
+                            mdn_url: attrCompat.mdn_url,
+                            source_file: attrCompat.source_file,
+                            spec_url: attrCompat.spec_url,
+                            status: attrCompat.status,
+                            support: attrCompat.support,
+                            tags: attrCompat.tags,
+                        },
+                    }
+                }
+            }
+        }
+    }
+}
+
+const extractHTMLGlobalAttributes = () => {
     for (const [attribute, data] of Object.entries(htmlData.global_attributes)) {
         const compat = getCompatData(data)
 
@@ -91,13 +154,6 @@ const extractData = () => {
             }
         }
     }
-
-    const outDir = path.resolve("./gen")
-    if (!existsSync(outDir)) mkdirSync(outDir)
-
-    writeFileSync(path.join(outDir, 'compat-data.json'), JSON.stringify(output))
-
-    console.log("Successfully generated compat-data JSON file.")
 }
 
 extractData()
