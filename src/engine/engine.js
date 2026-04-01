@@ -1,7 +1,7 @@
-/**@typedef {import('../types/public').CustomEventEngineDetail} CustomEventEngineDetail */
-import init, { CompatEngine } from '../../pkg/shinkore'
-import compatData from '../../gen/compat-data.json'
-import { ShinkomBus } from '../core'
+/**@typedef {import('~/types/public').CustomEventEngineDetail} CustomEventEngineDetail */
+import init, { CompatEngine } from '@/pkg/shinkore'
+import compatData from '@/gen/compat-data.json'
+import { ShinkomBus } from '~/core'
 
 export class SKEngine {
     /**
@@ -101,10 +101,10 @@ export class SKEngine {
      * Only available in `browser` environments.
      */
     fullInspect() {
-        if (!document) {
-            console.warn("fullInspect is only available in browser environments")
-        } else {
+        try {
             console.dir(this.compatEngine?.full_inspect(document.documentElement.outerHTML))
+        } catch (_error) {
+            console.error("fullInspect is only available in browser environments")
         }
     }
 

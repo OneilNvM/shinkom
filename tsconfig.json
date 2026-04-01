@@ -11,6 +11,10 @@
         "emitDeclarationOnly": true,
         "rootDir": "src",
         "skipLibCheck": true,
+        "paths": {
+            "@/*": ["./*"],
+            "~/*": ["./src/*"]
+        }
     },
     "include": [
         "src/**/*.js"

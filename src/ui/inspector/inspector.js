@@ -1,7 +1,7 @@
-/**@typedef {import('../../types/public').UISharedState} UISharedState */
-/**@typedef {import('../../types/public').InspectorConfig} InspectorConfig */
-/**@typedef {import('../../types/public').UISharedStateProps} UISharedStateProps */
-import { ShinkomBus, ShinkomState, UIComponent } from '../../core';
+/**@typedef {import('~/types/public').UISharedState} UISharedState */
+/**@typedef {import('~/types/public').InspectorConfig} InspectorConfig */
+/**@typedef {import('~/types/public').UISharedStateProps} UISharedStateProps */
+import { ShinkomBus, ShinkomState, UIComponent } from '~/core';
 
 /**@extends {UIComponent} */
 export class CompatInspector extends UIComponent {
