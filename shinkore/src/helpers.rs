@@ -13,21 +13,10 @@ use regex::Regex;
 use wasm_bindgen::JsValue;
 
 use crate::{
-    LookupResults,
+    HTMLData, LookupResults, SVGData,
+    constants::{IGNORE_TAGS, SKIP_TAGS},
     schema::{CompatElement, CompatGlobalAttribs},
 };
-
-/// HTML tags to ignore the body of when pre-processing HTML.
-const IGNORE_TAGS: [&str; 8] = [
-    "</script>",
-    "</style>",
-    "</textarea>",
-    "</title>",
-    "</noscript>",
-    "</noembed>",
-    "</iframe>",
-    "</xmp>",
-];
 
 /// Used for pre-processing HTML to return all of the elements down to the specified `depth_level`,
 /// which **must be greater than 0**.
@@ -236,8 +225,8 @@ pub fn write_close_tag(line: &str) -> Option<String> {
 pub fn compat_check(
     tag_name: &str,
     attributes: &[Attribute<'_>],
-    el_data: &HashMap<String, CompatElement>,
-    g_attrib_data: &HashMap<String, CompatGlobalAttribs>,
+    html_data: &HTMLData,
+    svg_data: &SVGData,
 ) -> Vec<LookupResults> {
     let mut overall_results: Vec<LookupResults> = vec![];
     let mut attribs: HashMap<String, String> = HashMap::new();
@@ -246,14 +235,25 @@ pub fn compat_check(
         attribs.insert(attribute.name_preserve_case(), attribute.value());
     }
 
-    lookup_element(tag_name, &mut overall_results, el_data);
-    lookup_attribs(
-        tag_name,
-        attribs,
-        &mut overall_results,
-        el_data,
-        g_attrib_data,
-    );
+    if svg_data.el_data.contains_key(tag_name) && !IGNORE_TAGS.contains(&tag_name) {
+        lookup_element(tag_name, &mut overall_results, &svg_data.el_data);
+        lookup_attribs(
+            tag_name,
+            attribs,
+            &mut overall_results,
+            &svg_data.el_data,
+            &svg_data.g_attrib_data,
+        );
+    } else {
+        lookup_element(tag_name, &mut overall_results, &html_data.el_data);
+        lookup_attribs(
+            tag_name,
+            attribs,
+            &mut overall_results,
+            &html_data.el_data,
+            &html_data.g_attrib_data,
+        );
+    }
 
     overall_results
 }
@@ -261,8 +261,8 @@ pub fn compat_check(
 pub fn multi_compat_check(
     tag_name: &str,
     attributes: &[Attribute<'_>],
-    el_data: &HashMap<String, CompatElement>,
-    g_attrib_data: &HashMap<String, CompatGlobalAttribs>,
+    html_data: &HTMLData,
+    svg_data: &SVGData,
     element_cache: &mut HashSet<String>,
     attrib_cache: &mut HashSet<String>,
 ) -> Vec<LookupResults> {
@@ -273,15 +273,37 @@ pub fn multi_compat_check(
         attribs.insert(attribute.name_preserve_case(), attribute.value());
     }
 
-    multi_lookup_element(tag_name, &mut overall_results, el_data, element_cache);
-    multi_lookup_attribs(
-        tag_name,
-        attribs,
-        &mut overall_results,
-        el_data,
-        g_attrib_data,
-        attrib_cache,
-    );
+    if svg_data.el_data.contains_key(tag_name) && !SKIP_TAGS.contains(&tag_name) {
+        multi_lookup_element(
+            tag_name,
+            &mut overall_results,
+            &svg_data.el_data,
+            element_cache,
+        );
+        multi_lookup_attribs(
+            tag_name,
+            attribs,
+            &mut overall_results,
+            &svg_data.el_data,
+            &svg_data.g_attrib_data,
+            attrib_cache,
+        );
+    } else {
+        multi_lookup_element(
+            tag_name,
+            &mut overall_results,
+            &html_data.el_data,
+            element_cache,
+        );
+        multi_lookup_attribs(
+            tag_name,
+            attribs,
+            &mut overall_results,
+            &html_data.el_data,
+            &html_data.g_attrib_data,
+            attrib_cache,
+        );
+    }
 
     overall_results
 }
@@ -344,15 +366,13 @@ fn multi_lookup_element(
 
             element_cache.insert(tag.to_string());
         }
-    } else {
-        if !element_cache.contains(tag) {
-            web_sys::console::error_1(&JsValue::from_str(&format!(
-                "<{}> is not an element or has no compat data",
-                tag
-            )));
+    } else if !element_cache.contains(tag) {
+        web_sys::console::error_1(&JsValue::from_str(&format!(
+            "<{}> is not an element or has no compat data",
+            tag
+        )));
 
-            element_cache.insert(tag.to_string());
-        }
+        element_cache.insert(tag.to_string());
     }
 }
 
@@ -386,29 +406,29 @@ fn lookup_attribs(
             continue;
         }
         if let Some(el) = el_data.get(tag) {
-            if tag == "input" {
-                if let Some(input_attrib) = el.sub_features.get(&format!("type_{value}")) {
-                    if let Some(status) = &input_attrib.compat.status {
-                        if status.deprecated {
-                            results.push(LookupResults {
-                                description: format!("'type_{value}' is deprecated"),
-                                deprecated: status.deprecated,
-                            })
-                        } else {
-                            results.push(LookupResults {
-                                description: format!("'type_{value}' is not deprecated"),
-                                deprecated: status.deprecated,
-                            })
-                        }
+            if tag == "input"
+                && let Some(input_attrib) = el.sub_features.get(&format!("type_{value}"))
+            {
+                if let Some(status) = &input_attrib.compat.status {
+                    if status.deprecated {
+                        results.push(LookupResults {
+                            description: format!("'type_{value}' is deprecated"),
+                            deprecated: status.deprecated,
+                        })
                     } else {
-                        web_sys::console::error_1(&JsValue::from_str(&format!(
-                            "Status is unavailable for local attribute '{}'",
-                            format!("type_{value}")
-                        )));
+                        results.push(LookupResults {
+                            description: format!("'type_{value}' is not deprecated"),
+                            deprecated: status.deprecated,
+                        })
                     }
-                    continue;
+                } else {
+                    web_sys::console::error_1(&JsValue::from_str(&format!(
+                        "Status is unavailable for local attribute 'type_{value}'"
+                    )));
                 }
+                continue;
             }
+
             if let Some(l_attrib) = el.sub_features.get(&name) {
                 if let Some(status) = &l_attrib.compat.status {
                     if status.deprecated {
@@ -429,15 +449,13 @@ fn lookup_attribs(
                     )));
                 }
                 continue;
-            } else {
-                if name.starts_with("data-") {
-                    results.push(LookupResults {
-                        description: format!("'{name}' is not deprecated"),
-                        deprecated: false,
-                    });
+            } else if name.starts_with("data-") {
+                results.push(LookupResults {
+                    description: format!("'{name}' is not deprecated"),
+                    deprecated: false,
+                });
 
-                    continue;
-                }
+                continue;
             }
         } else {
             web_sys::console::error_1(&JsValue::from_str(&format!("<{}> is not an element", tag)));
@@ -481,31 +499,30 @@ fn multi_lookup_attribs(
             continue;
         }
         if let Some(el) = el_data.get(tag) {
-            if tag == "input" {
-                if let Some(input_attrib) = el.sub_features.get(&format!("type_{value}")) {
-                    if !attrib_cache.contains(&format!("type_{value}")) {
-                        if let Some(status) = &input_attrib.compat.status {
-                            if status.deprecated {
-                                results.push(LookupResults {
-                                    description: format!("'type_{value}' is deprecated"),
-                                    deprecated: status.deprecated,
-                                })
-                            } else {
-                                results.push(LookupResults {
-                                    description: format!("'type_{value}' is not deprecated"),
-                                    deprecated: status.deprecated,
-                                })
-                            }
+            if tag == "input"
+                && let Some(input_attrib) = el.sub_features.get(&format!("type_{value}"))
+            {
+                if !attrib_cache.contains(&format!("type_{value}")) {
+                    if let Some(status) = &input_attrib.compat.status {
+                        if status.deprecated {
+                            results.push(LookupResults {
+                                description: format!("'type_{value}' is deprecated"),
+                                deprecated: status.deprecated,
+                            })
                         } else {
-                            web_sys::console::error_1(&JsValue::from_str(&format!(
-                                "Status is unavailable for local attribute '{}'",
-                                format!("type_{value}")
-                            )));
+                            results.push(LookupResults {
+                                description: format!("'type_{value}' is not deprecated"),
+                                deprecated: status.deprecated,
+                            })
                         }
-                        attrib_cache.insert(format!("type_{value}"));
+                    } else {
+                        web_sys::console::error_1(&JsValue::from_str(&format!(
+                            "Status is unavailable for local attribute 'type_{value}'"
+                        )));
                     }
-                    continue;
+                    attrib_cache.insert(format!("type_{value}"));
                 }
+                continue;
             }
             if let Some(l_attrib) = el.sub_features.get(&name) {
                 if !attrib_cache.contains(&name) {
@@ -530,18 +547,16 @@ fn multi_lookup_attribs(
                     attrib_cache.insert(name);
                 }
                 continue;
-            } else {
-                if name.starts_with("data-") {
-                    if !attrib_cache.contains(&name) {
-                        results.push(LookupResults {
-                            description: format!("'{name}' is not deprecated"),
-                            deprecated: false,
-                        });
+            } else if name.starts_with("data-") {
+                if !attrib_cache.contains(&name) {
+                    results.push(LookupResults {
+                        description: format!("'{name}' is not deprecated"),
+                        deprecated: false,
+                    });
 
-                        attrib_cache.insert(name);
-                    }
-                    continue;
+                    attrib_cache.insert(name);
                 }
+                continue;
             }
         } else {
             web_sys::console::error_1(&JsValue::from_str(&format!(

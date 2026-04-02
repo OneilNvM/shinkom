@@ -1,3 +1,4 @@
+mod constants;
 pub mod helpers;
 mod prelude;
 mod schema;
@@ -10,10 +11,25 @@ use lol_html::{RewriteStrSettings, element, rewrite_str};
 use wasm_bindgen::prelude::*;
 
 #[derive(Serialize, Deserialize, Default)]
+pub struct HTMLData {
+    #[serde(rename = "elements")]
+    el_data: HashMap<String, CompatElement>,
+    #[serde(rename = "global_attributes")]
+    g_attrib_data: HashMap<String, CompatGlobalAttribs>,
+}
+#[derive(Serialize, Deserialize, Default)]
+pub struct SVGData {
+    #[serde(rename = "elements")]
+    el_data: HashMap<String, CompatElement>,
+    #[serde(rename = "global_attributes")]
+    g_attrib_data: HashMap<String, CompatGlobalAttribs>,
+}
+
+#[derive(Serialize, Deserialize, Default)]
 #[wasm_bindgen]
 pub struct CompatEngine {
-    el_data: HashMap<String, CompatElement>,
-    g_attrib_data: HashMap<String, CompatGlobalAttribs>,
+    html: HTMLData,
+    svg: SVGData,
 }
 
 #[derive(Default, Serialize, Deserialize)]
@@ -25,11 +41,11 @@ pub struct LookupResults {
 #[wasm_bindgen]
 impl CompatEngine {
     #[wasm_bindgen(constructor)]
-    pub fn new(bcd_elem_data: JsValue, bcd_g_attrib_data: JsValue) -> Self {
+    pub fn new(bcd_html_data: JsValue, bcd_svg_data: JsValue) -> Self {
         let mut engine = CompatEngine::default();
 
-        match serde_wasm_bindgen::from_value::<HashMap<String, CompatElement>>(bcd_elem_data) {
-            Ok(parsed_elem) => engine.el_data = parsed_elem,
+        match serde_wasm_bindgen::from_value::<HTMLData>(bcd_html_data) {
+            Ok(parsed_elem) => engine.html = parsed_elem,
             Err(e) => {
                 web_sys::console::error_1(&JsValue::from_str(&format!(
                     "BCD element parsing error: {}",
@@ -38,10 +54,8 @@ impl CompatEngine {
             }
         }
 
-        match serde_wasm_bindgen::from_value::<HashMap<String, CompatGlobalAttribs>>(
-            bcd_g_attrib_data,
-        ) {
-            Ok(parsed_attrib) => engine.g_attrib_data = parsed_attrib,
+        match serde_wasm_bindgen::from_value::<SVGData>(bcd_svg_data) {
+            Ok(parsed_attrib) => engine.svg = parsed_attrib,
             Err(e) => {
                 web_sys::console::error_1(&JsValue::from_str(&format!(
                     "BCD global attribute parsing error: {e}"
@@ -61,8 +75,8 @@ impl CompatEngine {
 
         let first_line = formatted.lines().next().unwrap();
 
-        let el_data = &self.el_data;
-        let g_attrib_data = &self.g_attrib_data;
+        let html_data = &self.html;
+        let svg_data = &self.svg;
 
         let _ = rewrite_str(
             first_line,
@@ -71,12 +85,9 @@ impl CompatEngine {
                     let tag_name = el.tag_name();
                     let attributes = el.attributes();
 
-                    results.borrow_mut().extend(compat_check(
-                        &tag_name,
-                        attributes,
-                        el_data,
-                        g_attrib_data,
-                    ));
+                    results
+                        .borrow_mut()
+                        .extend(compat_check(&tag_name, attributes, html_data, svg_data));
 
                     Ok(())
                 })],
@@ -112,8 +123,8 @@ impl CompatEngine {
 
         let elements = pre_process_html(&format_html(html), depth_level);
 
-        let el_data = &self.el_data;
-        let g_attrib_data = &self.g_attrib_data;
+        let html_data = &self.html;
+        let svg_data = &self.svg;
 
         let mut element_cache: HashSet<String> = HashSet::new();
         let mut attrib_cache: HashSet<String> = HashSet::new();
@@ -128,8 +139,8 @@ impl CompatEngine {
                     results.borrow_mut().extend(multi_compat_check(
                         &tag_name,
                         attributes,
-                        el_data,
-                        g_attrib_data,
+                        html_data,
+                        svg_data,
                         &mut element_cache,
                         &mut attrib_cache,
                     ));
@@ -156,8 +167,8 @@ impl CompatEngine {
 
         let formatted = format_html(html);
 
-        let el_data = &self.el_data;
-        let g_attrib_data = &self.g_attrib_data;
+        let html_data = &self.html;
+        let svg_data = &self.svg;
 
         let mut element_cache: HashSet<String> = HashSet::new();
         let mut attrib_cache: HashSet<String> = HashSet::new();
@@ -172,8 +183,8 @@ impl CompatEngine {
                     results.borrow_mut().extend(multi_compat_check(
                         &tag_name,
                         attributes,
-                        el_data,
-                        g_attrib_data,
+                        html_data,
+                        svg_data,
                         &mut element_cache,
                         &mut attrib_cache,
                     ));
