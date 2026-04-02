@@ -71,7 +71,7 @@ export class SKEngine {
             if (!this.compatEngine) {
                 await this.loadWasm()
 
-                this.compatEngine = new CompatEngine(compatData.elements, compatData.global_attributes)
+                this.compatEngine = new CompatEngine(compatData.html, compatData.svg)
             }
         } catch (error) {
             console.error(`Engine initialization error: ${error}`)
