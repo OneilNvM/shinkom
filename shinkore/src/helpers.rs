@@ -243,7 +243,7 @@ pub fn compat_check(
     let mut attribs: HashMap<String, String> = HashMap::new();
 
     for attribute in attributes {
-        attribs.insert(attribute.name(), attribute.value());
+        attribs.insert(attribute.name_preserve_case(), attribute.value());
     }
 
     lookup_element(tag_name, &mut overall_results, el_data);
@@ -270,7 +270,7 @@ pub fn multi_compat_check(
     let mut attribs: HashMap<String, String> = HashMap::new();
 
     for attribute in attributes {
-        attribs.insert(attribute.name(), attribute.value());
+        attribs.insert(attribute.name_preserve_case(), attribute.value());
     }
 
     multi_lookup_element(tag_name, &mut overall_results, el_data, element_cache);
@@ -346,7 +346,10 @@ fn multi_lookup_element(
         }
     } else {
         if !element_cache.contains(tag) {
-            web_sys::console::error_1(&JsValue::from_str(&format!("<{}> is not an element or has no compat data", tag)));
+            web_sys::console::error_1(&JsValue::from_str(&format!(
+                "<{}> is not an element or has no compat data",
+                tag
+            )));
 
             element_cache.insert(tag.to_string());
         }
@@ -541,11 +544,17 @@ fn multi_lookup_attribs(
                 }
             }
         } else {
-            web_sys::console::error_1(&JsValue::from_str(&format!("<{}> is not an element or has no compat data", tag)));
+            web_sys::console::error_1(&JsValue::from_str(&format!(
+                "<{}> is not an element or has no compat data",
+                tag
+            )));
         }
 
         if !attrib_cache.contains(&name) {
-            web_sys::console::error_1(&JsValue::from_str(&format!("{} is not an attribute or has no compat data", name)));
+            web_sys::console::error_1(&JsValue::from_str(&format!(
+                "{} is not an attribute or has no compat data",
+                name
+            )));
 
             attrib_cache.insert(name);
         }
