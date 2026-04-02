@@ -5,6 +5,8 @@ import path from 'node:path'
 const htmlData = bcd.html
 const svgData = bcd.svg
 
+const IDENTICAL_ELEMENTS = ["a", "script"]
+
 const output = {
     elements: {} as Record<string, Record<string, any>>,
     global_attributes: {} as Record<string, any>,
@@ -94,7 +96,7 @@ const extractSVGElements = () => {
         const elCompat = getCompatData(tagData)
 
         if (elCompat) {
-            if (svg === "a") {
+            if (IDENTICAL_ELEMENTS.includes(svg)) {
                 continue
             } else {
                 output.elements[svg] = {
