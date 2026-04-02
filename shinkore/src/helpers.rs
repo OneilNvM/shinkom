@@ -345,7 +345,11 @@ fn multi_lookup_element(
             element_cache.insert(tag.to_string());
         }
     } else {
-        web_sys::console::error_1(&JsValue::from_str(&format!("<{}> is not an element", tag)));
+        if !element_cache.contains(tag) {
+            web_sys::console::error_1(&JsValue::from_str(&format!("<{}> is not an element or has no compat data", tag)));
+
+            element_cache.insert(tag.to_string());
+        }
     }
 }
 
@@ -525,21 +529,26 @@ fn multi_lookup_attribs(
                 continue;
             } else {
                 if name.starts_with("data-") {
-                    results.push(LookupResults {
-                        description: format!("'{name}' is not deprecated"),
-                        deprecated: false,
-                    });
+                    if !attrib_cache.contains(&name) {
+                        results.push(LookupResults {
+                            description: format!("'{name}' is not deprecated"),
+                            deprecated: false,
+                        });
 
-                    attrib_cache.insert(name);
-
+                        attrib_cache.insert(name);
+                    }
                     continue;
                 }
             }
         } else {
-            web_sys::console::error_1(&JsValue::from_str(&format!("<{}> is not an element", tag)));
+            web_sys::console::error_1(&JsValue::from_str(&format!("<{}> is not an element or has no compat data", tag)));
         }
 
-        web_sys::console::error_1(&JsValue::from_str(&format!("{} is not an attribute", name)));
+        if !attrib_cache.contains(&name) {
+            web_sys::console::error_1(&JsValue::from_str(&format!("{} is not an attribute or has no compat data", name)));
+
+            attrib_cache.insert(name);
+        }
     }
 }
 
