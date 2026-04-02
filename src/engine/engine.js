@@ -103,8 +103,12 @@ export class SKEngine {
     fullInspect() {
         try {
             console.dir(this.compatEngine?.full_inspect(document.documentElement.outerHTML))
-        } catch (_error) {
-            console.error("fullInspect is only available in browser environments")
+        } catch (error) {
+            if (error instanceof ReferenceError) {
+                console.error("fullInspect is only available in browser environments")
+            } else {
+                console.error(`fullInspect error: ${error}`)
+            }
         }
     }
 
