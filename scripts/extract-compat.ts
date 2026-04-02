@@ -8,16 +8,23 @@ const svgData = bcd.svg
 const IDENTICAL_ELEMENTS = ["a", "script"]
 
 const output = {
-    elements: {} as Record<string, Record<string, any>>,
-    global_attributes: {} as Record<string, any>,
+    html: {
+        elements: {} as Record<string, Record<string, any>>,
+        global_attributes: {} as Record<string, any>,
+    },
+    svg: {
+        elements: {} as Record<string, Record<string, any>>,
+        global_attributes: {} as Record<string, any>,
+    }
 }
 
 const getCompatData = (data: any): CompatStatement | undefined => (data as Identifier).__compat
 
 const extractData = () => {
     extractHTMLElements()
-    extractSVGElements()
     extractHTMLGlobalAttributes()
+    extractSVGElements()
+    extractSVGGlobalAttributes()
 
     const outDir = path.resolve("./gen")
     if (!existsSync(outDir)) mkdirSync(outDir)
@@ -32,7 +39,7 @@ const extractHTMLElements = () => {
         const elCompat = getCompatData(tagData)
 
         if (elCompat) {
-            output.elements[tag] = {
+            output.html.elements[tag] = {
                 __compat: {
                     description: elCompat.description,
                     mdn_url: elCompat.mdn_url,
@@ -50,7 +57,7 @@ const extractHTMLElements = () => {
                 const inputCompat = getCompatData(inputData)
 
                 if (inputCompat) {
-                    output.elements[tag][inputAttr] = {
+                    output.html.elements[tag][inputAttr] = {
                         __compat: {
                             description: inputCompat.description,
                             mdn_url: inputCompat.mdn_url,
@@ -72,8 +79,8 @@ const extractHTMLElements = () => {
             const attrCompat = getCompatData(attrData)
 
             if (attrCompat) {
-                output.elements[tag] = {
-                    ...output.elements[tag],
+                output.html.elements[tag] = {
+                    ...output.html.elements[tag],
                     [attr]: {
                         __compat: {
                             description: attrCompat.description,
@@ -96,19 +103,15 @@ const extractSVGElements = () => {
         const elCompat = getCompatData(tagData)
 
         if (elCompat) {
-            if (IDENTICAL_ELEMENTS.includes(svg)) {
-                continue
-            } else {
-                output.elements[svg] = {
-                    __compat: {
-                        description: elCompat.description,
-                        mdn_url: elCompat.mdn_url,
-                        source_file: elCompat.source_file,
-                        spec_url: elCompat.spec_url,
-                        status: elCompat.status,
-                        support: elCompat.support,
-                        tags: elCompat.tags,
-                    }
+            output.svg.elements[svg] = {
+                __compat: {
+                    description: elCompat.description,
+                    mdn_url: elCompat.mdn_url,
+                    source_file: elCompat.source_file,
+                    spec_url: elCompat.spec_url,
+                    status: elCompat.status,
+                    support: elCompat.support,
+                    tags: elCompat.tags,
                 }
             }
         }
@@ -119,8 +122,8 @@ const extractSVGElements = () => {
             const attrCompat = getCompatData(attrData)
 
             if (attrCompat) {
-                output.elements[svg] = {
-                    ...output.elements[svg],
+                output.svg.elements[svg] = {
+                    ...output.svg.elements[svg],
                     [attr]: {
                         __compat: {
                             description: attrCompat.description,
@@ -143,7 +146,27 @@ const extractHTMLGlobalAttributes = () => {
         const compat = getCompatData(data)
 
         if (compat) {
-            output.global_attributes[attribute] = {
+            output.html.global_attributes[attribute] = {
+                __compat: {
+                    description: compat.description,
+                    mdn_url: compat.mdn_url,
+                    source_file: compat.source_file,
+                    spec_url: compat.spec_url,
+                    status: compat.status,
+                    support: compat.support,
+                    tags: compat.tags,
+                }
+            }
+        }
+    }
+}
+
+const extractSVGGlobalAttributes = () => {
+    for (const [attribute, data] of Object.entries(svgData.global_attributes)) {
+        const compat = getCompatData(data)
+
+        if (compat) {
+            output.svg.global_attributes[attribute] = {
                 __compat: {
                     description: compat.description,
                     mdn_url: compat.mdn_url,
