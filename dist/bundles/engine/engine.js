@@ -6,7 +6,7 @@
 */
 
 import { CompatEngine, __wbg_init } from "../pkg/shinkore.js";
-import { elements, global_attributes } from "../gen/compat-data.js";
+import { html, svg } from "../gen/compat-data.js";
 //#region src/engine/engine.js
 /**@typedef {import('../types/public').CustomEventEngineDetail} CustomEventEngineDetail */
 var SKEngine = class {
@@ -59,7 +59,7 @@ var SKEngine = class {
 		try {
 			if (!this.compatEngine) {
 				await this.loadWasm();
-				this.compatEngine = new CompatEngine(elements, global_attributes);
+				this.compatEngine = new CompatEngine(html, svg);
 			}
 		} catch (error) {
 			console.error(`Engine initialization error: ${error}`);

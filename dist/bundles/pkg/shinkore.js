@@ -53,11 +53,11 @@ var CompatEngine = class {
 		return wasm.compatengine_full_inspect(this.__wbg_ptr, ptr0, len0);
 	}
 	/**
-	* @param {any} bcd_elem_data
-	* @param {any} bcd_g_attrib_data
+	* @param {any} bcd_html_data
+	* @param {any} bcd_svg_data
 	*/
-	constructor(bcd_elem_data, bcd_g_attrib_data) {
-		this.__wbg_ptr = wasm.compatengine_new(bcd_elem_data, bcd_g_attrib_data) >>> 0;
+	constructor(bcd_html_data, bcd_svg_data) {
+		this.__wbg_ptr = wasm.compatengine_new(bcd_html_data, bcd_svg_data) >>> 0;
 		CompatEngineFinalization.register(this, this.__wbg_ptr, this);
 		return this;
 	}
