@@ -1,0 +1,1 @@
+Object.defineProperty(exports,Symbol.toStringTag,{value:`Module`});const e={inspectorExists:!1,inspectorActive:!1,inspectorSwitching:!1,ignorePanelEl:null,multiElements:!1,depthLevel:0};exports.DEFAULT_STATE=e;

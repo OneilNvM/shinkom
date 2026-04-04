@@ -1,11 +1,10 @@
-import { CompatInspector } from "../src"
+import { Shinkom } from '../src'
 
 const config = {
+    disabled: false,
     keyboardShortcuts: true
 }
 
-const inspector = new CompatInspector(config)
+const shinkom = new Shinkom(config)
 
-inspector.setup()
-
-console.log(`Inspector is ${inspector.config.disabled ? 'disabled' : 'enabled'}`)
+shinkom.init()

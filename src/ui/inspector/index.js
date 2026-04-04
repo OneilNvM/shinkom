@@ -1,0 +1,1 @@
+export { CompatInspector } from './inspector'

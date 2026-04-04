@@ -1,0 +1,55 @@
+/**@typedef {import("../types/public").UISharedState} UISharedState */
+/**@typedef {import("../types/public").UISharedStateProps} UISharedStateProps */
+import { ShinkomBus } from "./event-bus";
+import { ShinkomState } from "./state-service";
+
+export class UIComponent {
+    /**
+     * @param {ShinkomBus} bus 
+     * @param {ShinkomState} stateService 
+     */
+    constructor(bus, stateService) {
+        if (this.constructor === UIComponent) {
+            throw new Error("UIComponent is an abstract class and cannot be instantiated.")
+        }
+
+        this.bus = bus;
+
+        stateService.subscribe((prop, val) => {
+            this.onStateChange(prop, val)
+        })
+    }
+
+    /**
+     * Mount UIComponent to the DOM.
+     */
+    mount() {
+        throw new Error("mount() method must be implemented.")
+    }
+
+    /**
+     * Unmount UIComponent from the DOM.
+     */
+    unmount() {
+        throw new Error("unmount() method must be implemented.")
+    }
+
+    /**
+     * Used to bind state from a proxy to a UIComponent instance.
+     * 
+     * Sets any initial state defined by the component.
+     * @param {UISharedState} _state 
+     */
+    bindState(_state) {
+        throw new Error("bindState() method must be implemented.")
+    }
+
+    /**
+     * Notify UIComponent of a state change in the `stateBind`.
+     * @param {UISharedStateProps} _prop 
+     * @param {any} _val 
+     */
+    onStateChange(_prop, _val) {
+        throw new Error("onStateChange() method must be implemented.")
+    }
+}

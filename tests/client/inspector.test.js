@@ -1,8 +1,12 @@
+/**@typedef {import('../../src/types/public').InspectorConfig} InspectorConfig */
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { CompatInspector } from "../../src";
+import { CompatInspector } from '../../src'
+import { ShinkomBus, ShinkomState } from "../../src/core";
 
 describe('Compatibility Inspector Logic', () => {
-    let inspector = new CompatInspector()
+    let inspector = new CompatInspector(new ShinkomBus(), new ShinkomState())
+
+    /**@type {HTMLElement | null} */
     let target;
 
     beforeEach(() => {
@@ -15,56 +19,58 @@ describe('Compatibility Inspector Logic', () => {
 
         target = document.getElementById('div-elem')
 
-        inspector.setup()
+        inspector.mount()
     })
 
     afterEach(() => {
-        inspector.destroy()
+        inspector.unmount()
     })
 
     test('should freeze inspector on target', () => {
-        target.dispatchEvent(new PointerEvent('click', {
+        target?.dispatchEvent(new PointerEvent('click', {
             bubbles: true,
             cancelable: true,
             pointerType: 'mouse'
         }))
 
-        expect(inspector.inspectorEl.style.outlineColor).toBe('rgb(255, 0, 0)')
+        expect(inspector.inspectorEl?.style.outlineColor).toBe('rgb(255, 0, 0)')
     })
 
     test('should switch inspector to span element and unfreeze when clicking same target', () => {
-        target.dispatchEvent(new PointerEvent('click', {
+        inspector.enableSwitching = true
+
+        target?.dispatchEvent(new PointerEvent('click', {
             bubbles: true,
             cancelable: true,
             pointerType: 'mouse'
         }))
-        expect(inspector.inspectorEl.style.outlineColor).toBe('rgb(255, 0, 0)')
+        expect(inspector.inspectorEl?.style.outlineColor).toBe('rgb(255, 0, 0)')
 
-        const span = target.querySelector('#nested-span')
-        span.dispatchEvent(new PointerEvent('click', {
+        const span = target?.querySelector('#nested-span')
+        span?.dispatchEvent(new PointerEvent('click', {
             bubbles: true,
             cancelable: true,
             pointerType: 'mouse'
         }))
 
-        expect(inspector.inspectorEl.style.outlineColor).toBe('rgb(255, 0, 0)')
+        expect(inspector.inspectorEl?.style.outlineColor).toBe('rgb(255, 0, 0)')
 
-        span.dispatchEvent(new PointerEvent('click', {
+        span?.dispatchEvent(new PointerEvent('click', {
             bubbles: true,
             cancelable: true,
             pointerType: 'mouse'
         }))
-        expect(inspector.inspectorEl.style.outlineColor).not.toBe('rgb(255, 0, 0)')
+        expect(inspector.inspectorEl?.style.outlineColor).not.toBe('rgb(255, 0, 0)')
     })
 })
 
 describe('Compatibility Inspector Keyboard Shortcuts', () => {
-    let inspector = new CompatInspector({ keyboardShortcuts: true })
+    let inspector = new CompatInspector(new ShinkomBus(), new ShinkomState(), { disabled: false, keyboardShorcuts: true })
+
+    /**@type {HTMLElement | null} */
     let target;
 
     beforeEach(() => {
-        inspector.destroy()
-
         document.body.innerHTML = `
         <div id='div-elem' class="div-elem">
             <span id='nested-span'>Nested span element</span>
@@ -74,11 +80,13 @@ describe('Compatibility Inspector Keyboard Shortcuts', () => {
 
         target = document.getElementById('nested-span')
 
-        inspector.setup()
+        inspector.mount()
     })
 
     afterEach(() => {
-        inspector.destroy()
+        if (inspector.inspectorEl) {
+            inspector.unmount()
+        }
     })
 
     test('should change switching to true', () => {
@@ -101,8 +109,8 @@ describe('Compatibility Inspector Keyboard Shortcuts', () => {
     })
 
     test('should reset the inspector to default configuration', () => {
-        const destroySpy = vi.spyOn(CompatInspector.prototype, 'destroy')
-        target.dispatchEvent(new PointerEvent('click', {
+        const destroySpy = vi.spyOn(CompatInspector.prototype, 'unmount')
+        target?.dispatchEvent(new PointerEvent('click', {
             bubbles: true,
             cancelable: true,
             pointerType: 'mouse'
@@ -112,6 +120,6 @@ describe('Compatibility Inspector Keyboard Shortcuts', () => {
 
         expect(destroySpy).toHaveBeenCalled()
 
-        expect(inspector.inspectorEl.style.outlineColor).toBe('rgb(0, 255, 0)')
+        expect(inspector.inspectorEl?.style.outlineColor).toBe('rgb(0, 255, 0)')
     })
 })
