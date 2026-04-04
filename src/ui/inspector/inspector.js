@@ -313,6 +313,9 @@ export class CompatInspector extends UIComponent {
             this.#stateBind.inspectorActive = true
     }
 
+    /**
+     * Remove event listeners on `window` object.
+     */
     #removeGlobalListeners() {
         if (!this.inspectorEl) {
             console.warn("Cannot deactivate inspector as it does not exist.")

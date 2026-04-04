@@ -38,18 +38,18 @@ export class UIComponent {
      * Used to bind state from a proxy to a UIComponent instance.
      * 
      * Sets any initial state defined by the component.
-     * @param {UISharedState} state 
+     * @param {UISharedState} _state 
      */
-    bindState(state) {
+    bindState(_state) {
         throw new Error("bindState() method must be implemented.")
     }
 
     /**
      * Notify UIComponent of a state change in the `stateBind`.
-     * @param {UISharedStateProps} prop 
-     * @param {any} val 
+     * @param {UISharedStateProps} _prop 
+     * @param {any} _val 
      */
-    onStateChange(prop, val) {
+    onStateChange(_prop, _val) {
         throw new Error("onStateChange() method must be implemented.")
     }
 }
