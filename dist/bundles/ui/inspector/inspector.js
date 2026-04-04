@@ -259,6 +259,9 @@ var CompatInspector = class extends UIComponent {
 		window.addEventListener("keydown", this.#handleKeyboard);
 		if (this.#stateBind) this.#stateBind.inspectorActive = true;
 	}
+	/**
+	* Remove event listeners on `window` object.
+	*/
 	#removeGlobalListeners() {
 		if (!this.inspectorEl) {
 			console.warn("Cannot deactivate inspector as it does not exist.");
