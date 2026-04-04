@@ -29,15 +29,15 @@ declare class UIComponent {
    * Used to bind state from a proxy to a UIComponent instance.
    *
    * Sets any initial state defined by the component.
-   * @param {UISharedState} state
+   * @param {UISharedState} _state
    */
-  bindState(state: UISharedState): void;
+  bindState(_state: UISharedState): void;
   /**
    * Notify UIComponent of a state change in the `stateBind`.
-   * @param {UISharedStateProps} prop
-   * @param {any} val
+   * @param {UISharedStateProps} _prop
+   * @param {any} _val
    */
-  onStateChange(prop: UISharedStateProps, val: any): void;
+  onStateChange(_prop: UISharedStateProps, _val: any): void;
 }
 type UISharedState = UISharedState$1;
 type UISharedStateProps = UISharedStateProps$1;
