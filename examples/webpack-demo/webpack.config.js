@@ -47,5 +47,8 @@ export default {
             url: false,
             path: false
         }
+    },
+    experiments: {
+        asyncWebAssembly: true
     }
 };
