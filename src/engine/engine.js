@@ -2,6 +2,7 @@
 import init, { CompatEngine } from '../../pkg/shinkore'
 import compatData from '../../gen/compat-data.json'
 import { ShinkomBus } from '../core'
+import { getModulePath } from '../core/helpers'
 
 export class SKEngine {
     /**
@@ -43,7 +44,7 @@ export class SKEngine {
                 const fs = await import('node:fs')
                 const url = await import('node:url')
 
-                let wasmPath = url.fileURLToPath(import.meta.resolve('shinkom/wasm'))
+                let wasmPath = url.fileURLToPath(getModulePath('shinkom/wasm'))
                 let wasmBuffer;
 
                 if (fs.existsSync(wasmPath)) {

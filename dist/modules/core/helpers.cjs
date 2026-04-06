@@ -1,0 +1,1 @@
+const e=e=>{try{return{}.resolve(e)}catch{return require.resolve(e)}};exports.getModulePath=e;
