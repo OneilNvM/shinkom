@@ -60,7 +60,9 @@ wasm files on your server or visit the [examples](/examples) directory, if your 
 
 Shinkom can be installed from npm via the `shinkom` package
 
-`npm install -D shinkom`
+```bash
+npm install -D shinkom
+```
 
 Once installed, you can then import the Shinkom package in JavaScript.
 Shinkom can be used in frontend frameworks, bundlers and vanilla JS.
