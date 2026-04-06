@@ -7,6 +7,7 @@
 
 import { CompatEngine, __wbg_init } from "../pkg/shinkore.js";
 import { html, svg } from "../gen/compat-data.js";
+import { getModulePath } from "../core/helpers.js";
 //#region src/engine/engine.js
 /**@typedef {import('../types/public').CustomEventEngineDetail} CustomEventEngineDetail */
 var SKEngine = class {
@@ -38,7 +39,7 @@ var SKEngine = class {
 			if (isNode) {
 				const path = await import("node:path");
 				const fs = await import("node:fs");
-				let wasmPath = (await import("node:url")).fileURLToPath(import.meta.resolve("shinkom/wasm"));
+				let wasmPath = (await import("node:url")).fileURLToPath(getModulePath("shinkom/wasm"));
 				let wasmBuffer;
 				if (fs.existsSync(wasmPath)) wasmBuffer = fs.readFileSync(wasmPath);
 				else {
