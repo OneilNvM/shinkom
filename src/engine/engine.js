@@ -5,7 +5,7 @@ import { ShinkomBus } from '../core'
 
 export class SKEngine {
     /**
-     * @param {ShinkomBus | null} bus 
+     * @param {ShinkomBus | null} bus
      */
     constructor(bus = null) {
         /**@type {CompatEngine | null} */
@@ -32,8 +32,9 @@ export class SKEngine {
 
     /**
      * Loads WASM for the Browser or Node.
+     * @param {string | undefined} wasmURL
      */
-    async loadWasm() {
+    async loadWasm(wasmURL = undefined) {
         const isNode = typeof window === "undefined"
 
         try {
@@ -41,10 +42,8 @@ export class SKEngine {
                 const path = await import('node:path')
                 const fs = await import('node:fs')
                 const url = await import('node:url')
-                const __filename = url.fileURLToPath(import.meta.url)
-                const __dirname = path.dirname(__filename)
 
-                let wasmPath = path.resolve(__dirname, '../pkg/shinkore_bg.wasm')
+                let wasmPath = url.fileURLToPath(import.meta.resolve('shinkom/wasm'))
                 let wasmBuffer;
 
                 if (fs.existsSync(wasmPath)) {
@@ -56,7 +55,11 @@ export class SKEngine {
                 }
                 await init({ module_or_path: wasmBuffer })
             } else {
-                await init()
+                if (wasmURL) {
+                    await init({ module_or_path: wasmURL })
+                } else {
+                    await init()
+                }
             }
         } catch (error) {
             throw error
@@ -65,11 +68,17 @@ export class SKEngine {
 
     /**
      * Initializes Rust/WASM engine.
+     * @param {string | undefined} wasmURL
      */
-    async initEngine() {
+    async initEngine(wasmURL = undefined) {
         try {
             if (!this.compatEngine) {
-                await this.loadWasm()
+                if (wasmURL) {
+                    await this.loadWasm(wasmURL)
+                }
+                else {
+                    await this.loadWasm()
+                }
 
                 this.compatEngine = new CompatEngine(compatData.html, compatData.svg)
             }
