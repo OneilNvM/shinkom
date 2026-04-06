@@ -116,7 +116,9 @@ onUnmounted(() => {
 You can also use Shinkom through the `require` statement in commonJS.
 
 ```javascript
-const shinkom = require('shinkom')
+const Shinkom = require('shinkom').Shinkom
+
+const shinkom = new Shinkom()
 
 shinkom.init()
 ```
@@ -136,7 +138,7 @@ Once a few more features are finished, proper usage will be written.
 Shinkom can be utilised in Node environments through its Engine module.
 The UI components are strictly for browser environments, however the engine itself can be used independently in both environments.
 
-### Example
+### ESM Bundles
 
 ```javascript
 import { SKEngine } from 'shinkom/engine'
@@ -146,6 +148,22 @@ const skEngine = new SKEngine()
 await skEngine.initEngine()
 
 skEngine.checkElement(`<div id="test-div" class="test-classes">Test Div</div>`)
+```
+
+### CommonJS Modules
+
+```javascript
+const SKEngine = require('shinkom/engine').SKEngine
+
+const skEngine = new SKEngine()
+
+const run = async () => {
+    await skEngine.initEngine()
+
+    skEngine.checkElement(`<div id="test-div" class="test-classes">Test Div</div>`)
+}
+
+run()
 ```
 
 ---
