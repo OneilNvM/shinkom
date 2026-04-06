@@ -22,9 +22,18 @@ export interface ShinkomEventTarget extends EventTarget {
 
 export type ShinkomEventListener<K extends keyof ShinkomEventMap> = (this: ShinkomEventTarget, ev: ShinkomEventMap[K]) => void
 
+export type ShinkomConfig = {
+    inspector?: InspectorConfig
+    engine?: EngineConfig
+}
+
 export type InspectorConfig = {
     disabled: boolean;
-    keyboardShorcuts: boolean;
+    keyboardShortcuts?: boolean;
+}
+
+export type EngineConfig = {
+    wasmURL: string
 }
 
 export type UISharedState = {
