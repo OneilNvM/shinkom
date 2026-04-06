@@ -1,1 +1,1 @@
-const e=e=>{try{return{}.resolve(e)}catch{return require.resolve(e)}};exports.getModulePath=e;
+let e=require(`node:url`);const t=t=>{try{return(0,e.fileURLToPath)({}.resolve(t))}catch{return(0,e.pathToFileURL)(require.resolve(t))}};exports.getModulePath=t;
