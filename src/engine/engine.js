@@ -42,19 +42,22 @@ export class SKEngine {
             if (isNode) {
                 const path = await import('node:path')
                 const fs = await import('node:fs')
-                const url = await import('node:url')
 
-                let wasmPath = url.fileURLToPath(getModulePath('shinkom/wasm'))
+                let wasmPath = getModulePath('shinkom/wasm')
                 let wasmBuffer;
 
-                if (fs.existsSync(wasmPath)) {
-                    wasmBuffer = fs.readFileSync(wasmPath)
-                } else {
-                    wasmPath = path.resolve(__dirname, '../../pkg/shinkore_bg.wasm')
+                if (wasmPath.toString().endsWith("shinkore_bg.wasm")) {
+                    if (fs.existsSync(wasmPath)) {
+                        wasmBuffer = fs.readFileSync(wasmPath)
+                    } else {
+                        wasmPath = path.resolve(__dirname, '../../pkg/shinkore_bg.wasm')
 
-                    wasmBuffer = fs.readFileSync(wasmPath)
+                        wasmBuffer = fs.readFileSync(wasmPath)
+                    }
+                    await init({ module_or_path: wasmBuffer })
+                } else {
+                    throw new Error("Path does not lead to WASM file.")
                 }
-                await init({ module_or_path: wasmBuffer })
             } else {
                 if (wasmURL) {
                     await init({ module_or_path: wasmURL })
