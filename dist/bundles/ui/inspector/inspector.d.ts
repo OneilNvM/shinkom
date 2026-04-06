@@ -16,11 +16,11 @@ declare class CompatInspector extends UIComponent {
   /**
    * @param {ShinkomBus} bus
    * @param {ShinkomState} stateService
-   * @param {InspectorConfig} config
+   * @param {InspectorConfig | undefined} config
    */
-  constructor(bus: ShinkomBus, stateService: ShinkomState, config?: InspectorConfig);
-  /**@type {InspectorConfig} */
-  config: InspectorConfig;
+  constructor(bus: ShinkomBus, stateService: ShinkomState, config?: InspectorConfig | undefined);
+  /**@type {InspectorConfig | undefined} */
+  config: InspectorConfig | undefined;
   /**@type {boolean} */
   enableSwitching: boolean;
   /**@type {HTMLDivElement | null} */

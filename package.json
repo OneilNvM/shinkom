@@ -64,7 +64,8 @@
       "import": "./dist/bundles/ui/compat-ui/compat-ui.js",
       "require": "./dist/modules/ui/compat-ui/compat-ui.cjs"
     },
-    "./@types": "./dist/bundles/types/public.d.ts"
+    "./@types": "./dist/bundles/types/public.d.ts",
+    "./wasm": "./dist/bundles/pkg/shinkore_bg.wasm"
   },
   "scripts": {
     "dev": "npm run build:wasm && vite",

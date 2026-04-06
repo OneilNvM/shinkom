@@ -21,12 +21,14 @@ declare class SKEngine {
   bus: ShinkomBus | null;
   /**
    * Loads WASM for the Browser or Node.
+   * @param {string | undefined} wasmURL
    */
-  loadWasm(): Promise<void>;
+  loadWasm(wasmURL?: string | undefined): Promise<void>;
   /**
    * Initializes Rust/WASM engine.
+   * @param {string | undefined} wasmURL
    */
-  initEngine(): Promise<void>;
+  initEngine(wasmURL?: string | undefined): Promise<void>;
   /**
    * Used for checking the compatibility of a single element.
    * @param {string} element

@@ -86,6 +86,9 @@ export default defineConfig([
         report: {
             gzip: false
         },
+        define: {
+            'import.meta': '{}'
+        },
         plugins: [copyWasmPlugin("modules")],
     },
 ])
