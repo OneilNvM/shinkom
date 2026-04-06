@@ -6,8 +6,6 @@
     </strong>
 </p>
 
----
-
 ## Introduction
 
 **Shinkom** is a JavaScript library for real-time website cross-browser compatibility analysis.
@@ -49,10 +47,87 @@ to check if a feature works on a particular browser or test the website on every
 
 ---
 
+## IMPORTANT
+
+It is important to mention that this project is made with **WebAssembly** through [wasm-bindgen](https://github.com/wasm-bindgen/wasm-bindgen).
+Therefore, the engine will need to be initialized asynchronously and your server will need to accept the `application/wasm` MIME type.
+It is recommended to read relevant documentation in whichever framework or bundler you are using to apply the correct configuration to accept
+wasm files on your server or visit the [examples](/examples) directory, if your framework or bundler of choice is listed there for a working example.
+
+---
+
+## Getting Started
+
+Shinkom can be installed from npm via the `shinkom` package
+
+```bash
+npm install -D shinkom
+```
+
+Once installed, you can then import the Shinkom package in JavaScript.
+Shinkom can be used in frontend frameworks, bundlers and vanilla JS.
+
+### Vanilla JS
+
+```javascript
+import { Shinkom } from 'shinkom'
+
+const shinkom = new Shinkom()
+
+shinkom.init()
+```
+
+### React
+
+```javascript
+import React, { useEffect } from 'react'
+import { Shinkom } from 'shinkom'
+
+export default function App() {
+    useEffect(() => {
+        const shinkom = new Shinkom()
+
+        shinkom.init()
+
+        return () => shinkom.destroy()
+    }, [])
+}
+```
+
+### Vue
+
+```javascript
+<script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue'
+import { Shinkom } from 'shinkom'
+
+const shinkom = new Shinkom()
+
+onMounted(() => {
+    shinkom.init()
+})
+
+onUnmounted(() => {
+    shinkom.destroy()
+})
+</script>
+```
+
+You can also use Shinkom through the `require` statement in commonJS.
+
+```javascript
+const shinkom = require('shinkom')
+
+shinkom.init()
+```
+
+---
+
 ## Usage
 
 **\*\*WIP\*\***
-Package is currently still being developed. When core features have been created, proper usage for the library will be written.
+Package is currently still being developed.
+Once a few more features are finished, proper usage will be written.
 
 ---
 
