@@ -21,7 +21,7 @@ jobs:
             - name: Download WASM artifact
               uses: actions/download-artifact@v7
               with:
-                name: shinkom-wasm
+                name: shinkore-wasm
                 path: ./pkg
                 run-id: ${{ github.event.workflow_run.id }}
             - name: Use Node.js ${{ matrix.node-version }}
