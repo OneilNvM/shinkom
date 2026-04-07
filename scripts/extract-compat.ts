@@ -5,8 +5,6 @@ import path from 'node:path'
 const htmlData = bcd.html
 const svgData = bcd.svg
 
-const IDENTICAL_ELEMENTS = ["a", "script"]
-
 const output = {
     html: {
         elements: {} as Record<string, Record<string, any>>,
