@@ -29,7 +29,16 @@ jobs:
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v6
+          - name: Install wasm-pack
+            run: cargo install wasm-pack
           - name: Run Build Release
             run: cargo build -r
           - name: Run Tests
             run: cargo test
+          - name: Build WASM files
+            run: npm run build:wasm
+          - name: Upload WASM
+            uses: actions/upload-artifact@v7
+            with:
+              name: shinkore-wasm
+              path: pkg
