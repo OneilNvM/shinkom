@@ -100,8 +100,13 @@ export default function App() {
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
 import { Shinkom } from 'shinkom'
+import wasm from 'shinkom/wasm?url'
 
-const shinkom = new Shinkom()
+const shinkom = new Shinkom({
+    engine: {
+        wasmURL: wasm
+    }
+})
 
 onMounted(() => {
     shinkom.init()
