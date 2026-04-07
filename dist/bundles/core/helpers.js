@@ -6,18 +6,19 @@
 */
 
 import { __require } from "../_virtual/_rolldown/runtime.js";
-import { fileURLToPath, pathToFileURL } from "node:url";
 //#region src/core/helpers.js
 /**
 * Get the resolved module path as a string or URL.
-* @param {string} path 
-* @returns {string | URL} module path
+* @param {string} modulePath 
+* @returns {Promise<string | URL>} module path
 */
-const getModulePath = (path) => {
+const getModulePath = async (modulePath) => {
+	const path = await import("node:url");
+	const module = await import("node:module");
 	try {
-		return fileURLToPath(import.meta.resolve(path));
+		return module.createRequire(import.meta.url).resolve(modulePath);
 	} catch (_error) {
-		return pathToFileURL(__require.resolve(path));
+		return path.pathToFileURL(__require.resolve(modulePath));
 	}
 };
 //#endregion
