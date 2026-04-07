@@ -2,7 +2,7 @@ name: Build Shinkom
 
 on:
     workflow_run:
-        workflows: ["Build Shinkore"]
+        workflows: [Build Shinkore]
         branches: [master]
         types:
             - completed
