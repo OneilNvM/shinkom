@@ -18,12 +18,18 @@ jobs:
 
         steps:
             - uses: actions/checkout@v6
+            - name: Download WASM artifact
+              uses: actions/download-artifact@v7
+              with:
+                name: shinkom-wasm
+                path: ./pkg
+                run-id: ${{ github.event.workflow_run.id }}
             - name: Use Node.js ${{ matrix.node-version }}
               uses: actions/setup-node@v6
               with:
                   node-version: ${{ matrix.node-version }}
             - run: npm ci
             - name: Run Build
-              run: npm run build
+              run: npm run build:js
             - name: Run Tests
               run: npm test
