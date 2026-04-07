@@ -43,7 +43,7 @@ export class SKEngine {
                 const path = await import('node:path')
                 const fs = await import('node:fs')
 
-                let wasmPath = getModulePath('shinkom/wasm')
+                let wasmPath = await getModulePath('shinkom/wasm')
                 let wasmBuffer;
 
                 if (wasmPath.toString().endsWith("shinkore_bg.wasm")) {
