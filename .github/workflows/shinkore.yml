@@ -9,6 +9,10 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+defaults:
+  run:
+    working-directory: ./shinkore
+
 jobs:
     clippy:
         runs-on: ubuntu-latest
