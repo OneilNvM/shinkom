@@ -39,7 +39,7 @@ var SKEngine = class {
 			if (isNode) {
 				const path = await import("node:path");
 				const fs = await import("node:fs");
-				let wasmPath = getModulePath("shinkom/wasm");
+				let wasmPath = await getModulePath("shinkom/wasm");
 				let wasmBuffer;
 				if (wasmPath.toString().endsWith("shinkore_bg.wasm")) {
 					if (fs.existsSync(wasmPath)) wasmBuffer = fs.readFileSync(wasmPath);

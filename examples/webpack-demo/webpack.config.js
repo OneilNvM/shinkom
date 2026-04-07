@@ -39,13 +39,18 @@ export default {
     externals: {
         "node:fs": "commonjs node:fs",
         "node:path": "commonjs node:path",
-        "node:url": "commonjs node:url"
+        "node:url": "commonjs node:url",
+        "node:module": "commonjs node:module"
     },
     resolve: {
         fallback: {
             fs: false,
             url: false,
-            path: false
+            path: false,
+            module: false
         }
+    },
+    experiments: {
+        asyncWebAssembly: true
     }
 };
