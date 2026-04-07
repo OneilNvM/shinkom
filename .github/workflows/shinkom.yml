@@ -22,7 +22,7 @@ jobs:
               uses: actions/download-artifact@v7
               with:
                 name: shinkore-wasm
-                path: ./pkg
+                path: pkg
                 run-id: ${{ github.event.workflow_run.id }}
             - name: Use Node.js ${{ matrix.node-version }}
               uses: actions/setup-node@v6
