@@ -1,0 +1,1 @@
+const e=async e=>{let t=await import(`node:url`),n=await import(`node:module`);try{return n.createRequire({}.url).resolve(e)}catch{return t.pathToFileURL(require.resolve(e))}};exports.getModulePath=e;

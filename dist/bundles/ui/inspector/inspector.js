@@ -22,14 +22,11 @@ var CompatInspector = class extends UIComponent {
 	/**
 	* @param {ShinkomBus} bus
 	* @param {ShinkomState} stateService
-	* @param {InspectorConfig} config 
+	* @param {InspectorConfig | undefined} config 
 	*/
-	constructor(bus, stateService, config = {
-		disabled: false,
-		keyboardShorcuts: false
-	}) {
+	constructor(bus, stateService, config = void 0) {
 		super(bus, stateService);
-		/**@type {InspectorConfig} */
+		/**@type {InspectorConfig | undefined} */
 		this.config = config;
 		/**@type {boolean} */
 		this.enableSwitching = false;
@@ -230,7 +227,7 @@ var CompatInspector = class extends UIComponent {
 		}
 	}
 	mount() {
-		if (this.inspectorEl || this.config.disabled) {
+		if (this.inspectorEl || this.config?.disabled) {
 			console.warn("Inspector is either disabled or already exists");
 			return;
 		}
@@ -256,7 +253,7 @@ var CompatInspector = class extends UIComponent {
 			signal,
 			capture: true
 		});
-		window.addEventListener("keydown", this.#handleKeyboard);
+		if (this.config?.keyboardShortcuts) window.addEventListener("keydown", this.#handleKeyboard);
 		if (this.#stateBind) this.#stateBind.inspectorActive = true;
 	}
 	/**

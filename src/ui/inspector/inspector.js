@@ -19,12 +19,12 @@ export class CompatInspector extends UIComponent {
     /**
      * @param {ShinkomBus} bus
      * @param {ShinkomState} stateService
-     * @param {InspectorConfig} config 
+     * @param {InspectorConfig | undefined} config 
      */
-    constructor(bus, stateService, config = { disabled: false, keyboardShorcuts: false }) {
+    constructor(bus, stateService, config = undefined) {
         super(bus, stateService)
 
-        /**@type {InspectorConfig} */
+        /**@type {InspectorConfig | undefined} */
         this.config = config
 
         /**@type {boolean} */
@@ -52,10 +52,6 @@ export class CompatInspector extends UIComponent {
         this.bus.on('ci:destroy', () => {
             this.unmount()
         })
-
-        // stateService.subscribe((prop, val) => {
-        //     this.#onStateChange(prop, val)
-        // })
     }
 
     /**
@@ -279,7 +275,7 @@ export class CompatInspector extends UIComponent {
     }
 
     mount() {
-        if (this.inspectorEl || this.config.disabled) {
+        if (this.inspectorEl || this.config?.disabled) {
             console.warn("Inspector is either disabled or already exists")
             return;
         }
@@ -307,7 +303,9 @@ export class CompatInspector extends UIComponent {
 
         window.addEventListener('pointerover', this.#handlePointerOver, { signal })
         window.addEventListener('click', this.#handleToggleFreeze, { signal, capture: true })
-        window.addEventListener('keydown', this.#handleKeyboard)
+        if (this.config?.keyboardShortcuts) {
+            window.addEventListener('keydown', this.#handleKeyboard)
+        }
 
         if (this.#stateBind)
             this.#stateBind.inspectorActive = true

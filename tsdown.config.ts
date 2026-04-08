@@ -43,6 +43,9 @@ export default defineConfig([
         format: 'esm',
         target: 'esnext',
         dts: true,
+        deps: {
+            neverBundle: [/^node(:.*)?/]
+        },
         outputOptions: {
             preserveModules: true,
             preserveModulesRoot: 'src',
@@ -85,6 +88,9 @@ export default defineConfig([
         },
         report: {
             gzip: false
+        },
+        define: {
+            'import.meta': '{}'
         },
         plugins: [copyWasmPlugin("modules")],
     },

@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { Shinkom } from 'shinkom'
-const shinkom = new Shinkom()
+import wasm from 'shinkom/wasm?url'
+const shinkom = new Shinkom({
+  engine: {
+    wasmURL: wasm
+  }
+})
 
 onMounted(() => {
   shinkom.init()

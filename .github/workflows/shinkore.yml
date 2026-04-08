@@ -1,0 +1,44 @@
+name: Build Shinkore
+
+on:
+    push:
+        branches: ["master"]
+    pull_request:
+        branches: ["master"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+defaults:
+  run:
+    working-directory: ./shinkore
+
+jobs:
+    clippy:
+        runs-on: ubuntu-latest
+        env:
+            RUSTFLAGS: "-Dwarnings"
+
+        steps:
+          - uses: actions/checkout@v6
+          - name: Run Clippy
+            run: cargo clippy
+
+    build:
+        needs: clippy
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v6
+          - name: Install wasm-pack
+            run: cargo install wasm-pack
+          - name: Run Build Release
+            run: cargo build -r
+          - name: Run Tests
+            run: cargo test
+          - name: Build WASM files
+            run: npm run build:wasm
+          - name: Upload WASM
+            uses: actions/upload-artifact@v7
+            with:
+              name: shinkore-wasm
+              path: pkg

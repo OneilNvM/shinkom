@@ -65,7 +65,7 @@ describe('Compatibility Inspector Logic', () => {
 })
 
 describe('Compatibility Inspector Keyboard Shortcuts', () => {
-    let inspector = new CompatInspector(new ShinkomBus(), new ShinkomState(), { disabled: false, keyboardShorcuts: true })
+    let inspector = new CompatInspector(new ShinkomBus(), new ShinkomState(), { disabled: false, keyboardShortcuts: true })
 
     /**@type {HTMLElement | null} */
     let target;
