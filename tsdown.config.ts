@@ -16,7 +16,7 @@ const banner = (c: any) => {
     * Shinkom - ${fileName}
     * @version ${pkg.version}
     * @license ${pkg.license}
-    * @copyright ${date.getFullYear()} - Oneil Achord
+    * @copyright ${date.getFullYear()} - OneilNvM
 */
 `
 }
