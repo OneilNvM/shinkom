@@ -27,6 +27,7 @@ jobs:
                 name: shinkore-wasm
                 path: pkg
                 run-id: ${{ github.event.workflow_run.id }}
+                github-token: ${{ secrets.GITHUB_TOKEN }}
             - name: Use Node.js ${{ matrix.node-version }}
               uses: actions/setup-node@v6
               with:
