@@ -128,6 +128,9 @@ const shinkom = new Shinkom()
 shinkom.init()
 ```
 
+If there are other frameworks or bundlers not listed here as being supported that you would like to use Shinkom with,
+then consider contributing by creating a **pull request** on the **dev** branch to support it and make sure to **create an example for others!**
+
 ---
 
 ## Usage
