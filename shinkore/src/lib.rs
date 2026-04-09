@@ -1,3 +1,4 @@
+pub mod compat;
 mod constants;
 pub mod helpers;
 mod prelude;
@@ -5,7 +6,8 @@ mod schema;
 use std::collections::HashSet;
 use std::{cell::RefCell, rc::Rc};
 
-use crate::helpers::{compat_check, format_html, multi_compat_check, pre_process_html};
+use crate::compat::check::{compat_check, multi_compat_check};
+use crate::helpers::{format_html, pre_process_html};
 use crate::prelude::*;
 use lol_html::{RewriteStrSettings, element, rewrite_str};
 use wasm_bindgen::prelude::*;
@@ -161,6 +163,7 @@ impl CompatEngine {
         })
     }
 
+    /// Used for performing a full page compatibility check.
     #[wasm_bindgen]
     pub fn full_inspect(&self, html: &str) -> JsValue {
         let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
