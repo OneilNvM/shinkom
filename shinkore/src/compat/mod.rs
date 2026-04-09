@@ -1,3 +1,4 @@
+mod calculate;
 pub mod check;
 mod lookup;
 

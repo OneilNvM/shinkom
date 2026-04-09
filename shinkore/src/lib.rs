@@ -35,9 +35,17 @@ pub struct CompatEngine {
 }
 
 #[derive(Default, Serialize, Deserialize)]
+pub struct CompatResult {
+    overall_score: u8,
+    lookup_results: Vec<LookupResults>,
+}
+
+#[derive(Default, Serialize, Deserialize, Clone)]
 pub struct LookupResults {
-    pub description: String,
-    pub deprecated: bool,
+    name: String,
+    compat_score: u8,
+    browser_score: u8,
+    status_score: u8,
 }
 
 #[wasm_bindgen]
@@ -103,9 +111,17 @@ impl CompatEngine {
             String::new()
         });
 
-        let final_results = results.borrow();
+        let mut final_score: f32 = 0.0;
+        for res in &*results.borrow() {
+            final_score += res.compat_score as f32;
+        }
 
-        serde_wasm_bindgen::to_value(&*final_results).unwrap_or_else(|e| {
+        let compat_result = CompatResult {
+            overall_score: (final_score / results.borrow().len() as f32) as u8,
+            lookup_results: results.borrow().to_vec(),
+        };
+
+        serde_wasm_bindgen::to_value(&compat_result).unwrap_or_else(|e| {
             web_sys::console::error_1(&JsValue::from_str(&format!(
                 "Error occurred parsing lookup results: {e}"
             )));
@@ -153,9 +169,17 @@ impl CompatEngine {
             },
         );
 
-        let final_results = results.borrow();
+        let mut final_score: f32 = 0.0;
+        for res in &*results.borrow() {
+            final_score += res.compat_score as f32;
+        }
 
-        serde_wasm_bindgen::to_value(&*final_results).unwrap_or_else(|e| {
+        let compat_result = CompatResult {
+            overall_score: (final_score / results.borrow().len() as f32) as u8,
+            lookup_results: results.borrow().to_vec(),
+        };
+
+        serde_wasm_bindgen::to_value(&compat_result).unwrap_or_else(|e| {
             web_sys::console::error_1(&JsValue::from_str(&format!(
                 "Error occurred parsing lookup results: {e}"
             )));
@@ -198,9 +222,17 @@ impl CompatEngine {
             },
         );
 
-        let final_results = results.borrow();
+        let mut final_score: f32 = 0.0;
+        for res in &*results.borrow() {
+            final_score += res.compat_score as f32;
+        }
 
-        serde_wasm_bindgen::to_value(&*final_results).unwrap_or_else(|e| {
+        let compat_result = CompatResult {
+            overall_score: (final_score / results.borrow().len() as f32) as u8,
+            lookup_results: results.borrow().to_vec(),
+        };
+
+        serde_wasm_bindgen::to_value(&compat_result).unwrap_or_else(|e| {
             web_sys::console::error_1(&JsValue::from_str(&format!(
                 "Error occurred parsing lookup results: {e}"
             )));

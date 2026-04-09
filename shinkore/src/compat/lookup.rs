@@ -4,9 +4,14 @@ use wasm_bindgen::JsValue;
 
 use crate::{
     LookupResults,
-    compat::{LookupType, check::check_status},
+    compat::{LookupType, calculate::calculate_compat_score},
     schema::{CompatElement, CompatGlobalAttribs},
 };
+
+pub enum CompatType<'a> {
+    Element(&'a CompatElement),
+    GlobalAttributes(&'a CompatGlobalAttribs),
+}
 
 pub fn lookup_element(
     tag: &str,
@@ -14,8 +19,9 @@ pub fn lookup_element(
     el_data: &HashMap<String, CompatElement>,
 ) {
     if let Some(el) = el_data.get(tag) {
-        check_status(
-            &el.compat.status,
+        calculate_compat_score(
+            String::from(tag),
+            CompatType::Element(el),
             LookupType::Element(String::from(tag)),
             results,
         );
@@ -32,8 +38,9 @@ pub fn multi_lookup_element(
 ) {
     if let Some(el) = el_data.get(tag) {
         if !element_cache.contains(tag) {
-            check_status(
-                &el.compat.status,
+            calculate_compat_score(
+                String::from(tag),
+                CompatType::Element(el),
                 LookupType::Element(String::from(tag)),
                 results,
             );
@@ -59,8 +66,9 @@ pub fn lookup_attribs(
 ) {
     for (name, value) in attribs {
         if let Some(g_attrib) = g_attrib_data.get(&name) {
-            check_status(
-                &g_attrib.compat.status,
+            calculate_compat_score(
+                name.clone(),
+                CompatType::GlobalAttributes(g_attrib),
                 LookupType::Attribute(name),
                 results,
             );
@@ -70,25 +78,29 @@ pub fn lookup_attribs(
             if tag == "input"
                 && let Some(input_attrib) = el.sub_features.get(&format!("type_{value}"))
             {
-                check_status(
-                    &input_attrib.compat.status,
-                    LookupType::Attribute(format!("type_{value}")),
+                calculate_compat_score(
+                    name.clone(),
+                    CompatType::Element(input_attrib),
+                    LookupType::Attribute(name),
                     results,
                 );
                 continue;
             }
 
             if let Some(l_attrib) = el.sub_features.get(&name) {
-                check_status(
-                    &l_attrib.compat.status,
+                calculate_compat_score(
+                    name.clone(),
+                    CompatType::Element(l_attrib),
                     LookupType::Attribute(name),
                     results,
                 );
                 continue;
             } else if name.starts_with("data-") {
                 results.push(LookupResults {
-                    description: format!("'{name}' is not deprecated"),
-                    deprecated: false,
+                    name,
+                    compat_score: 100,
+                    browser_score: 100,
+                    status_score: 100,
                 });
 
                 continue;
@@ -112,8 +124,9 @@ pub fn multi_lookup_attribs(
     for (name, value) in attribs {
         if let Some(g_attrib) = g_attrib_data.get(&name) {
             if !attrib_cache.contains(&name) {
-                check_status(
-                    &g_attrib.compat.status,
+                calculate_compat_score(
+                    name.clone(),
+                    CompatType::GlobalAttributes(g_attrib),
                     LookupType::Attribute(name.clone()),
                     results,
                 );
@@ -126,8 +139,9 @@ pub fn multi_lookup_attribs(
                 && let Some(input_attrib) = el.sub_features.get(&format!("type_{value}"))
             {
                 if !attrib_cache.contains(&format!("type_{value}")) {
-                    check_status(
-                        &input_attrib.compat.status,
+                    calculate_compat_score(
+                        format!("type_{value}"),
+                        CompatType::Element(input_attrib),
                         LookupType::Attribute(format!("type_{value}")),
                         results,
                     );
@@ -137,8 +151,9 @@ pub fn multi_lookup_attribs(
             }
             if let Some(l_attrib) = el.sub_features.get(&name) {
                 if !attrib_cache.contains(&name) {
-                    check_status(
-                        &l_attrib.compat.status,
+                    calculate_compat_score(
+                        name.clone(),
+                        CompatType::Element(l_attrib),
                         LookupType::Attribute(name.clone()),
                         results,
                     );
@@ -148,8 +163,10 @@ pub fn multi_lookup_attribs(
             } else if name.starts_with("data-") {
                 if !attrib_cache.contains(&name) {
                     results.push(LookupResults {
-                        description: format!("'{name}' is not deprecated"),
-                        deprecated: false,
+                        name: name.clone(),
+                        compat_score: 100,
+                        browser_score: 100,
+                        status_score: 100,
                     });
 
                     attrib_cache.insert(name);

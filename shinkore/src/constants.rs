@@ -12,3 +12,8 @@ pub const IGNORE_TAGS: [&str; 8] = [
     "</iframe>",
     "</xmp>",
 ];
+
+pub const MAX_COMPAT_SCORE: u8 = MAX_SUM_BROWSER_SUPPORT_COMPAT_SCORES + MAX_STATUS_COMPAT_SCORE;
+pub const MAX_SUM_BROWSER_SUPPORT_COMPAT_SCORES: u8 = NUMBER_BROWSERS * 10;
+pub const MAX_STATUS_COMPAT_SCORE: u8 = 10;
+pub const NUMBER_BROWSERS: u8 = 14;
