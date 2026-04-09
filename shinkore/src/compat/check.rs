@@ -1,16 +1,11 @@
 use std::collections::{HashMap, HashSet};
 
 use lol_html::html_content::Attribute;
-use wasm_bindgen::JsValue;
 
 use crate::{
     HTMLData, LookupResults, SVGData,
-    compat::{
-        LookupType,
-        lookup::{lookup_attribs, lookup_element, multi_lookup_attribs, multi_lookup_element},
-    },
+    compat::lookup::{lookup_attribs, lookup_element, multi_lookup_attribs, multi_lookup_element},
     constants::{IGNORE_TAGS, SKIP_TAGS},
-    schema::Status,
 };
 
 pub fn compat_check(
@@ -97,39 +92,4 @@ pub fn multi_compat_check(
     }
 
     overall_results
-}
-
-pub fn check_status(
-    compat_status: &Option<Status>,
-    lookup_type: LookupType,
-    results: &mut Vec<LookupResults>,
-) {
-    if let Some(status) = compat_status {
-        if status.deprecated {
-            results.push(LookupResults {
-                description: match lookup_type {
-                    LookupType::Element(tag) => format!("<{tag}> is deprecated"),
-                    LookupType::Attribute(attribute) => format!("'{attribute}' is deprecated"),
-                },
-                deprecated: status.deprecated,
-            });
-        } else {
-            results.push(LookupResults {
-                description: match lookup_type {
-                    LookupType::Element(tag) => format!("<{tag}> is not deprecated"),
-                    LookupType::Attribute(attribute) => format!("'{attribute}' is not deprecated"),
-                },
-                deprecated: status.deprecated,
-            });
-        }
-    } else {
-        match lookup_type {
-            LookupType::Element(tag) => web_sys::console::error_1(&JsValue::from_str(&format!(
-                "Status is unavailable for tag <{tag}>"
-            ))),
-            LookupType::Attribute(attribute) => web_sys::console::error_1(&JsValue::from_str(
-                &format!("Status is unavailable for local attribute '{attribute}'"),
-            )),
-        }
-    }
 }
