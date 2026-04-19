@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use lol_html::html_content::Attribute;
 
 use crate::{
-    HTMLData, LookupResults, SVGData,
+    BrowserDataParamType, HTMLData, LookupResults, SVGData,
     compat::lookup::{lookup_attribs, lookup_element, multi_lookup_attribs, multi_lookup_element},
     constants::{IGNORE_TAGS, SKIP_TAGS},
 };
@@ -13,6 +13,7 @@ pub fn compat_check(
     attributes: &[Attribute<'_>],
     html_data: &HTMLData,
     svg_data: &SVGData,
+    browser_data_params: Vec<BrowserDataParamType>,
 ) -> Vec<LookupResults> {
     let mut overall_results: Vec<LookupResults> = vec![];
     let mut attribs: HashMap<String, String> = HashMap::new();
@@ -22,22 +23,34 @@ pub fn compat_check(
     }
 
     if svg_data.el_data.contains_key(tag_name) && !IGNORE_TAGS.contains(&tag_name) {
-        lookup_element(tag_name, &mut overall_results, &svg_data.el_data);
+        lookup_element(
+            tag_name,
+            &mut overall_results,
+            &svg_data.el_data,
+            &browser_data_params,
+        );
         lookup_attribs(
             tag_name,
             attribs,
             &mut overall_results,
             &svg_data.el_data,
             &svg_data.g_attrib_data,
+            &browser_data_params,
         );
     } else {
-        lookup_element(tag_name, &mut overall_results, &html_data.el_data);
+        lookup_element(
+            tag_name,
+            &mut overall_results,
+            &html_data.el_data,
+            &browser_data_params,
+        );
         lookup_attribs(
             tag_name,
             attribs,
             &mut overall_results,
             &html_data.el_data,
             &html_data.g_attrib_data,
+            &browser_data_params,
         );
     }
 
@@ -51,6 +64,7 @@ pub fn multi_compat_check(
     svg_data: &SVGData,
     element_cache: &mut HashSet<String>,
     attrib_cache: &mut HashSet<String>,
+    browser_data_params: Vec<BrowserDataParamType>,
 ) -> Vec<LookupResults> {
     let mut overall_results: Vec<LookupResults> = vec![];
     let mut attribs: HashMap<String, String> = HashMap::new();
@@ -65,6 +79,7 @@ pub fn multi_compat_check(
             &mut overall_results,
             &svg_data.el_data,
             element_cache,
+            &browser_data_params,
         );
         multi_lookup_attribs(
             tag_name,
@@ -73,6 +88,7 @@ pub fn multi_compat_check(
             &svg_data.el_data,
             &svg_data.g_attrib_data,
             attrib_cache,
+            &browser_data_params,
         );
     } else {
         multi_lookup_element(
@@ -80,6 +96,7 @@ pub fn multi_compat_check(
             &mut overall_results,
             &html_data.el_data,
             element_cache,
+            &browser_data_params,
         );
         multi_lookup_attribs(
             tag_name,
@@ -88,6 +105,7 @@ pub fn multi_compat_check(
             &html_data.el_data,
             &html_data.g_attrib_data,
             attrib_cache,
+            &browser_data_params,
         );
     }
 

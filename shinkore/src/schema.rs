@@ -5,7 +5,7 @@ pub use std::collections::HashMap;
 
 pub use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(untagged)]
 pub enum VersionValue {
     Version(String),
@@ -14,7 +14,7 @@ pub enum VersionValue {
     Unknown(serde_json::Value),
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(untagged)]
 pub enum SupportData {
     Multiple(Vec<SupportDetails>),
@@ -23,21 +23,21 @@ pub enum SupportData {
     Unknown(serde_json::Value),
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(untagged)]
 pub enum ImplementURLValue {
     Multiple(Vec<String>),
     Single(String),
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(untagged)]
 pub enum NotesValue {
     Multiple(Vec<String>),
     Single(String),
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct SupportDetails {
     pub version_added: VersionValue,
 
@@ -66,7 +66,7 @@ pub struct SupportDetails {
     pub notes: Option<NotesValue>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct FlagStatement {
     #[serde(rename = "type")]
     pub flag_type: bool,
@@ -76,7 +76,7 @@ pub struct FlagStatement {
     pub value_to_set: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct Status {
     pub deprecated: bool,
     pub experimental: bool,
@@ -116,4 +116,40 @@ pub struct CompatElement {
 pub struct CompatGlobalAttribs {
     #[serde(rename = "__compat")]
     pub compat: Compat,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ReleaseStatement {
+    release_date: Option<String>,
+    release_notes: Option<String>,
+    status: BrowserStatus,
+    engine: Option<BrowserEngine>,
+    pub engine_version: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub enum BrowserEngine {
+    Blink,
+    EdgeHTML,
+    Gecko,
+    Presto,
+    Trident,
+    WebKit,
+    V8,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub enum BrowserStatus {
+    #[serde(rename = "retired")]
+    Retired,
+    #[serde(rename = "current")]
+    Current,
+    #[serde(rename = "beta")]
+    Beta,
+    #[serde(rename = "nightly")]
+    Nightly,
+    #[serde(rename = "esr")]
+    Esr,
+    #[serde(rename = "planned")]
+    Planned,
 }

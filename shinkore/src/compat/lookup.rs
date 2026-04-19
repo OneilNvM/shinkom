@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use wasm_bindgen::JsValue;
 
 use crate::{
-    LookupResults,
+    BrowserDataParamType, LookupResults,
     compat::{LookupType, calculate::calculate_compat_score},
     schema::{CompatElement, CompatGlobalAttribs},
 };
@@ -17,6 +17,7 @@ pub fn lookup_element(
     tag: &str,
     results: &mut Vec<LookupResults>,
     el_data: &HashMap<String, CompatElement>,
+    browser_data_params: &Vec<BrowserDataParamType>,
 ) {
     if let Some(el) = el_data.get(tag) {
         calculate_compat_score(
@@ -24,6 +25,7 @@ pub fn lookup_element(
             CompatType::Element(el),
             LookupType::Element(String::from(tag)),
             results,
+            browser_data_params,
         );
     } else {
         web_sys::console::error_1(&JsValue::from_str(&format!("<{}> is not an element", tag)));
@@ -35,6 +37,7 @@ pub fn multi_lookup_element(
     results: &mut Vec<LookupResults>,
     el_data: &HashMap<String, CompatElement>,
     element_cache: &mut HashSet<String>,
+    browser_data_params: &Vec<BrowserDataParamType>,
 ) {
     if let Some(el) = el_data.get(tag) {
         if !element_cache.contains(tag) {
@@ -43,6 +46,7 @@ pub fn multi_lookup_element(
                 CompatType::Element(el),
                 LookupType::Element(String::from(tag)),
                 results,
+                browser_data_params,
             );
 
             element_cache.insert(tag.to_string());
@@ -63,6 +67,7 @@ pub fn lookup_attribs(
     results: &mut Vec<LookupResults>,
     el_data: &HashMap<String, CompatElement>,
     g_attrib_data: &HashMap<String, CompatGlobalAttribs>,
+    browser_data_params: &Vec<BrowserDataParamType>,
 ) {
     for (name, value) in attribs {
         if let Some(g_attrib) = g_attrib_data.get(&name) {
@@ -71,6 +76,7 @@ pub fn lookup_attribs(
                 CompatType::GlobalAttributes(g_attrib),
                 LookupType::Attribute(name),
                 results,
+                browser_data_params,
             );
             continue;
         }
@@ -83,6 +89,7 @@ pub fn lookup_attribs(
                     CompatType::Element(input_attrib),
                     LookupType::Attribute(name),
                     results,
+                    browser_data_params,
                 );
                 continue;
             }
@@ -93,14 +100,17 @@ pub fn lookup_attribs(
                     CompatType::Element(l_attrib),
                     LookupType::Attribute(name),
                     results,
+                    browser_data_params,
                 );
                 continue;
             } else if name.starts_with("data-") {
                 results.push(LookupResults {
                     name,
-                    compat_score: 100,
-                    browser_score: 100,
-                    status_score: 100,
+                    mdn_url: None,
+                    compat_score: String::from("100"),
+                    browser_score: String::from("100"),
+                    status_score: String::from("100"),
+                    browsers: None,
                 });
 
                 continue;
@@ -120,6 +130,7 @@ pub fn multi_lookup_attribs(
     el_data: &HashMap<String, CompatElement>,
     g_attrib_data: &HashMap<String, CompatGlobalAttribs>,
     attrib_cache: &mut HashSet<String>,
+    browser_data_params: &Vec<BrowserDataParamType>,
 ) {
     for (name, value) in attribs {
         if let Some(g_attrib) = g_attrib_data.get(&name) {
@@ -129,6 +140,7 @@ pub fn multi_lookup_attribs(
                     CompatType::GlobalAttributes(g_attrib),
                     LookupType::Attribute(name.clone()),
                     results,
+                    browser_data_params,
                 );
                 attrib_cache.insert(name);
             }
@@ -144,6 +156,7 @@ pub fn multi_lookup_attribs(
                         CompatType::Element(input_attrib),
                         LookupType::Attribute(format!("type_{value}")),
                         results,
+                        browser_data_params,
                     );
                     attrib_cache.insert(format!("type_{value}"));
                 }
@@ -156,6 +169,7 @@ pub fn multi_lookup_attribs(
                         CompatType::Element(l_attrib),
                         LookupType::Attribute(name.clone()),
                         results,
+                        browser_data_params,
                     );
                     attrib_cache.insert(name);
                 }
@@ -164,9 +178,11 @@ pub fn multi_lookup_attribs(
                 if !attrib_cache.contains(&name) {
                     results.push(LookupResults {
                         name: name.clone(),
-                        compat_score: 100,
-                        browser_score: 100,
-                        status_score: 100,
+                        mdn_url: None,
+                        compat_score: String::from("100"),
+                        browser_score: String::from("100"),
+                        status_score: String::from("100"),
+                        browsers: None,
                     });
 
                     attrib_cache.insert(name);
