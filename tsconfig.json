@@ -9,12 +9,15 @@
         "noEmit": true,
         "declaration": true,
         "emitDeclarationOnly": true,
-        "rootDir": "src",
+        "rootDirs": [
+            "src",
+            "gen"
+        ],
         "skipLibCheck": true,
         "types": ["node"]
     },
     "include": [
-        "src/**/*.js"
+        "src/**/*.js",
     ],
     "exclude": ["node_modules"]
 }
