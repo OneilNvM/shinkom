@@ -1,8 +1,9 @@
 /**@typedef {import('../types/public').CustomEventEngineDetail} CustomEventEngineDetail */
 import init, { CompatEngine } from '../../pkg/shinkore'
-import compatData from '../../gen/compat-data.json'
+import compatData, { browserData, usageData } from '../../gen/index'
 import { ShinkomBus } from '../core'
 import { getModulePath } from '../core/helpers'
+
 
 export class SKEngine {
     /**
@@ -84,7 +85,7 @@ export class SKEngine {
                     await this.loadWasm()
                 }
 
-                this.compatEngine = new CompatEngine(compatData.html, compatData.svg)
+                this.compatEngine = new CompatEngine(compatData.html, compatData.svg, browserData, usageData)
             }
         } catch (error) {
             console.error(`Engine initialization error: ${error}`)
