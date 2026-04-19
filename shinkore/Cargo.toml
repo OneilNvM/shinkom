@@ -20,6 +20,7 @@ regex = "1.12.3"
 serde = { version = "1.0.228", features = ['derive'] }
 serde-wasm-bindgen = "0.6.5"
 serde_json = "1.0.149"
+version-compare = "0.2.1"
 wasm-bindgen = "0.2.114"
 
 [dependencies.web-sys]
