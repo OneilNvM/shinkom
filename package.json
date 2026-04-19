@@ -57,11 +57,6 @@
       "import": "./dist/bundles/ui/control-panel/control-panel.js",
       "require": "./dist/modules/ui/control-panel/control-panel.cjs"
     },
-    "./ui/compatibility-view": {
-      "types": "./dist/bundles/ui/compatibility-view/compatibility-view.d.ts",
-      "import": "./dist/bundles/ui/compatibility-view/compatibility-view.js",
-      "require": "./dist/modules/ui/compatibility-view/compatibility-view.cjs"
-    },
     "./ui/compat-ui": {
       "types": "./dist/bundles/ui/compat-ui/compat-ui.d.ts",
       "import": "./dist/bundles/ui/compat-ui/compat-ui.js",

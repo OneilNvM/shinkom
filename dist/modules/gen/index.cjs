@@ -1,0 +1,1 @@
+const e=require(`./compat-data.cjs`);require(`./browser-data.cjs`),require(`./browser-usage-data.cjs`);var t=e.default;exports.default=t;

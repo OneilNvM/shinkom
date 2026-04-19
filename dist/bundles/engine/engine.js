@@ -2,11 +2,13 @@
     * Shinkom - engine
     * @version 1.0.0
     * @license MIT
-    * @copyright 2026 - Oneil Achord
+    * @copyright 2026 - OneilNvM
 */
 
 import { CompatEngine, __wbg_init } from "../pkg/shinkore.js";
-import { html, svg } from "../gen/compat-data.js";
+import browser_data_default from "../gen/browser-data.js";
+import browser_usage_data_default from "../gen/browser-usage-data.js";
+import gen_default from "../gen/index.js";
 import { getModulePath } from "../core/helpers.js";
 //#region src/engine/engine.js
 /**@typedef {import('../types/public').CustomEventEngineDetail} CustomEventEngineDetail */
@@ -64,7 +66,7 @@ var SKEngine = class {
 			if (!this.compatEngine) {
 				if (wasmURL) await this.loadWasm(wasmURL);
 				else await this.loadWasm();
-				this.compatEngine = new CompatEngine(html, svg);
+				this.compatEngine = new CompatEngine(gen_default.html, gen_default.svg, browser_data_default, browser_usage_data_default);
 			}
 		} catch (error) {
 			console.error(`Engine initialization error: ${error}`);

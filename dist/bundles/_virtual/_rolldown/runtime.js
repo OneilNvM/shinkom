@@ -2,7 +2,7 @@
     * Shinkom - _rolldown
     * @version 1.0.0
     * @license MIT
-    * @copyright 2026 - Oneil Achord
+    * @copyright 2026 - OneilNvM
 */
 
 //#region \0rolldown/runtime.js
