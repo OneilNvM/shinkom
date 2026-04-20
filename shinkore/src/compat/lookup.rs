@@ -79,6 +79,17 @@ pub fn lookup_attribs(
                 browser_data_params,
             );
             continue;
+        } else if name.starts_with("data-")
+            && let Some(d_attrib) = g_attrib_data.get("data_attributes")
+        {
+            calculate_compat_score(
+                "data-attributes".to_string(),
+                CompatType::GlobalAttributes(d_attrib),
+                LookupType::Attribute("data-attributes".to_string()),
+                results,
+                browser_data_params,
+            );
+            continue;
         }
         if let Some(el) = el_data.get(tag) {
             if tag == "input"
@@ -102,17 +113,6 @@ pub fn lookup_attribs(
                     results,
                     browser_data_params,
                 );
-                continue;
-            } else if name.starts_with("data-") {
-                results.push(LookupResults {
-                    name,
-                    mdn_url: None,
-                    compat_score: String::from("100"),
-                    browser_score: String::from("100"),
-                    status_score: String::from("100"),
-                    browsers: None,
-                });
-
                 continue;
             }
         } else {
@@ -145,6 +145,19 @@ pub fn multi_lookup_attribs(
                 attrib_cache.insert(name);
             }
             continue;
+        } else if name.starts_with("data-")
+            && let Some(d_attrib) = g_attrib_data.get("data_attributes")
+        {
+            calculate_compat_score(
+                "data-attributes".to_string(),
+                CompatType::GlobalAttributes(d_attrib),
+                LookupType::Attribute("data-attributes".to_string()),
+                results,
+                browser_data_params,
+            );
+            attrib_cache.insert(name);
+
+            continue;
         }
         if let Some(el) = el_data.get(tag) {
             if tag == "input"
@@ -171,20 +184,6 @@ pub fn multi_lookup_attribs(
                         results,
                         browser_data_params,
                     );
-                    attrib_cache.insert(name);
-                }
-                continue;
-            } else if name.starts_with("data-") {
-                if !attrib_cache.contains(&name) {
-                    results.push(LookupResults {
-                        name: name.clone(),
-                        mdn_url: None,
-                        compat_score: String::from("100"),
-                        browser_score: String::from("100"),
-                        status_score: String::from("100"),
-                        browsers: None,
-                    });
-
                     attrib_cache.insert(name);
                 }
                 continue;
