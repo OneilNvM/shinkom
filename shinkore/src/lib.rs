@@ -13,74 +13,12 @@ use lol_html::{RewriteStrSettings, element, rewrite_str};
 use wasm_bindgen::prelude::*;
 
 #[derive(Serialize, Deserialize, Default)]
-pub struct HTMLData {
-    #[serde(rename = "elements")]
-    el_data: HashMap<String, CompatElement>,
-    #[serde(rename = "global_attributes")]
-    g_attrib_data: HashMap<String, CompatGlobalAttribs>,
-}
-#[derive(Serialize, Deserialize, Default)]
-pub struct SVGData {
-    #[serde(rename = "elements")]
-    el_data: HashMap<String, CompatElement>,
-    #[serde(rename = "global_attributes")]
-    g_attrib_data: HashMap<String, CompatGlobalAttribs>,
-}
-
-#[derive(Serialize, Deserialize, Default, Clone)]
-pub struct BrowserData {
-    browsers: HashMap<String, HashMap<String, ReleaseStatement>>,
-}
-
-#[derive(Serialize, Deserialize, Default, Clone)]
-pub struct BrowserUsageData {
-    agents: HashMap<String, HashMap<String, f32>>,
-    #[serde(rename = "marketShare")]
-    market_share: f32,
-}
-
-#[derive(Serialize, Deserialize)]
-pub enum BrowserDataParamType {
-    BrowserData(BrowserData),
-    UsageData(BrowserUsageData),
-}
-
-#[derive(Serialize, Deserialize, Default)]
 #[wasm_bindgen]
 pub struct CompatEngine {
     html: HTMLData,
     svg: SVGData,
     browser_data: BrowserData,
     browser_usage_data: BrowserUsageData,
-}
-
-#[derive(Default, Serialize, Deserialize)]
-pub struct CompatResult {
-    overall_score: u8,
-    lookup_results: Vec<LookupResults>,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct BrowserResult {
-    browser_name: String,
-    score: Scores,
-    versions: Option<SupportData>,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct Scores {
-    raw_score: String,
-    weighted_score: String,
-}
-
-#[derive(Default, Serialize, Deserialize, Clone)]
-pub struct LookupResults {
-    name: String,
-    mdn_url: Option<String>,
-    compat_score: String,
-    browser_score: String,
-    status_score: String,
-    browsers: Option<Vec<BrowserResult>>,
 }
 
 #[wasm_bindgen]
