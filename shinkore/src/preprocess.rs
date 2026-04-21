@@ -1,3 +1,6 @@
+//! This module contains functions for pre-processing HTML input before compatibility checks.
+//! The purpose of these functions is to make sure that the HTML input passed into
+//! compatibility checking functions is standardized to output accurate results.
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use lol_html::{RewriteStrSettings, element, html_content::Element, rewrite_str};

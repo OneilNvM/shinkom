@@ -1,3 +1,4 @@
+//! This module exports all structs and enums in shinkore.
 pub use crate::schema::*;
 
 #[derive(Serialize, Deserialize, Default)]

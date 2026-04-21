@@ -1,6 +1,5 @@
 //! This module contains types which map the schema for the compatiblity data from the [@mdn/browser-compat-data](https://github.com/mdn/browser-compat-data) package.
 //! You can find the data for the schema at this link: https://github.com/mdn/browser-compat-data/blob/main/schemas/compat-data.schema.json
-
 pub use std::collections::HashMap;
 
 pub use serde::{Deserialize, Serialize};
