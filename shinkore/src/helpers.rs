@@ -2,6 +2,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use lol_html::{RewriteStrSettings, element, html_content::Element, rewrite_str};
 use regex::Regex;
+use wasm_bindgen::JsError;
 
 use crate::constants::IGNORE_TAGS;
 
@@ -52,6 +53,8 @@ use crate::constants::IGNORE_TAGS;
 pub fn pre_process_html(html: &str, depth_level: u32) -> String {
     let mut result: Vec<&str> = vec![];
     let mut lines = html.lines();
+
+    // Handle base cases
     if depth_level == 0 {
         return String::new();
     }
@@ -61,17 +64,30 @@ pub fn pre_process_html(html: &str, depth_level: u32) -> String {
         return String::new();
     }
 
+    // Current depth level in the iteration
     let mut cur_depth = 0;
+
+    // Vector of tags that have been closed
     let mut close_tags: Vec<String> = vec![];
+
+    // Determines when an open tag is present at the depth level
     let mut parent = false;
+
+    // Ignores any line until the parent element's close tag has been reached
     let mut ignore_until_closed = false;
 
     let mut cur_line = lines.next();
     while cur_line.is_some() {
         let line = cur_line.unwrap();
+
+        // Reset `parent` if parent is true 
+        // and when current depth is less than depth level
         if cur_depth < depth_level && parent {
             parent = false;
         }
+
+        // Ignore current line except for when the line is equal
+        // to the last String in `close_tags`
         if ignore_until_closed {
             if let Some(close) = close_tags.last()
                 && line == close
@@ -83,13 +99,18 @@ pub fn pre_process_html(html: &str, depth_level: u32) -> String {
             cur_line = lines.next();
             continue;
         }
+
+        // Handle situations when current depth is greater than or equal to depth level 
         if cur_depth >= depth_level {
+            // Decrement `cur_depth` and remove a close tag if the current line matches the last close tag
             if line == close_tags.last().unwrap() {
                 cur_depth -= 1;
                 close_tags.pop();
                 cur_line = lines.next();
                 continue;
             } else {
+                // If parent is already true and current line is an open tag,
+                // increase `cur_depth` and push the close tag
                 if parent && let Some(close_tag) = write_close_tag(line) {
                     cur_depth += 1;
                     close_tags.push(close_tag);
@@ -100,6 +121,7 @@ pub fn pre_process_html(html: &str, depth_level: u32) -> String {
             }
         }
 
+        // Decrement `cur_depth` if line is a cloes tag and matches last close tag
         if line.starts_with("</") {
             if cur_depth > 0 && line == close_tags.last().unwrap() {
                 cur_depth -= 1;
@@ -110,7 +132,9 @@ pub fn pre_process_html(html: &str, depth_level: u32) -> String {
             continue;
         }
 
+        // Check if the current line is an open tag
         if let Some(close_tag) = write_close_tag(line) {
+            // Ignore any content within ignored tags in next iteration
             if IGNORE_TAGS.contains(&close_tag.as_str()) {
                 cur_depth += 1;
                 close_tags.push(close_tag);
@@ -120,14 +144,18 @@ pub fn pre_process_html(html: &str, depth_level: u32) -> String {
             } else {
                 cur_depth += 1;
                 close_tags.push(close_tag);
+                
+                // Push line to result if current depth is less than depth level
                 if cur_depth < depth_level {
                     result.push("\n");
                     result.push(line);
                 } else {
+                    // Push line to result if depth level is equal to current depth
                     if depth_level == cur_depth {
                         result.push("\n");
                         result.push(line);
                     }
+                    // Set parent to true to flag that the parent element was reached
                     if !parent {
                         parent = true
                     }
@@ -174,12 +202,16 @@ pub fn pre_process_html(html: &str, depth_level: u32) -> String {
 pub fn write_close_tag(line: &str) -> Option<String> {
     let end_tag = Rc::new(RefCell::new(None));
     let open_tags: Rc<RefCell<HashMap<String, String>>> = Rc::new(RefCell::new(HashMap::new()));
+
+    // Return the equivalent end tag if the line has an open tag
     let _ = rewrite_str(
         line,
         RewriteStrSettings {
             element_content_handlers: vec![element!("*", |el: &mut Element| {
                 let open_tags_inner = Rc::clone(&open_tags);
                 let end_tag_inner = Rc::clone(&end_tag);
+
+                // Check if the element is an open tag
                 if el.can_have_content() {
                     open_tags_inner
                         .borrow_mut()
@@ -187,12 +219,13 @@ pub fn write_close_tag(line: &str) -> Option<String> {
                     *end_tag.borrow_mut() = Some(format!("</{}>", el.tag_name()));
                 }
 
+                // Check if the line has a close tag
                 if let Some(handlers) = el.end_tag_handlers() {
                     handlers.push(Box::new(move |end| {
                         if open_tags_inner.borrow().contains_key(&end.name()) {
                             open_tags_inner.borrow_mut().remove(&end.name());
                             match open_tags_inner.borrow().iter().last() {
-                                Some(tag) => *end_tag_inner.borrow_mut() = Some(tag.1.to_string()),
+                                Some((_, tag)) => *end_tag_inner.borrow_mut() = Some(tag.to_owned()),
                                 None => *end_tag_inner.borrow_mut() = None,
                             }
                         }
@@ -215,10 +248,13 @@ pub fn write_close_tag(line: &str) -> Option<String> {
 ///
 /// ```rust
 /// use shinkore::helpers::format_html;
+/// use wasm_bindgen::JsError;
+///
+/// fn main() -> Result<(), JsError> {
 ///
 /// let html = "<aside><section><h2>Aside Title</h2><div>Content</div></section></aside>";
 ///
-/// let formatted = format_html(html);
+/// let formatted = format_html(html)?;
 ///
 /// println!("{formatted}");
 ///
@@ -230,9 +266,12 @@ pub fn write_close_tag(line: &str) -> Option<String> {
 ///     </section>
 ///     </aside>
 /// */
+///
+/// Ok(())
+/// }
 /// ```
-pub fn format_html(html: &str) -> String {
-    let regex = Regex::new(r">\s*<").unwrap();
+pub fn format_html(html: &str) -> Result<String, JsError> {
+    let regex = Regex::new(r">\s*<").map_err(|e| JsError::new(&e.to_string()))?;
 
-    regex.replace_all(html, ">\n<").trim().to_string()
+    Ok(regex.replace_all(html, ">\n<").trim().to_string())
 }
