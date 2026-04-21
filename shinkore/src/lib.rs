@@ -1,14 +1,14 @@
 pub mod compat;
 mod constants;
-pub mod preprocess;
 mod prelude;
+pub mod preprocess;
 mod schema;
 use std::collections::HashSet;
 use std::{cell::RefCell, rc::Rc};
 
 use crate::compat::check::{compat_check, multi_compat_check};
-use crate::preprocess::{format_html, pre_process_html};
 use crate::prelude::*;
+use crate::preprocess::{format_html, pre_process_html};
 use lol_html::{RewriteStrSettings, element, rewrite_str};
 use wasm_bindgen::prelude::*;
 
@@ -102,7 +102,7 @@ impl CompatEngine {
                     let tag_name = el.tag_name();
                     let attributes = el.attributes();
 
-                    results.borrow_mut().extend(compat_check(
+                    let compat_results = compat_check(
                         &tag_name,
                         attributes,
                         html_data,
@@ -111,7 +111,12 @@ impl CompatEngine {
                             BrowserDataParamType::BrowserData(browser_data.to_owned()),
                             BrowserDataParamType::UsageData(usage_data.to_owned()),
                         ],
-                    ));
+                    );
+
+                    match compat_results {
+                        Ok(res) => results.borrow_mut().extend(res),
+                        Err(e) => return Err(format!("{e:?}").into())
+                    }
 
                     Ok(())
                 })],
@@ -176,7 +181,7 @@ impl CompatEngine {
                     let tag_name = el.tag_name();
                     let attributes = el.attributes();
 
-                    results.borrow_mut().extend(multi_compat_check(
+                    let compat_results = multi_compat_check(
                         &tag_name,
                         attributes,
                         html_data,
@@ -187,7 +192,12 @@ impl CompatEngine {
                             BrowserDataParamType::BrowserData(browser_data.to_owned()),
                             BrowserDataParamType::UsageData(usage_data.to_owned()),
                         ],
-                    ));
+                    );
+
+                    match compat_results {
+                        Ok(res) => results.borrow_mut().extend(res),
+                        Err(e) => return Err(format!("{e:?}").into()),
+                    }
 
                     Ok(())
                 })],
@@ -247,7 +257,7 @@ impl CompatEngine {
                     let tag_name = el.tag_name();
                     let attributes = el.attributes();
 
-                    results.borrow_mut().extend(multi_compat_check(
+                    let compat_results = multi_compat_check(
                         &tag_name,
                         attributes,
                         html_data,
@@ -258,7 +268,12 @@ impl CompatEngine {
                             BrowserDataParamType::BrowserData(browser_data.to_owned()),
                             BrowserDataParamType::UsageData(usage_data.to_owned()),
                         ],
-                    ));
+                    );
+
+                    match compat_results {
+                        Ok(res) => results.borrow_mut().extend(res),
+                        Err(e) => return Err(format!("{e:?}").into()),
+                    }
 
                     Ok(())
                 })],
@@ -273,7 +288,10 @@ impl CompatEngine {
         // Calculates the overall score
         let mut final_score: f32 = 0.0;
         for res in &*results.borrow() {
-            final_score += res.compat_score.parse::<f32>().map_err(|e| JsError::new(&e.to_string()))?;
+            final_score += res
+                .compat_score
+                .parse::<f32>()
+                .map_err(|e| JsError::new(&e.to_string()))?;
         }
 
         let compat_result = CompatResult {

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use version_compare::{Cmp, compare};
-use wasm_bindgen::JsValue;
+use wasm_bindgen::JsError;
 
 use crate::{
     BrowserData, BrowserDataParamType, BrowserResult, BrowserUsageData, LookupResults, Scores,
@@ -16,7 +16,7 @@ pub fn calculate_compat_score(
     lookup_type: LookupType,
     results: &mut Vec<LookupResults>,
     browser_data_params: &Vec<BrowserDataParamType>,
-) {
+) -> Result<(), JsError> {
     let mut browser_results: Vec<BrowserResult> = vec![];
     let mut compat_score = 0.0;
     match compat_type {
@@ -25,13 +25,13 @@ pub fn calculate_compat_score(
                 CompatType::Element(el),
                 &mut browser_results,
                 browser_data_params,
-            );
+            )?;
             let status_score = match lookup_type {
                 LookupType::Element(name) => {
-                    calculate_status_score(&el.compat.status, LookupType::Element(name))
+                    calculate_status_score(&el.compat.status, LookupType::Element(name))?
                 }
                 LookupType::Attribute(name) => {
-                    calculate_status_score(&el.compat.status, LookupType::Attribute(name))
+                    calculate_status_score(&el.compat.status, LookupType::Attribute(name))?
                 }
             };
 
@@ -54,18 +54,20 @@ pub fn calculate_compat_score(
                     (status_score / MAX_STATUS_COMPAT_SCORE as f32) * 100.0
                 ),
                 browsers: Some(browser_results),
-            })
+            });
+
+            Ok(())
         }
         CompatType::GlobalAttributes(g_attrib) => {
             let mut browser_score = calculate_browser_score(
                 CompatType::GlobalAttributes(g_attrib),
                 &mut browser_results,
                 browser_data_params,
-            );
+            )?;
             let status_score = calculate_status_score(
                 &g_attrib.compat.status,
                 LookupType::Attribute(name.clone()),
-            );
+            )?;
 
             if status_score != 0.0 {
                 compat_score += ((browser_score + status_score) / MAX_COMPAT_SCORE as f32) * 100.0;
@@ -86,12 +88,14 @@ pub fn calculate_compat_score(
                     (status_score / MAX_STATUS_COMPAT_SCORE as f32) * 100.0
                 ),
                 browsers: Some(browser_results),
-            })
+            });
+
+            Ok(())
         }
     }
 }
 
-pub fn calculate_status_score(compat_status: &Option<Status>, lookup_type: LookupType) -> f32 {
+pub fn calculate_status_score(compat_status: &Option<Status>, lookup_type: LookupType) -> Result<f32, JsError> {
     let mut status_score = 0.0;
     if let Some(status) = compat_status {
         if status.standard_track {
@@ -107,23 +111,19 @@ pub fn calculate_status_score(compat_status: &Option<Status>, lookup_type: Looku
         }
     } else {
         match lookup_type {
-            LookupType::Element(tag) => web_sys::console::error_1(&JsValue::from_str(&format!(
-                "Status is unavailable for tag <{tag}>"
-            ))),
-            LookupType::Attribute(attribute) => web_sys::console::error_1(&JsValue::from_str(
-                &format!("Status is unavailable for local attribute '{attribute}'"),
-            )),
+            LookupType::Element(tag) => return Err(JsError::new(&format!("Status is unavailable for tag <{tag}>"))),
+            LookupType::Attribute(attribute) => return Err(JsError::new(&format!("Status is unavailable for local attribute '{attribute}'"))),
         }
     }
 
-    status_score
+    Ok(status_score)
 }
 
 fn calculate_browser_score(
     compat_type: CompatType,
     browser_results: &mut Vec<BrowserResult>,
     browser_data_params: &Vec<BrowserDataParamType>,
-) -> f32 {
+) -> Result<f32, JsError> {
     let mut browser_score_total: f32 = 0.0;
     match compat_type {
         CompatType::Element(el) => {
@@ -134,7 +134,7 @@ fn calculate_browser_score(
                     &el.compat.status,
                     browser_results,
                     browser_data_params,
-                );
+                )?;
             }
         }
         CompatType::GlobalAttributes(g_attrib) => {
@@ -145,12 +145,12 @@ fn calculate_browser_score(
                     &g_attrib.compat.status,
                     browser_results,
                     browser_data_params,
-                );
+                )?;
             }
         }
     }
 
-    browser_score_total
+    Ok(browser_score_total)
 }
 
 fn calculate_version_score(
@@ -159,7 +159,7 @@ fn calculate_version_score(
     status: &Option<Status>,
     browser_results: &mut Vec<BrowserResult>,
     browser_data_params: &Vec<BrowserDataParamType>,
-) -> f32 {
+) -> Result<f32, JsError> {
     let mut browser_data: Option<&BrowserData> = None;
     let mut usage_data: Option<&BrowserUsageData> = None;
     let mut browser_score = 0.0;
@@ -172,10 +172,7 @@ fn calculate_version_score(
     }
 
     if browser_data.is_none() || usage_data.is_none() {
-        web_sys::console::error_1(&JsValue::from_str(
-            "the required browser data parameter types were not given.",
-        ));
-        panic!("the required browser data parameter types were not given.");
+        return Err(JsError::new("the required browser data parameter types were not given."));
     }
 
     calculate_support(
@@ -188,7 +185,7 @@ fn calculate_version_score(
         usage_data.unwrap(),
     );
 
-    browser_score
+    Ok(browser_score)
 }
 
 fn calculate_support(

@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use wasm_bindgen::JsValue;
+use wasm_bindgen::{JsError, JsValue};
 
 use crate::{
     BrowserDataParamType, LookupResults,
@@ -18,7 +18,7 @@ pub fn lookup_element(
     results: &mut Vec<LookupResults>,
     el_data: &HashMap<String, CompatElement>,
     browser_data_params: &Vec<BrowserDataParamType>,
-) {
+) -> Result<(), JsError> {
     if let Some(el) = el_data.get(tag) {
         calculate_compat_score(
             String::from(tag),
@@ -26,10 +26,12 @@ pub fn lookup_element(
             LookupType::Element(String::from(tag)),
             results,
             browser_data_params,
-        );
+        )?;
     } else {
         web_sys::console::error_1(&JsValue::from_str(&format!("<{}> is not an element", tag)));
     }
+
+    Ok(())
 }
 
 pub fn multi_lookup_element(
@@ -38,7 +40,7 @@ pub fn multi_lookup_element(
     el_data: &HashMap<String, CompatElement>,
     element_cache: &mut HashSet<String>,
     browser_data_params: &Vec<BrowserDataParamType>,
-) {
+) -> Result<(), JsError> {
     if let Some(el) = el_data.get(tag) {
         if !element_cache.contains(tag) {
             calculate_compat_score(
@@ -47,7 +49,7 @@ pub fn multi_lookup_element(
                 LookupType::Element(String::from(tag)),
                 results,
                 browser_data_params,
-            );
+            )?;
 
             element_cache.insert(tag.to_string());
         }
@@ -59,6 +61,8 @@ pub fn multi_lookup_element(
 
         element_cache.insert(tag.to_string());
     }
+
+    Ok(())
 }
 
 pub fn lookup_attribs(
@@ -68,7 +72,7 @@ pub fn lookup_attribs(
     el_data: &HashMap<String, CompatElement>,
     g_attrib_data: &HashMap<String, CompatGlobalAttribs>,
     browser_data_params: &Vec<BrowserDataParamType>,
-) {
+) -> Result<(), JsError> {
     for (name, value) in attribs {
         if let Some(g_attrib) = g_attrib_data.get(&name) {
             calculate_compat_score(
@@ -77,7 +81,7 @@ pub fn lookup_attribs(
                 LookupType::Attribute(name),
                 results,
                 browser_data_params,
-            );
+            )?;
             continue;
         } else if name.starts_with("data-")
             && let Some(d_attrib) = g_attrib_data.get("data_attributes")
@@ -88,7 +92,7 @@ pub fn lookup_attribs(
                 LookupType::Attribute("data-attributes".to_string()),
                 results,
                 browser_data_params,
-            );
+            )?;
             continue;
         }
         if let Some(el) = el_data.get(tag) {
@@ -101,7 +105,7 @@ pub fn lookup_attribs(
                     LookupType::Attribute(name),
                     results,
                     browser_data_params,
-                );
+                )?;
                 continue;
             }
 
@@ -112,7 +116,7 @@ pub fn lookup_attribs(
                     LookupType::Attribute(name),
                     results,
                     browser_data_params,
-                );
+                )?;
                 continue;
             }
         } else {
@@ -121,6 +125,8 @@ pub fn lookup_attribs(
 
         web_sys::console::error_1(&JsValue::from_str(&format!("{} is not an attribute", name)));
     }
+
+    Ok(())
 }
 
 pub fn multi_lookup_attribs(
@@ -131,7 +137,7 @@ pub fn multi_lookup_attribs(
     g_attrib_data: &HashMap<String, CompatGlobalAttribs>,
     attrib_cache: &mut HashSet<String>,
     browser_data_params: &Vec<BrowserDataParamType>,
-) {
+) -> Result<(), JsError> {
     for (name, value) in attribs {
         if let Some(g_attrib) = g_attrib_data.get(&name) {
             if !attrib_cache.contains(&name) {
@@ -141,7 +147,7 @@ pub fn multi_lookup_attribs(
                     LookupType::Attribute(name.clone()),
                     results,
                     browser_data_params,
-                );
+                )?;
                 attrib_cache.insert(name);
             }
             continue;
@@ -154,7 +160,7 @@ pub fn multi_lookup_attribs(
                 LookupType::Attribute("data-attributes".to_string()),
                 results,
                 browser_data_params,
-            );
+            )?;
             attrib_cache.insert(name);
 
             continue;
@@ -170,7 +176,7 @@ pub fn multi_lookup_attribs(
                         LookupType::Attribute(format!("type_{value}")),
                         results,
                         browser_data_params,
-                    );
+                    )?;
                     attrib_cache.insert(format!("type_{value}"));
                 }
                 continue;
@@ -183,7 +189,7 @@ pub fn multi_lookup_attribs(
                         LookupType::Attribute(name.clone()),
                         results,
                         browser_data_params,
-                    );
+                    )?;
                     attrib_cache.insert(name);
                 }
                 continue;
@@ -204,4 +210,6 @@ pub fn multi_lookup_attribs(
             attrib_cache.insert(name);
         }
     }
+
+    Ok(())
 }

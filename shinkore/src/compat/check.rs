@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use lol_html::html_content::Attribute;
+use wasm_bindgen::JsError;
 
 use crate::{
     BrowserDataParamType, HTMLData, LookupResults, SVGData,
@@ -14,7 +15,7 @@ pub fn compat_check(
     html_data: &HTMLData,
     svg_data: &SVGData,
     browser_data_params: Vec<BrowserDataParamType>,
-) -> Vec<LookupResults> {
+) -> Result<Vec<LookupResults>, JsError> {
     let mut overall_results: Vec<LookupResults> = vec![];
     let mut attribs: HashMap<String, String> = HashMap::new();
 
@@ -28,7 +29,7 @@ pub fn compat_check(
             &mut overall_results,
             &svg_data.el_data,
             &browser_data_params,
-        );
+        )?;
         lookup_attribs(
             tag_name,
             attribs,
@@ -36,14 +37,14 @@ pub fn compat_check(
             &svg_data.el_data,
             &svg_data.g_attrib_data,
             &browser_data_params,
-        );
+        )?;
     } else {
         lookup_element(
             tag_name,
             &mut overall_results,
             &html_data.el_data,
             &browser_data_params,
-        );
+        )?;
         lookup_attribs(
             tag_name,
             attribs,
@@ -51,10 +52,10 @@ pub fn compat_check(
             &html_data.el_data,
             &html_data.g_attrib_data,
             &browser_data_params,
-        );
+        )?;
     }
 
-    overall_results
+    Ok(overall_results)
 }
 
 pub fn multi_compat_check(
@@ -65,7 +66,7 @@ pub fn multi_compat_check(
     element_cache: &mut HashSet<String>,
     attrib_cache: &mut HashSet<String>,
     browser_data_params: Vec<BrowserDataParamType>,
-) -> Vec<LookupResults> {
+) -> Result<Vec<LookupResults>, JsError> {
     let mut overall_results: Vec<LookupResults> = vec![];
     let mut attribs: HashMap<String, String> = HashMap::new();
 
@@ -80,7 +81,7 @@ pub fn multi_compat_check(
             &svg_data.el_data,
             element_cache,
             &browser_data_params,
-        );
+        )?;
         multi_lookup_attribs(
             tag_name,
             attribs,
@@ -89,7 +90,7 @@ pub fn multi_compat_check(
             &svg_data.g_attrib_data,
             attrib_cache,
             &browser_data_params,
-        );
+        )?;
     } else {
         multi_lookup_element(
             tag_name,
@@ -97,7 +98,7 @@ pub fn multi_compat_check(
             &html_data.el_data,
             element_cache,
             &browser_data_params,
-        );
+        )?;
         multi_lookup_attribs(
             tag_name,
             attribs,
@@ -106,8 +107,8 @@ pub fn multi_compat_check(
             &html_data.g_attrib_data,
             attrib_cache,
             &browser_data_params,
-        );
+        )?;
     }
 
-    overall_results
+    Ok(overall_results)
 }
