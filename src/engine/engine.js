@@ -97,7 +97,11 @@ export class SKEngine {
      * @param {string} element 
      */
     checkElement(element) {
-        console.dir(this.compatEngine?.check_element(element))
+        try {
+            console.dir(this.compatEngine?.check_element(element))
+        } catch (error) {
+            console.error(error)
+        }
     }
 
     /**
@@ -106,7 +110,11 @@ export class SKEngine {
      * @param {number} depthLevel 
      */
     checkElements(html, depthLevel) {
-        console.dir(this.compatEngine?.check_elements(html, depthLevel))
+        try {
+            console.dir(this.compatEngine?.check_elements(html, depthLevel))
+        } catch (error) {
+            console.error(error)
+        }
     }
 
     /**
