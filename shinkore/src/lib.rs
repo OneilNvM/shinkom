@@ -12,6 +12,8 @@ use crate::prelude::*;
 use lol_html::{RewriteStrSettings, element, rewrite_str};
 use wasm_bindgen::prelude::*;
 
+/// The [`CompatEngine`] struct stores the compatibility data
+/// and acts as an entry-point for the Rust/WASM engine.
 #[derive(Serialize, Deserialize, Default)]
 #[wasm_bindgen]
 pub struct CompatEngine {
@@ -23,6 +25,7 @@ pub struct CompatEngine {
 
 #[wasm_bindgen]
 impl CompatEngine {
+    /// Constructs an new engine instance
     #[wasm_bindgen(constructor)]
     pub fn new(
         bcd_html_data: JsValue,
@@ -73,19 +76,26 @@ impl CompatEngine {
 
     /// Used for checking the compatibility of a single element and its attributes.
     #[wasm_bindgen]
-    pub fn check_element(&self, html: &str) -> JsValue {
+    pub fn check_element(&self, html: &str) -> Result<JsValue, JsError> {
         let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
 
-        let formatted = format_html(html);
+        // Format HTML tags onto individual lines
+        let formatted = format_html(html)?;
 
-        let first_line = formatted.lines().next().unwrap();
+        // Only get the first line of the HTML String
+        let first_line = formatted
+            .lines()
+            .next()
+            .ok_or_else(|| JsError::new("no lines were found in HTML"))?;
 
+        // Store references to compatibility data to be used in element_content_handlers closure
         let html_data = &self.html;
         let svg_data = &self.svg;
         let browser_data = &self.browser_data;
         let usage_data = &self.browser_usage_data;
 
-        let _ = rewrite_str(
+        // Use rewrite_str to find tag for compatibility check
+        let rewrite = rewrite_str(
             first_line,
             RewriteStrSettings {
                 element_content_handlers: vec![element!("*", |el| {
@@ -107,17 +117,19 @@ impl CompatEngine {
                 })],
                 ..Default::default()
             },
-        )
-        .unwrap_or_else(|e| {
-            web_sys::console::error_1(&JsValue::from_str(&format!(
-                "Error occurred rewriting html: {e}"
-            )));
-            String::new()
-        });
+        );
 
+        if let Err(e) = rewrite {
+            return Err(JsError::new(&format!("Error occurred rewriting html: {e}")));
+        }
+
+        // Calculates the overall score
         let mut final_score: f32 = 0.0;
         for res in &*results.borrow() {
-            final_score += res.compat_score.parse::<f32>().unwrap_or(0_f32);
+            final_score += res
+                .compat_score
+                .parse::<f32>()
+                .map_err(|e| JsError::new(&e.to_string()))?;
         }
 
         let compat_result = CompatResult {
@@ -125,12 +137,12 @@ impl CompatEngine {
             lookup_results: results.borrow().to_vec(),
         };
 
-        serde_wasm_bindgen::to_value(&compat_result).unwrap_or_else(|e| {
-            web_sys::console::error_1(&JsValue::from_str(&format!(
+        match serde_wasm_bindgen::to_value(&compat_result) {
+            Ok(val) => Ok(val),
+            Err(e) => Err(JsError::new(&format!(
                 "Error occurred parsing lookup results: {e}"
-            )));
-            JsValue::null()
-        })
+            ))),
+        }
     }
 
     /// Used for checking the compatibility of multiple elements and their attributes
@@ -140,20 +152,24 @@ impl CompatEngine {
     ///
     /// See [`helpers::pre_process_html`] to learn more about how `depth_level` works.
     #[wasm_bindgen]
-    pub fn check_elements(&self, html: &str, depth_level: u32) -> JsValue {
+    pub fn check_elements(&self, html: &str, depth_level: u32) -> Result<JsValue, JsError> {
         let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
 
-        let elements = pre_process_html(&format_html(html), depth_level);
+        // Pre-process HTML to return the appropriate String of elements
+        let elements = pre_process_html(&format_html(html)?, depth_level);
 
+        // Store references to compatibility data to be used in element_content_handlers closure
         let html_data = &self.html;
         let svg_data = &self.svg;
         let browser_data = &self.browser_data;
         let usage_data = &self.browser_usage_data;
 
+        // Create HashSet cache to prevent repeated element/ attribute searches
         let mut element_cache: HashSet<String> = HashSet::new();
         let mut attrib_cache: HashSet<String> = HashSet::new();
 
-        let _ = rewrite_str(
+        // Use rewrite_str to find tags for compatibility checks
+        let rewrite = rewrite_str(
             &elements,
             RewriteStrSettings {
                 element_content_handlers: vec![element!("*", |el| {
@@ -179,9 +195,17 @@ impl CompatEngine {
             },
         );
 
+        if let Err(e) = rewrite {
+            return Err(JsError::new(&format!("Error occurred rewriting html: {e}")));
+        }
+
+        // Calculates the overall score
         let mut final_score: f32 = 0.0;
         for res in &*results.borrow() {
-            final_score += res.compat_score.parse::<f32>().unwrap_or(0_f32);
+            final_score += res
+                .compat_score
+                .parse::<f32>()
+                .map_err(|e| JsError::new(&e.to_string()))?;
         }
 
         let compat_result = CompatResult {
@@ -189,30 +213,34 @@ impl CompatEngine {
             lookup_results: results.borrow().to_vec(),
         };
 
-        serde_wasm_bindgen::to_value(&compat_result).unwrap_or_else(|e| {
-            web_sys::console::error_1(&JsValue::from_str(&format!(
+        match serde_wasm_bindgen::to_value(&compat_result) {
+            Ok(val) => Ok(val),
+            Err(e) => Err(JsError::new(&format!(
                 "Error occurred parsing lookup results: {e}"
-            )));
-            JsValue::null()
-        })
+            ))),
+        }
     }
 
     /// Used for performing a full page compatibility check.
     #[wasm_bindgen]
-    pub fn full_inspect(&self, html: &str) -> JsValue {
+    pub fn full_inspect(&self, html: &str) -> Result<JsValue, JsError> {
         let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
 
-        let formatted = format_html(html);
+        // Format the HTML tags onto individual lines
+        let formatted = format_html(html)?;
 
+        // Store references to compatibility data to be used in element_content_handlers closure
         let html_data = &self.html;
         let svg_data = &self.svg;
         let browser_data = &self.browser_data;
         let usage_data = &self.browser_usage_data;
 
+        // Create HashSet cache to prevent repeated element/ attribute searches
         let mut element_cache: HashSet<String> = HashSet::new();
         let mut attrib_cache: HashSet<String> = HashSet::new();
 
-        let _ = rewrite_str(
+        // Use rewrite_str to find tags for compatibility checks
+        let rewrite = rewrite_str(
             &formatted,
             RewriteStrSettings {
                 element_content_handlers: vec![element!("*", |el| {
@@ -238,9 +266,14 @@ impl CompatEngine {
             },
         );
 
+        if let Err(e) = rewrite {
+            return Err(JsError::new(&format!("Error occurred rewriting html: {e}")));
+        }
+
+        // Calculates the overall score
         let mut final_score: f32 = 0.0;
         for res in &*results.borrow() {
-            final_score += res.compat_score.parse::<f32>().unwrap_or(0_f32);
+            final_score += res.compat_score.parse::<f32>().map_err(|e| JsError::new(&e.to_string()))?;
         }
 
         let compat_result = CompatResult {
@@ -248,11 +281,11 @@ impl CompatEngine {
             lookup_results: results.borrow().to_vec(),
         };
 
-        serde_wasm_bindgen::to_value(&compat_result).unwrap_or_else(|e| {
-            web_sys::console::error_1(&JsValue::from_str(&format!(
+        match serde_wasm_bindgen::to_value(&compat_result) {
+            Ok(val) => Ok(val),
+            Err(e) => Err(JsError::new(&format!(
                 "Error occurred parsing lookup results: {e}"
-            )));
-            JsValue::null()
-        })
+            ))),
+        }
     }
 }
