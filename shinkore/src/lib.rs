@@ -1,13 +1,13 @@
 pub mod compat;
 mod constants;
-pub mod helpers;
+pub mod preprocess;
 mod prelude;
 mod schema;
 use std::collections::HashSet;
 use std::{cell::RefCell, rc::Rc};
 
 use crate::compat::check::{compat_check, multi_compat_check};
-use crate::helpers::{format_html, pre_process_html};
+use crate::preprocess::{format_html, pre_process_html};
 use crate::prelude::*;
 use lol_html::{RewriteStrSettings, element, rewrite_str};
 use wasm_bindgen::prelude::*;

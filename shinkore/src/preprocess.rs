@@ -33,7 +33,7 @@ use crate::constants::IGNORE_TAGS;
 /// If we call the function with a depth level of 3:
 ///
 /// ```rust
-/// use shinkore::helpers::pre_process_html;
+/// use shinkore::preprocess::pre_process_html;
 ///
 /// let html = "example"; // Example html above
 ///
@@ -182,7 +182,7 @@ pub fn pre_process_html(html: &str, depth_level: u32) -> String {
 /// ## Examples
 ///
 /// ```rust
-/// use shinkore::helpers::write_close_tag;
+/// use shinkore::preprocess::write_close_tag;
 ///
 /// // Single open tag
 ///
@@ -247,7 +247,7 @@ pub fn write_close_tag(line: &str) -> Option<String> {
 /// ## Examples
 ///
 /// ```rust
-/// use shinkore::helpers::format_html;
+/// use shinkore::preprocess::format_html;
 /// use wasm_bindgen::JsError;
 ///
 /// fn main() -> Result<(), JsError> {

@@ -1,4 +1,4 @@
-use shinkore::helpers::{format_html, pre_process_html, write_close_tag};
+use shinkore::preprocess::{format_html, pre_process_html, write_close_tag};
 use wasm_bindgen::JsError;
 
 #[test]
