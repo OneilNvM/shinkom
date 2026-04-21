@@ -1,18 +1,19 @@
+//! Module contains functions for performing compatibility data lookup logic to calculate the
+//! compatibility score.
 use std::collections::{HashMap, HashSet};
 
 use wasm_bindgen::{JsError, JsValue};
 
 use crate::{
     BrowserDataParamType, LookupResults,
-    compat::{LookupType, calculate::calculate_compat_score},
+    compat::{CompatType, LookupType, calculate::calculate_compat_score},
     schema::{CompatElement, CompatGlobalAttribs},
 };
 
-pub enum CompatType<'a> {
-    Element(&'a CompatElement),
-    GlobalAttributes(&'a CompatGlobalAttribs),
-}
-
+/// Perform a compatibility lookup for a single element.
+/// 
+/// ## Errors
+/// A [`JsError`] is returned if there are any errors in score calculations.
 pub fn lookup_element(
     tag: &str,
     results: &mut Vec<LookupResults>,
@@ -34,6 +35,10 @@ pub fn lookup_element(
     Ok(())
 }
 
+/// Perform compatibility lookups for multiple elements.
+/// 
+/// ## Errors
+/// A [`JsError`] is returned if there are any errors in score calculations.
 pub fn multi_lookup_element(
     tag: &str,
     results: &mut Vec<LookupResults>,
@@ -42,6 +47,7 @@ pub fn multi_lookup_element(
     browser_data_params: &Vec<BrowserDataParamType>,
 ) -> Result<(), JsError> {
     if let Some(el) = el_data.get(tag) {
+        // Store tag name in element cache to prevent duplicate element lookups
         if !element_cache.contains(tag) {
             calculate_compat_score(
                 String::from(tag),
@@ -65,6 +71,10 @@ pub fn multi_lookup_element(
     Ok(())
 }
 
+/// Perform compatibility lookups for an element's attributes.
+/// 
+/// ## Errors
+/// A [`JsError`] is returned if there are any errors in score calculations.
 pub fn lookup_attribs(
     tag: &str,
     attribs: HashMap<String, String>,
@@ -75,6 +85,7 @@ pub fn lookup_attribs(
 ) -> Result<(), JsError> {
     for (name, value) in attribs {
         if let Some(g_attrib) = g_attrib_data.get(&name) {
+            // Handle global attribute lookups
             calculate_compat_score(
                 name.clone(),
                 CompatType::GlobalAttributes(g_attrib),
@@ -86,6 +97,7 @@ pub fn lookup_attribs(
         } else if name.starts_with("data-")
             && let Some(d_attrib) = g_attrib_data.get("data_attributes")
         {
+            // Handle special data-* attribute lookups
             calculate_compat_score(
                 "data-attributes".to_string(),
                 CompatType::GlobalAttributes(d_attrib),
@@ -99,6 +111,7 @@ pub fn lookup_attribs(
             if tag == "input"
                 && let Some(input_attrib) = el.sub_features.get(&format!("type_{value}"))
             {
+                // Handle input attribute lookups
                 calculate_compat_score(
                     name.clone(),
                     CompatType::Element(input_attrib),
@@ -110,6 +123,7 @@ pub fn lookup_attribs(
             }
 
             if let Some(l_attrib) = el.sub_features.get(&name) {
+                // Handle local attribute lookups
                 calculate_compat_score(
                     name.clone(),
                     CompatType::Element(l_attrib),
@@ -129,6 +143,10 @@ pub fn lookup_attribs(
     Ok(())
 }
 
+/// Perform compatibility lookups for multiple elements' attributes.
+/// 
+/// ## Errors
+/// A [`JsError`] is returned if there are any errors in score calculations.
 pub fn multi_lookup_attribs(
     tag: &str,
     attribs: HashMap<String, String>,
@@ -140,6 +158,7 @@ pub fn multi_lookup_attribs(
 ) -> Result<(), JsError> {
     for (name, value) in attribs {
         if let Some(g_attrib) = g_attrib_data.get(&name) {
+            // Store global attribute name in attribute cache to prevent duplicate attribute lookups
             if !attrib_cache.contains(&name) {
                 calculate_compat_score(
                     name.clone(),
@@ -154,6 +173,7 @@ pub fn multi_lookup_attribs(
         } else if name.starts_with("data-")
             && let Some(d_attrib) = g_attrib_data.get("data_attributes")
         {
+            // Store special data-* attribute name in attribute cache to prevent duplicate attribute lookups
             calculate_compat_score(
                 "data-attributes".to_string(),
                 CompatType::GlobalAttributes(d_attrib),
@@ -169,6 +189,7 @@ pub fn multi_lookup_attribs(
             if tag == "input"
                 && let Some(input_attrib) = el.sub_features.get(&format!("type_{value}"))
             {
+                // Store input attribute name in attribute cache to prevent duplicate attribute lookups
                 if !attrib_cache.contains(&format!("type_{value}")) {
                     calculate_compat_score(
                         format!("type_{value}"),
@@ -182,6 +203,7 @@ pub fn multi_lookup_attribs(
                 continue;
             }
             if let Some(l_attrib) = el.sub_features.get(&name) {
+                // Store local attribute name in attribute cache to prevent duplicate attribute lookups
                 if !attrib_cache.contains(&name) {
                     calculate_compat_score(
                         name.clone(),
@@ -201,6 +223,7 @@ pub fn multi_lookup_attribs(
             )));
         }
 
+        // Insert name into attribute cache to prevent duplicate error messages
         if !attrib_cache.contains(&name) {
             web_sys::console::error_1(&JsValue::from_str(&format!(
                 "{} is not an attribute or has no compat data",

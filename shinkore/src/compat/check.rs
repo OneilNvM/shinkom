@@ -1,3 +1,4 @@
+/// Module contains functions involved in performing compatibility checks.
 use std::collections::{HashMap, HashSet};
 
 use lol_html::html_content::Attribute;
@@ -9,6 +10,12 @@ use crate::{
     constants::{IGNORE_TAGS, SKIP_TAGS},
 };
 
+/// Perform a compatibility check for a single element and its attributes.
+/// 
+/// Returns a Vector of [`LookupResults`] when successful.
+/// 
+/// ## Errors
+/// A [`JsError`] is returned if there are any errors in lookups.
 pub fn compat_check(
     tag_name: &str,
     attributes: &[Attribute<'_>],
@@ -23,6 +30,7 @@ pub fn compat_check(
         attribs.insert(attribute.name_preserve_case(), attribute.value());
     }
 
+    // If the element is an SVG element, opt for an SVG data lookup
     if svg_data.el_data.contains_key(tag_name) && !IGNORE_TAGS.contains(&tag_name) {
         lookup_element(
             tag_name,
@@ -58,6 +66,12 @@ pub fn compat_check(
     Ok(overall_results)
 }
 
+/// Perform a compatibility check for multiple elements and their attributes
+/// 
+/// Returns a Vector of [`LookupResults`] when successful
+/// 
+/// ## Errors
+/// A [`JsError`] is returned if there are any errors in lookups.
 pub fn multi_compat_check(
     tag_name: &str,
     attributes: &[Attribute<'_>],
@@ -74,6 +88,7 @@ pub fn multi_compat_check(
         attribs.insert(attribute.name_preserve_case(), attribute.value());
     }
 
+    // If the element is an SVG element, opt for an SVG data lookup
     if svg_data.el_data.contains_key(tag_name) && !SKIP_TAGS.contains(&tag_name) {
         multi_lookup_element(
             tag_name,

@@ -1,3 +1,4 @@
+//! Module contains functions for calculating the compatibility scores for web features.
 use std::collections::HashMap;
 
 use version_compare::{Cmp, compare};
@@ -5,11 +6,17 @@ use wasm_bindgen::JsError;
 
 use crate::{
     BrowserData, BrowserDataParamType, BrowserResult, BrowserUsageData, LookupResults, Scores,
-    compat::{LookupType, lookup::CompatType},
+    compat::{LookupType, CompatType},
     constants::{MAX_COMPAT_SCORE, MAX_STATUS_COMPAT_SCORE, MAX_SUM_BROWSER_SUPPORT_COMPAT_SCORES},
     schema::{Status, SupportData, SupportDetails, VersionValue},
 };
 
+/// Calculates the compatibility score for a web feature.
+/// 
+/// Performs calculations for a global attribute or an element/ local attribute.
+/// 
+/// ## Errors
+/// A [`JsError`] is returned if any errors occurr in calculations.
 pub fn calculate_compat_score(
     name: String,
     compat_type: CompatType,
@@ -26,6 +33,8 @@ pub fn calculate_compat_score(
                 &mut browser_results,
                 browser_data_params,
             )?;
+            
+            // LookupType is used for returning the appropriate error message
             let status_score = match lookup_type {
                 LookupType::Element(name) => {
                     calculate_status_score(&el.compat.status, LookupType::Element(name))?
@@ -95,6 +104,12 @@ pub fn calculate_compat_score(
     }
 }
 
+/// Calculates the status score for a web feature
+/// 
+/// Returns the score as an [`f32`].
+/// 
+/// ## Errors
+/// A [`JsError`] is returned if the status is not available for the feature.
 pub fn calculate_status_score(compat_status: &Option<Status>, lookup_type: LookupType) -> Result<f32, JsError> {
     let mut status_score = 0.0;
     if let Some(status) = compat_status {
@@ -119,6 +134,12 @@ pub fn calculate_status_score(compat_status: &Option<Status>, lookup_type: Looku
     Ok(status_score)
 }
 
+/// Calculates the browser score for a web feature.
+/// 
+/// Returns the total browser score between the available browsers.
+/// 
+/// ## Errors
+/// A [`JsError`] is returned if an error occurrs in the calculations for version scores.
 fn calculate_browser_score(
     compat_type: CompatType,
     browser_results: &mut Vec<BrowserResult>,
@@ -131,7 +152,6 @@ fn calculate_browser_score(
                 browser_score_total += calculate_version_score(
                     browser_name,
                     support,
-                    &el.compat.status,
                     browser_results,
                     browser_data_params,
                 )?;
@@ -142,7 +162,6 @@ fn calculate_browser_score(
                 browser_score_total += calculate_version_score(
                     browser_name,
                     support,
-                    &g_attrib.compat.status,
                     browser_results,
                     browser_data_params,
                 )?;
@@ -153,10 +172,19 @@ fn calculate_browser_score(
     Ok(browser_score_total)
 }
 
+/// Calculates the version score for a web feature.
+/// 
+/// This functions requires the [`BrowserData`] and [`BrowserUsageData`] parameters
+/// as part of the Vector of [`BrowserDataParamType`] in order to function.
+/// 
+/// Returns the calculated browser score for a specific browser.
+/// 
+/// ## Errors
+/// A [`JsError`] is returned if the [`BrowserDataParamType`] Vector does not contain both
+/// `browser_data` and `browser_usage_data`.
 fn calculate_version_score(
     browser_name: &String,
     support: &SupportData,
-    status: &Option<Status>,
     browser_results: &mut Vec<BrowserResult>,
     browser_data_params: &Vec<BrowserDataParamType>,
 ) -> Result<f32, JsError> {
@@ -164,6 +192,7 @@ fn calculate_version_score(
     let mut usage_data: Option<&BrowserUsageData> = None;
     let mut browser_score = 0.0;
 
+    // Retrieve data from parameter types
     for param_type in browser_data_params {
         match param_type {
             BrowserDataParamType::BrowserData(data) => browser_data = Some(data),
@@ -178,7 +207,6 @@ fn calculate_version_score(
     calculate_support(
         support,
         browser_name,
-        status,
         &mut browser_score,
         browser_results,
         browser_data.unwrap(),
@@ -188,15 +216,18 @@ fn calculate_version_score(
     Ok(browser_score)
 }
 
+/// Calculates the support score for the web feature on a specific browser.
+/// 
+/// Browser name must be present in `browser_data` or one of the `proxied` browser names.
 fn calculate_support(
     support: &SupportData,
     browser_name: &String,
-    _status: &Option<Status>,
     browser_score: &mut f32,
     browser_results: &mut Vec<BrowserResult>,
     browser_data: &BrowserData,
     usage_data: &BrowserUsageData,
 ) {
+    // Proxy browsers that have no usage data to browsers with similar engines.
     let browser_proxies = HashMap::from([
         (String::from("oculus"), String::from("chrome")),
         (
@@ -208,6 +239,7 @@ fn calculate_support(
 
     match support {
         SupportData::Single(detail) => {
+            // Calculate browser_score for version_added 
             match_version_added(browser_name, browser_score, detail, browser_data);
 
             if detail.partial_implementation.is_some() {
@@ -217,6 +249,7 @@ fn calculate_support(
                 && let VersionValue::Version(added) = &detail.version_added
                 && let VersionValue::Version(removed) = detail.version_removed.as_ref().unwrap()
             {
+                // Make sure to check which is greater between version_added and version_removed
                 match compare(removed, added) {
                     Ok(Cmp::Lt) | Ok(Cmp::Eq) => *browser_score = 100.0,
                     Ok(Cmp::Gt) => *browser_score = 0.0,
@@ -224,9 +257,11 @@ fn calculate_support(
                 }
             }
 
+            // Get the raw score before the weighting calculation
             let raw_score = format!("{:.2}", *browser_score);
 
             if browser_data.browsers.contains_key(browser_name) {
+                // Calculate the proxy weight if the browser name is proxied
                 if browser_proxies.contains_key(browser_name) {
                     let proxy_name = browser_proxies.get(browser_name).unwrap();
 
@@ -246,11 +281,14 @@ fn calculate_support(
             })
         }
         SupportData::Multiple(details) => {
+            // Separate the total weighted score from the total raw score
             let mut sum_of_raw_scores = 0.0;
             let mut sum_of_weighted_scores = 0.0;
 
             for detail in details {
                 let mut support_score = 0.0;
+                
+                // Use support_score instead of browser_score for average calculations later
                 match_version_added(
                     browser_name,
                     &mut support_score,
@@ -265,6 +303,7 @@ fn calculate_support(
                     && let VersionValue::Version(added) = &detail.version_added
                     && let VersionValue::Version(removed) = detail.version_removed.as_ref().unwrap()
                 {
+                    // Make sure to check which is greater between version_added and version_removed
                     match compare(removed, added) {
                         Ok(Cmp::Lt) | Ok(Cmp::Eq) => *browser_score = 100.0,
                         Ok(Cmp::Gt) => *browser_score = 0.0,
@@ -275,6 +314,7 @@ fn calculate_support(
                 sum_of_raw_scores += support_score;
 
                 if browser_data.browsers.contains_key(browser_name) {
+                    // Calculate the proxy weight if the browser name is proxied
                     if browser_proxies.contains_key(browser_name) {
                         let proxy_name = browser_proxies.get(browser_name).unwrap();
 
@@ -287,6 +327,7 @@ fn calculate_support(
                 sum_of_weighted_scores += support_score
             }
 
+            // Calculate the averages for the raw score and weighted score
             sum_of_raw_scores /= details.len() as f32;
             *browser_score = sum_of_weighted_scores / details.len() as f32;
 
@@ -308,12 +349,20 @@ fn calculate_support(
                     *browser_score = 100.0;
                 }
             }
-            VersionValue::Unknown(_) => (),
+            _ => (),
         },
-        SupportData::Unknown(_) => (),
+        _ => (),
     }
 }
 
+/// Calculates the weighted score for an individual browser.
+/// 
+/// The weight is calculated by summing the total usage between a browser's versions and dividing it by
+/// the total market share. This is then multiplied with the raw browser score giving the weighted score,
+/// based on browser usage.
+/// 
+/// A higher weighted score **(e.g. 20)** means a feature is more likely to affect a lot of users on a browser, meanwhile
+/// a low score **(e.g. 0.2)** means that it won't affect many users.
 fn calculate_weight(
     browser_name: &String,
     proxied: bool,
@@ -321,6 +370,7 @@ fn calculate_weight(
     browser_score: &mut f32,
 ) {
     if let Some(usage) = usage_data.agents.get(browser_name) {
+        // Set total usage to 0 if the browser is proxied
         let total_usage = if proxied {
             0.0
         } else {
@@ -332,6 +382,7 @@ fn calculate_weight(
     }
 }
 
+/// Matches the [`VersionValue`] variant of the `version_added` field.
 fn match_version_added(
     browser_name: &String,
     browser_score: &mut f32,
