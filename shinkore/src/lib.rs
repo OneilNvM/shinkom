@@ -28,9 +28,9 @@ mod schema;
 use std::collections::HashSet;
 use std::{cell::RefCell, rc::Rc};
 
-use crate::compat::check::{compat_check, multi_compat_check};
-use crate::prelude::*;
-use crate::preprocess::{format_html, pre_process_html};
+use compat::check::{compat_check, multi_compat_check};
+use prelude::*;
+use preprocess::{format_html, pre_process_html};
 use lol_html::{RewriteStrSettings, element, rewrite_str};
 use wasm_bindgen::prelude::*;
 
