@@ -83,7 +83,7 @@ pub fn pre_process_html(html: &str, depth_level: u32) -> String {
     while cur_line.is_some() {
         let line = cur_line.unwrap();
 
-        // Reset `parent` if parent is true 
+        // Reset `parent` if parent is true
         // and when current depth is less than depth level
         if cur_depth < depth_level && parent {
             parent = false;
@@ -103,7 +103,7 @@ pub fn pre_process_html(html: &str, depth_level: u32) -> String {
             continue;
         }
 
-        // Handle situations when current depth is greater than or equal to depth level 
+        // Handle situations when current depth is greater than or equal to depth level
         if cur_depth >= depth_level {
             // Decrement `cur_depth` and remove a close tag if the current line matches the last close tag
             if line == close_tags.last().unwrap() {
@@ -147,7 +147,7 @@ pub fn pre_process_html(html: &str, depth_level: u32) -> String {
             } else {
                 cur_depth += 1;
                 close_tags.push(close_tag);
-                
+
                 // Push line to result if current depth is less than depth level
                 if cur_depth < depth_level {
                     result.push("\n");
@@ -228,7 +228,9 @@ pub fn write_close_tag(line: &str) -> Option<String> {
                         if open_tags_inner.borrow().contains_key(&end.name()) {
                             open_tags_inner.borrow_mut().remove(&end.name());
                             match open_tags_inner.borrow().iter().last() {
-                                Some((_, tag)) => *end_tag_inner.borrow_mut() = Some(tag.to_owned()),
+                                Some((_, tag)) => {
+                                    *end_tag_inner.borrow_mut() = Some(tag.to_owned())
+                                }
                                 None => *end_tag_inner.borrow_mut() = None,
                             }
                         }

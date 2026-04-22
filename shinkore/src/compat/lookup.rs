@@ -11,7 +11,7 @@ use crate::{
 };
 
 /// Perform a compatibility lookup for a single element.
-/// 
+///
 /// ## Errors
 /// A [`JsError`] is returned if there are any errors in score calculations.
 pub fn lookup_element(
@@ -36,7 +36,7 @@ pub fn lookup_element(
 }
 
 /// Perform compatibility lookups for multiple elements.
-/// 
+///
 /// ## Errors
 /// A [`JsError`] is returned if there are any errors in score calculations.
 pub fn multi_lookup_element(
@@ -72,7 +72,7 @@ pub fn multi_lookup_element(
 }
 
 /// Perform compatibility lookups for an element's attributes.
-/// 
+///
 /// ## Errors
 /// A [`JsError`] is returned if there are any errors in score calculations.
 pub fn lookup_attribs(
@@ -144,7 +144,7 @@ pub fn lookup_attribs(
 }
 
 /// Perform compatibility lookups for multiple elements' attributes.
-/// 
+///
 /// ## Errors
 /// A [`JsError`] is returned if there are any errors in score calculations.
 pub fn multi_lookup_attribs(

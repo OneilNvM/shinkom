@@ -11,9 +11,9 @@ use crate::{
 };
 
 /// Perform a compatibility check for a single element and its attributes.
-/// 
+///
 /// Returns a Vector of [`LookupResults`] when successful.
-/// 
+///
 /// ## Errors
 /// A [`JsError`] is returned if there are any errors in lookups.
 pub fn compat_check(
@@ -67,9 +67,9 @@ pub fn compat_check(
 }
 
 /// Perform a compatibility check for multiple elements and their attributes
-/// 
+///
 /// Returns a Vector of [`LookupResults`] when successful
-/// 
+///
 /// ## Errors
 /// A [`JsError`] is returned if there are any errors in lookups.
 pub fn multi_compat_check(

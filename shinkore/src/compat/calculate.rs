@@ -6,15 +6,15 @@ use wasm_bindgen::JsError;
 
 use crate::{
     BrowserData, BrowserDataParamType, BrowserResult, BrowserUsageData, LookupResults, Scores,
-    compat::{LookupType, CompatType},
+    compat::{CompatType, LookupType},
     constants::{MAX_COMPAT_SCORE, MAX_STATUS_COMPAT_SCORE, MAX_SUM_BROWSER_SUPPORT_COMPAT_SCORES},
     schema::{Status, SupportData, SupportDetails, VersionValue},
 };
 
 /// Calculates the compatibility score for a web feature.
-/// 
+///
 /// Performs calculations for a global attribute or an element/ local attribute.
-/// 
+///
 /// ## Errors
 /// A [`JsError`] is returned if any errors occurr in calculations.
 pub fn calculate_compat_score(
@@ -33,7 +33,7 @@ pub fn calculate_compat_score(
                 &mut browser_results,
                 browser_data_params,
             )?;
-            
+
             // LookupType is used for returning the appropriate error message
             let status_score = match lookup_type {
                 LookupType::Element(name) => {
@@ -105,12 +105,15 @@ pub fn calculate_compat_score(
 }
 
 /// Calculates the status score for a web feature
-/// 
+///
 /// Returns the score as an [`f32`].
-/// 
+///
 /// ## Errors
 /// A [`JsError`] is returned if the status is not available for the feature.
-pub fn calculate_status_score(compat_status: &Option<Status>, lookup_type: LookupType) -> Result<f32, JsError> {
+pub fn calculate_status_score(
+    compat_status: &Option<Status>,
+    lookup_type: LookupType,
+) -> Result<f32, JsError> {
     let mut status_score = 0.0;
     if let Some(status) = compat_status {
         if status.standard_track {
@@ -126,8 +129,16 @@ pub fn calculate_status_score(compat_status: &Option<Status>, lookup_type: Looku
         }
     } else {
         match lookup_type {
-            LookupType::Element(tag) => return Err(JsError::new(&format!("Status is unavailable for tag <{tag}>"))),
-            LookupType::Attribute(attribute) => return Err(JsError::new(&format!("Status is unavailable for local attribute '{attribute}'"))),
+            LookupType::Element(tag) => {
+                return Err(JsError::new(&format!(
+                    "Status is unavailable for tag <{tag}>"
+                )));
+            }
+            LookupType::Attribute(attribute) => {
+                return Err(JsError::new(&format!(
+                    "Status is unavailable for local attribute '{attribute}'"
+                )));
+            }
         }
     }
 
@@ -135,9 +146,9 @@ pub fn calculate_status_score(compat_status: &Option<Status>, lookup_type: Looku
 }
 
 /// Calculates the browser score for a web feature.
-/// 
+///
 /// Returns the total browser score between the available browsers.
-/// 
+///
 /// ## Errors
 /// A [`JsError`] is returned if an error occurrs in the calculations for version scores.
 fn calculate_browser_score(
@@ -173,12 +184,12 @@ fn calculate_browser_score(
 }
 
 /// Calculates the version score for a web feature.
-/// 
+///
 /// This functions requires the [`BrowserData`] and [`BrowserUsageData`] parameters
 /// as part of the Vector of [`BrowserDataParamType`] in order to function.
-/// 
+///
 /// Returns the calculated browser score for a specific browser.
-/// 
+///
 /// ## Errors
 /// A [`JsError`] is returned if the [`BrowserDataParamType`] Vector does not contain both
 /// `browser_data` and `browser_usage_data`.
@@ -201,7 +212,9 @@ fn calculate_version_score(
     }
 
     if browser_data.is_none() || usage_data.is_none() {
-        return Err(JsError::new("the required browser data parameter types were not given."));
+        return Err(JsError::new(
+            "the required browser data parameter types were not given.",
+        ));
     }
 
     calculate_support(
@@ -217,7 +230,7 @@ fn calculate_version_score(
 }
 
 /// Calculates the support score for the web feature on a specific browser.
-/// 
+///
 /// Browser name must be present in `browser_data` or one of the `proxied` browser names.
 fn calculate_support(
     support: &SupportData,
@@ -239,7 +252,7 @@ fn calculate_support(
 
     match support {
         SupportData::Single(detail) => {
-            // Calculate browser_score for version_added 
+            // Calculate browser_score for version_added
             match_version_added(browser_name, browser_score, detail, browser_data);
 
             if detail.partial_implementation.is_some() {
@@ -287,7 +300,7 @@ fn calculate_support(
 
             for detail in details {
                 let mut support_score = 0.0;
-                
+
                 // Use support_score instead of browser_score for average calculations later
                 match_version_added(
                     browser_name,
@@ -356,11 +369,11 @@ fn calculate_support(
 }
 
 /// Calculates the weighted score for an individual browser.
-/// 
+///
 /// The weight is calculated by summing the total usage between a browser's versions and dividing it by
 /// the total market share. This is then multiplied with the raw browser score giving the weighted score,
 /// based on browser usage.
-/// 
+///
 /// A higher weighted score **(e.g. 20)** means a feature is more likely to affect a lot of users on a browser, meanwhile
 /// a low score **(e.g. 0.2)** means that it won't affect many users.
 fn calculate_weight(
