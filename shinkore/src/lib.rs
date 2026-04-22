@@ -1,3 +1,25 @@
+//! # Shinkore
+//! 
+//! Shinkore is a cross-browser compatability data processesor and analyser originally built for the [Shinkom](https://github.com/OneilNvM/shinkom) 
+//! Javascript library. This library is made with [wasm-bindgen](https://github.com/wasm-bindgen/wasm-bindgen) which builds and outputs a WASM binary
+//! and JS '*glue code*' to allow for usage of the compatibility engine in Javascript through WebAssembly. **Keep in mind that the usage of the engine
+//! in Javascript through WebAssembly is asynchronous at initialization.**
+//! 
+//! ---
+//! 
+//! ## Notes
+//! 
+//! The library consists of modules containing functions used for performing cross-browser compatibility checks of web features on modern browsers.
+//! The engine requires compatibility data in JSON format, therefore usage of crates such as [`serde`] and [`serde_json`] or [`serde_wasm_bindgen`]
+//! for JSON parsing will be necessary. The JSON structure to follow for the compatibility data can be interpreted in the [`schema`] module, but most
+//! of the structure in the schema module is based on the [compat-data-schema](https://github.com/mdn/browser-compat-data/blob/main/schemas/compat-data-schema.md)
+//! in the [browser-compat-data](https://github.com/mdn/browser-compat-data) project by MDN, as well as the 
+//! [browser-data](https://github.com/mdn/browser-compat-data/blob/main/schemas/browsers-schema.md) format in [`prelude`].
+//! 
+//! The [`BrowserUsageData`] is based on the [caniuse-db](https://github.com/Fyrd/caniuse) format which only includes the usage data for each browser.
+//! 
+//! If your not planning on using your own custom data, then you can download each JSON file from the [gen directory](https://github.com/OneilNvM/shinkom/tree/master/gen)
+//! on the Shinkom GitHub repository.
 pub mod compat;
 mod constants;
 mod prelude;
@@ -78,6 +100,7 @@ impl CompatEngine {
     #[wasm_bindgen]
     pub fn check_element(&self, html: &str) -> Result<JsValue, JsError> {
         let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
+
 
         // Format HTML tags onto individual lines
         let formatted = format_html(html)?;
