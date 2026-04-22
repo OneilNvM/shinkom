@@ -8,9 +8,9 @@
 //! across multiple browsers.
 
 use crate::schema::{CompatElement, CompatGlobalAttribs};
-mod calculate;
+pub mod calculate;
 pub mod check;
-mod lookup;
+pub mod lookup;
 
 pub enum LookupType {
     Element(String),

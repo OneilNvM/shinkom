@@ -22,9 +22,9 @@
 //! on the Shinkom GitHub repository.
 pub mod compat;
 mod constants;
-mod prelude;
+pub mod prelude;
 pub mod preprocess;
-mod schema;
+pub mod schema;
 use std::collections::HashSet;
 use std::{cell::RefCell, rc::Rc};
 
@@ -178,7 +178,7 @@ impl CompatEngine {
     /// `depth_level` is used to control how far down in a nested HTML structure to go before
     /// returning element tags.
     ///
-    /// See [`helpers::pre_process_html`] to learn more about how `depth_level` works.
+    /// See [`preprocess::pre_process_html`] to learn more about how `depth_level` works.
     #[wasm_bindgen]
     pub fn check_elements(&self, html: &str, depth_level: u32) -> Result<JsValue, JsError> {
         let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));

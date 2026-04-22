@@ -151,7 +151,7 @@ pub fn calculate_status_score(
 ///
 /// ## Errors
 /// A [`JsError`] is returned if an error occurrs in the calculations for version scores.
-fn calculate_browser_score(
+pub fn calculate_browser_score(
     compat_type: CompatType,
     browser_results: &mut Vec<BrowserResult>,
     browser_data_params: &Vec<BrowserDataParamType>,
