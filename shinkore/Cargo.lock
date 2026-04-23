@@ -421,6 +421,7 @@ dependencies = [
  "serde",
  "serde-wasm-bindgen",
  "serde_json",
+ "thiserror",
  "version-compare",
  "wasm-bindgen",
  "web-sys",

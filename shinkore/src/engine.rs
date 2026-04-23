@@ -1,118 +1,57 @@
-//! # Shinkore
-//!
-//! Shinkore is a cross-browser compatability data processesor and analyser originally built for the [Shinkom](https://github.com/OneilNvM/shinkom)
-//! Javascript library. This library is made with [wasm-bindgen](https://github.com/wasm-bindgen/wasm-bindgen) which builds and outputs a WASM binary
-//! and JS '*glue code*' to allow for usage of the compatibility engine in Javascript through WebAssembly. **Keep in mind that the usage of the engine
-//! in Javascript through WebAssembly is asynchronous at initialization.**
-//!
-//! If you plan on using this purely in Rust, then make use of the [`engine`] module for a pure Rust application.
-//!
-//! ---
-//!
-//! ## Notes
-//!
-//! The library consists of modules containing functions used for performing cross-browser compatibility checks of web features on modern browsers.
-//! The engine requires compatibility data in JSON format, therefore usage of crates such as [`serde`] and [`serde_json`] or [`serde_wasm_bindgen`]
-//! for JSON parsing will be necessary. The JSON structure to follow for the compatibility data can be interpreted in the [`schema`] module, but most
-//! of the structure in the schema module is based on the [compat-data-schema](https://github.com/mdn/browser-compat-data/blob/main/schemas/compat-data-schema.md)
-//! in the [browser-compat-data](https://github.com/mdn/browser-compat-data) project by MDN, as well as the
-//! [browser-data](https://github.com/mdn/browser-compat-data/blob/main/schemas/browsers-schema.md) format in [`prelude`].
-//!
-//! The [`BrowserUsageData`] is based on the [caniuse-db](https://github.com/Fyrd/caniuse) format which only includes the usage data for each browser.
-//!
-//! If your not planning on using your own custom data, then you can download each JSON file from the [gen directory](https://github.com/OneilNvM/shinkom/tree/master/gen)
-//! on the Shinkom GitHub repository.
-pub mod compat;
-mod constants;
-pub mod engine;
-mod errors;
-pub mod prelude;
-pub mod preprocess;
-pub mod schema;
-use std::collections::HashSet;
-use std::{cell::RefCell, rc::Rc};
+//! This module contains a Rust compatible version of the compatibility engine.
+//! It contains the same functionality of the [`crate::CompatEngine`] version but removes any usage of the [`wasm_bindgen`] implementations
+//! and replaces [`wasm_bindgen::JsValue`] and [`wasm_bindgen::JsError`] usage with native Rust types.
+use std::{cell::RefCell, collections::HashSet, num::ParseFloatError, rc::Rc};
 
-use compat::check::{compat_check, multi_compat_check};
 use lol_html::{RewriteStrSettings, element, rewrite_str};
-use prelude::*;
-use preprocess::{format_html, pre_process_html};
-use wasm_bindgen::prelude::*;
+use serde::{Deserialize, Serialize};
 
-/// The [`CompatEngine`] struct stores the compatibility data
-/// and acts as an entry-point for the Rust/WASM engine.
+use crate::{
+    compat::check::{compat_check, multi_compat_check},
+    errors::{CheckError, PreProcessError},
+    prelude::{
+        BrowserData, BrowserDataParamType, BrowserUsageData, CompatResult, HTMLData, LookupResults,
+        SVGData,
+    },
+    preprocess::{format_html, pre_process_html},
+};
+
 #[derive(Serialize, Deserialize, Default, Debug)]
-#[wasm_bindgen]
-pub struct CompatEngine {
+pub struct RustCompatEngine {
     html: HTMLData,
     svg: SVGData,
     browser_data: BrowserData,
     browser_usage_data: BrowserUsageData,
 }
 
-#[wasm_bindgen]
-impl CompatEngine {
-    /// Constructs an new engine instance
-    #[wasm_bindgen(constructor)]
+impl RustCompatEngine {
     pub fn new(
-        bcd_html_data: JsValue,
-        bcd_svg_data: JsValue,
-        bcd_browser_data: JsValue,
-        ciu_usage_data: JsValue,
+        bcd_html_data: HTMLData,
+        bcd_svg_data: SVGData,
+        bcd_browser_data: BrowserData,
+        ciu_usage_data: BrowserUsageData,
     ) -> Self {
-        let mut engine = CompatEngine::default();
-
-        match serde_wasm_bindgen::from_value::<HTMLData>(bcd_html_data) {
-            Ok(parsed) => engine.html = parsed,
-            Err(e) => {
-                web_sys::console::error_1(&JsValue::from_str(&format!(
-                    "BCD HTML data parsing error: {e}"
-                )));
-            }
+        RustCompatEngine {
+            html: bcd_html_data,
+            svg: bcd_svg_data,
+            browser_data: bcd_browser_data,
+            browser_usage_data: ciu_usage_data,
         }
-
-        match serde_wasm_bindgen::from_value::<SVGData>(bcd_svg_data) {
-            Ok(parsed) => engine.svg = parsed,
-            Err(e) => {
-                web_sys::console::error_1(&JsValue::from_str(&format!(
-                    "BCD SVG data parsing error: {e}"
-                )));
-            }
-        }
-
-        match serde_wasm_bindgen::from_value::<BrowserData>(bcd_browser_data) {
-            Ok(parsed) => engine.browser_data = parsed,
-            Err(e) => {
-                web_sys::console::error_1(&JsValue::from_str(&format!(
-                    "BCD Browser data parsing error: {e}"
-                )));
-            }
-        }
-
-        match serde_wasm_bindgen::from_value::<BrowserUsageData>(ciu_usage_data) {
-            Ok(parsed) => engine.browser_usage_data = parsed,
-            Err(e) => {
-                web_sys::console::error_1(&JsValue::from_str(&format!(
-                    "BCD Browser Usage data parsing error: {e}"
-                )));
-            }
-        }
-
-        engine
     }
 
     /// Used for checking the compatibility of a single element and its attributes.
-    #[wasm_bindgen]
-    pub fn check_element(&self, html: &str) -> Result<JsValue, JsError> {
+    pub fn check_element(&self, html: &str) -> Result<CompatResult, CheckError> {
         let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
 
         // Format HTML tags onto individual lines
-        let formatted = format_html(html)?;
+        let formatted =
+            format_html(html).map_err(<PreProcessError as Into<CheckError>>::into)?;
 
         // Only get the first line of the HTML String
         let first_line = formatted
             .lines()
             .next()
-            .ok_or_else(|| JsError::new("no lines were found in HTML"))?;
+            .ok_or(CheckError::NoLines)?;
 
         // Store references to compatibility data to be used in element_content_handlers closure
         let html_data = &self.html;
@@ -137,12 +76,12 @@ impl CompatEngine {
                             BrowserDataParamType::BrowserData(browser_data.to_owned()),
                             BrowserDataParamType::UsageData(usage_data.to_owned()),
                         ],
-                        false,
+                        true,
                     );
 
                     match compat_results {
                         Ok(res) => results.borrow_mut().extend(res),
-                        Err(e) => return Err(format!("{e:?}").into()),
+                        Err(e) => return Err(e.into()),
                     }
 
                     Ok(())
@@ -152,7 +91,7 @@ impl CompatEngine {
         );
 
         if let Err(e) = rewrite {
-            return Err(JsError::new(&format!("Error occurred rewriting html: {e}")));
+            return Err(e.into());
         }
 
         // Calculates the overall score
@@ -161,7 +100,7 @@ impl CompatEngine {
             final_score += res
                 .compat_score
                 .parse::<f32>()
-                .map_err(|e| JsError::new(&e.to_string()))?;
+                .map_err(<ParseFloatError as Into<CheckError>>::into)?;
         }
 
         let compat_result = CompatResult {
@@ -169,12 +108,7 @@ impl CompatEngine {
             lookup_results: results.borrow().to_vec(),
         };
 
-        match serde_wasm_bindgen::to_value(&compat_result) {
-            Ok(val) => Ok(val),
-            Err(e) => Err(JsError::new(&format!(
-                "Error occurred parsing lookup results: {e}"
-            ))),
-        }
+        Ok(compat_result)
     }
 
     /// Used for checking the compatibility of multiple elements and their attributes
@@ -183,12 +117,14 @@ impl CompatEngine {
     /// returning element tags.
     ///
     /// See [`preprocess::pre_process_html`] to learn more about how `depth_level` works.
-    #[wasm_bindgen]
-    pub fn check_elements(&self, html: &str, depth_level: u32) -> Result<JsValue, JsError> {
+    pub fn check_elements(&self, html: &str, depth_level: u32) -> Result<CompatResult, CheckError> {
         let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
 
+        let formatted =
+            format_html(html).map_err(<PreProcessError as Into<CheckError>>::into)?;
+
         // Pre-process HTML to return the appropriate String of elements
-        let elements = pre_process_html(&format_html(html)?, depth_level);
+        let elements = pre_process_html(&formatted, depth_level);
 
         // Store references to compatibility data to be used in element_content_handlers closure
         let html_data = &self.html;
@@ -219,12 +155,12 @@ impl CompatEngine {
                             BrowserDataParamType::BrowserData(browser_data.to_owned()),
                             BrowserDataParamType::UsageData(usage_data.to_owned()),
                         ],
-                        false,
+                        true,
                     );
 
                     match compat_results {
                         Ok(res) => results.borrow_mut().extend(res),
-                        Err(e) => return Err(format!("{e:?}").into()),
+                        Err(e) => return Err(e.into()),
                     }
 
                     Ok(())
@@ -234,7 +170,7 @@ impl CompatEngine {
         );
 
         if let Err(e) = rewrite {
-            return Err(JsError::new(&format!("Error occurred rewriting html: {e}")));
+            return Err(e.into());
         }
 
         // Calculates the overall score
@@ -243,7 +179,7 @@ impl CompatEngine {
             final_score += res
                 .compat_score
                 .parse::<f32>()
-                .map_err(|e| JsError::new(&e.to_string()))?;
+                .map_err(<ParseFloatError as Into<CheckError>>::into)?;
         }
 
         let compat_result = CompatResult {
@@ -251,21 +187,16 @@ impl CompatEngine {
             lookup_results: results.borrow().to_vec(),
         };
 
-        match serde_wasm_bindgen::to_value(&compat_result) {
-            Ok(val) => Ok(val),
-            Err(e) => Err(JsError::new(&format!(
-                "Error occurred parsing lookup results: {e}"
-            ))),
-        }
+        Ok(compat_result)
     }
 
     /// Used for performing a full page compatibility check.
-    #[wasm_bindgen]
-    pub fn full_inspect(&self, html: &str) -> Result<JsValue, JsError> {
+    pub fn full_inspect(&self, html: &str) -> Result<CompatResult, CheckError> {
         let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
 
         // Format the HTML tags onto individual lines
-        let formatted = format_html(html)?;
+        let formatted =
+            format_html(html).map_err(<PreProcessError as Into<CheckError>>::into)?;
 
         // Store references to compatibility data to be used in element_content_handlers closure
         let html_data = &self.html;
@@ -296,7 +227,7 @@ impl CompatEngine {
                             BrowserDataParamType::BrowserData(browser_data.to_owned()),
                             BrowserDataParamType::UsageData(usage_data.to_owned()),
                         ],
-                        false,
+                        true,
                     );
 
                     match compat_results {
@@ -311,7 +242,7 @@ impl CompatEngine {
         );
 
         if let Err(e) = rewrite {
-            return Err(JsError::new(&format!("Error occurred rewriting html: {e}")));
+            return Err(e.into());
         }
 
         // Calculates the overall score
@@ -320,7 +251,7 @@ impl CompatEngine {
             final_score += res
                 .compat_score
                 .parse::<f32>()
-                .map_err(|e| JsError::new(&e.to_string()))?;
+                .map_err(<ParseFloatError as Into<CheckError>>::into)?;
         }
 
         let compat_result = CompatResult {
@@ -328,11 +259,6 @@ impl CompatEngine {
             lookup_results: results.borrow().to_vec(),
         };
 
-        match serde_wasm_bindgen::to_value(&compat_result) {
-            Ok(val) => Ok(val),
-            Err(e) => Err(JsError::new(&format!(
-                "Error occurred parsing lookup results: {e}"
-            ))),
-        }
+        Ok(compat_result)
     }
 }

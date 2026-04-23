@@ -2,12 +2,12 @@
 use std::collections::HashMap;
 
 use version_compare::{Cmp, compare};
-use wasm_bindgen::JsError;
 
 use crate::{
     BrowserData, BrowserDataParamType, BrowserResult, BrowserUsageData, LookupResults, Scores,
     compat::{CompatType, LookupType},
     constants::{MAX_COMPAT_SCORE, MAX_STATUS_COMPAT_SCORE, MAX_SUM_BROWSER_SUPPORT_COMPAT_SCORES},
+    errors::CheckError,
     schema::{Status, SupportData, SupportDetails, VersionValue},
 };
 
@@ -16,14 +16,14 @@ use crate::{
 /// Performs calculations for a global attribute or an element/ local attribute.
 ///
 /// ## Errors
-/// A [`JsError`] is returned if any errors occurr in calculations.
+/// A [`CheckError`] is returned if any errors occurr in calculations.
 pub fn calculate_compat_score(
     name: String,
     compat_type: CompatType,
     lookup_type: LookupType,
     results: &mut Vec<LookupResults>,
     browser_data_params: &Vec<BrowserDataParamType>,
-) -> Result<(), JsError> {
+) -> Result<(), CheckError> {
     let mut browser_results: Vec<BrowserResult> = vec![];
     let mut compat_score = 0.0;
     match compat_type {
@@ -109,11 +109,11 @@ pub fn calculate_compat_score(
 /// Returns the score as an [`f32`].
 ///
 /// ## Errors
-/// A [`JsError`] is returned if the status is not available for the feature.
+/// A [`CheckError`] is returned if the status is not available for the feature.
 pub fn calculate_status_score(
     compat_status: &Option<Status>,
     lookup_type: LookupType,
-) -> Result<f32, JsError> {
+) -> Result<f32, CheckError> {
     let mut status_score = 0.0;
     if let Some(status) = compat_status {
         if status.standard_track {
@@ -130,13 +130,11 @@ pub fn calculate_status_score(
     } else {
         match lookup_type {
             LookupType::Element(tag) => {
-                return Err(JsError::new(&format!(
-                    "Status is unavailable for tag <{tag}>"
-                )));
+                return Err(CheckError::MissingStatus(format!("tag <{tag}>")));
             }
             LookupType::Attribute(attribute) => {
-                return Err(JsError::new(&format!(
-                    "Status is unavailable for local attribute '{attribute}'"
+                return Err(CheckError::MissingStatus(format!(
+                    "local attribute '{attribute}'"
                 )));
             }
         }
@@ -150,12 +148,12 @@ pub fn calculate_status_score(
 /// Returns the total browser score between the available browsers.
 ///
 /// ## Errors
-/// A [`JsError`] is returned if an error occurrs in the calculations for version scores.
+/// A [`CheckError`] is returned if an error occurrs in the calculations for version scores.
 pub fn calculate_browser_score(
     compat_type: CompatType,
     browser_results: &mut Vec<BrowserResult>,
     browser_data_params: &Vec<BrowserDataParamType>,
-) -> Result<f32, JsError> {
+) -> Result<f32, CheckError> {
     let mut browser_score_total: f32 = 0.0;
     match compat_type {
         CompatType::Element(el) => {
@@ -191,14 +189,14 @@ pub fn calculate_browser_score(
 /// Returns the calculated browser score for a specific browser.
 ///
 /// ## Errors
-/// A [`JsError`] is returned if the [`BrowserDataParamType`] Vector does not contain both
+/// A [`CheckError`] is returned if the [`BrowserDataParamType`] Vector does not contain both
 /// `browser_data` and `browser_usage_data`.
 fn calculate_version_score(
     browser_name: &String,
     support: &SupportData,
     browser_results: &mut Vec<BrowserResult>,
     browser_data_params: &Vec<BrowserDataParamType>,
-) -> Result<f32, JsError> {
+) -> Result<f32, CheckError> {
     let mut browser_data: Option<&BrowserData> = None;
     let mut usage_data: Option<&BrowserUsageData> = None;
     let mut browser_score = 0.0;
@@ -212,8 +210,13 @@ fn calculate_version_score(
     }
 
     if browser_data.is_none() || usage_data.is_none() {
-        return Err(JsError::new(
-            "the required browser data parameter types were not given.",
+        return Err(CheckError::WrongBrowserDataParams(
+            String::from("BrowserData and UsageData"),
+            format!(
+                "BrowserData is {:?} and UsageData is {:?}",
+                browser_data.is_some(),
+                usage_data.is_some()
+            ),
         ));
     }
 

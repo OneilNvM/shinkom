@@ -2,11 +2,12 @@
 //! compatibility score.
 use std::collections::{HashMap, HashSet};
 
-use wasm_bindgen::{JsError, JsValue};
+use wasm_bindgen::JsValue;
 
 use crate::{
     BrowserDataParamType, LookupResults,
     compat::{CompatType, LookupType, calculate::calculate_compat_score},
+    errors::CheckError,
     schema::{CompatElement, CompatGlobalAttribs},
 };
 
@@ -19,7 +20,8 @@ pub fn lookup_element(
     results: &mut Vec<LookupResults>,
     el_data: &HashMap<String, CompatElement>,
     browser_data_params: &Vec<BrowserDataParamType>,
-) -> Result<(), JsError> {
+    rust_engine: bool,
+) -> Result<(), CheckError> {
     if let Some(el) = el_data.get(tag) {
         calculate_compat_score(
             String::from(tag),
@@ -28,8 +30,10 @@ pub fn lookup_element(
             results,
             browser_data_params,
         )?;
+    } else if rust_engine {
+        eprintln!("<{tag}> is not an element")
     } else {
-        web_sys::console::error_1(&JsValue::from_str(&format!("<{}> is not an element", tag)));
+        web_sys::console::error_1(&JsValue::from_str(&format!("<{tag}> is not an element")));
     }
 
     Ok(())
@@ -45,7 +49,8 @@ pub fn multi_lookup_element(
     el_data: &HashMap<String, CompatElement>,
     element_cache: &mut HashSet<String>,
     browser_data_params: &Vec<BrowserDataParamType>,
-) -> Result<(), JsError> {
+    rust_engine: bool,
+) -> Result<(), CheckError> {
     if let Some(el) = el_data.get(tag) {
         // Store tag name in element cache to prevent duplicate element lookups
         if !element_cache.contains(tag) {
@@ -60,11 +65,13 @@ pub fn multi_lookup_element(
             element_cache.insert(tag.to_string());
         }
     } else if !element_cache.contains(tag) {
-        web_sys::console::error_1(&JsValue::from_str(&format!(
-            "<{}> is not an element or has no compat data",
-            tag
-        )));
-
+        if rust_engine {
+            eprintln!("<{tag}> is not an element or has no compat data")
+        } else {
+            web_sys::console::error_1(&JsValue::from_str(&format!(
+                "<{tag}> is not an element or has no compat data"
+            )));
+        }
         element_cache.insert(tag.to_string());
     }
 
@@ -82,7 +89,8 @@ pub fn lookup_attribs(
     el_data: &HashMap<String, CompatElement>,
     g_attrib_data: &HashMap<String, CompatGlobalAttribs>,
     browser_data_params: &Vec<BrowserDataParamType>,
-) -> Result<(), JsError> {
+    rust_engine: bool,
+) -> Result<(), CheckError> {
     for (name, value) in attribs {
         if let Some(g_attrib) = g_attrib_data.get(&name) {
             // Handle global attribute lookups
@@ -133,11 +141,17 @@ pub fn lookup_attribs(
                 )?;
                 continue;
             }
+        } else if rust_engine {
+            eprintln!("<{tag}> is not an element")
         } else {
-            web_sys::console::error_1(&JsValue::from_str(&format!("<{}> is not an element", tag)));
+            web_sys::console::error_1(&JsValue::from_str(&format!("<{tag}> is not an element")));
         }
 
-        web_sys::console::error_1(&JsValue::from_str(&format!("{} is not an attribute", name)));
+        if rust_engine {
+            eprintln!("{name} is not an attribute")
+        } else {
+            web_sys::console::error_1(&JsValue::from_str(&format!("{name} is not an attribute")));
+        }
     }
 
     Ok(())
@@ -155,7 +169,8 @@ pub fn multi_lookup_attribs(
     g_attrib_data: &HashMap<String, CompatGlobalAttribs>,
     attrib_cache: &mut HashSet<String>,
     browser_data_params: &Vec<BrowserDataParamType>,
-) -> Result<(), JsError> {
+    rust_engine: bool,
+) -> Result<(), CheckError> {
     for (name, value) in attribs {
         if let Some(g_attrib) = g_attrib_data.get(&name) {
             // Store global attribute name in attribute cache to prevent duplicate attribute lookups
@@ -216,19 +231,23 @@ pub fn multi_lookup_attribs(
                 }
                 continue;
             }
+        } else if rust_engine {
+            eprintln!("<{tag}> is not an element or has no compat data");
         } else {
             web_sys::console::error_1(&JsValue::from_str(&format!(
-                "<{}> is not an element or has no compat data",
-                tag
+                "<{tag}> is not an element or has no compat data"
             )));
         }
 
         // Insert name into attribute cache to prevent duplicate error messages
         if !attrib_cache.contains(&name) {
-            web_sys::console::error_1(&JsValue::from_str(&format!(
-                "{} is not an attribute or has no compat data",
-                name
-            )));
+            if rust_engine {
+                eprintln!("{name} is not an attribute or has no compat data")
+            } else {
+                web_sys::console::error_1(&JsValue::from_str(&format!(
+                    "{name} is not an attribute or has no compat data"
+                )));
+            }
 
             attrib_cache.insert(name);
         }

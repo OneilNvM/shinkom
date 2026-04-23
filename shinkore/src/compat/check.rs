@@ -2,12 +2,12 @@
 use std::collections::{HashMap, HashSet};
 
 use lol_html::html_content::Attribute;
-use wasm_bindgen::JsError;
 
 use crate::{
     BrowserDataParamType, HTMLData, LookupResults, SVGData,
     compat::lookup::{lookup_attribs, lookup_element, multi_lookup_attribs, multi_lookup_element},
     constants::{IGNORE_TAGS, SKIP_TAGS},
+    errors::CheckError,
 };
 
 /// Perform a compatibility check for a single element and its attributes.
@@ -22,7 +22,8 @@ pub fn compat_check(
     html_data: &HTMLData,
     svg_data: &SVGData,
     browser_data_params: Vec<BrowserDataParamType>,
-) -> Result<Vec<LookupResults>, JsError> {
+    rust_engine: bool,
+) -> Result<Vec<LookupResults>, CheckError> {
     let mut overall_results: Vec<LookupResults> = vec![];
     let mut attribs: HashMap<String, String> = HashMap::new();
 
@@ -37,6 +38,7 @@ pub fn compat_check(
             &mut overall_results,
             &svg_data.el_data,
             &browser_data_params,
+            rust_engine,
         )?;
         lookup_attribs(
             tag_name,
@@ -45,6 +47,7 @@ pub fn compat_check(
             &svg_data.el_data,
             &svg_data.g_attrib_data,
             &browser_data_params,
+            rust_engine,
         )?;
     } else {
         lookup_element(
@@ -52,6 +55,7 @@ pub fn compat_check(
             &mut overall_results,
             &html_data.el_data,
             &browser_data_params,
+            rust_engine,
         )?;
         lookup_attribs(
             tag_name,
@@ -60,6 +64,7 @@ pub fn compat_check(
             &html_data.el_data,
             &html_data.g_attrib_data,
             &browser_data_params,
+            rust_engine,
         )?;
     }
 
@@ -80,7 +85,8 @@ pub fn multi_compat_check(
     element_cache: &mut HashSet<String>,
     attrib_cache: &mut HashSet<String>,
     browser_data_params: Vec<BrowserDataParamType>,
-) -> Result<Vec<LookupResults>, JsError> {
+    rust_engine: bool,
+) -> Result<Vec<LookupResults>, CheckError> {
     let mut overall_results: Vec<LookupResults> = vec![];
     let mut attribs: HashMap<String, String> = HashMap::new();
 
@@ -96,6 +102,7 @@ pub fn multi_compat_check(
             &svg_data.el_data,
             element_cache,
             &browser_data_params,
+            rust_engine,
         )?;
         multi_lookup_attribs(
             tag_name,
@@ -105,6 +112,7 @@ pub fn multi_compat_check(
             &svg_data.g_attrib_data,
             attrib_cache,
             &browser_data_params,
+            rust_engine,
         )?;
     } else {
         multi_lookup_element(
@@ -113,6 +121,7 @@ pub fn multi_compat_check(
             &html_data.el_data,
             element_cache,
             &browser_data_params,
+            rust_engine,
         )?;
         multi_lookup_attribs(
             tag_name,
@@ -122,6 +131,7 @@ pub fn multi_compat_check(
             &html_data.g_attrib_data,
             attrib_cache,
             &browser_data_params,
+            rust_engine,
         )?;
     }
 

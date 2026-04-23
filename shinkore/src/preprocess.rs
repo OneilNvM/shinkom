@@ -5,9 +5,8 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use lol_html::{RewriteStrSettings, element, html_content::Element, rewrite_str};
 use regex::Regex;
-use wasm_bindgen::JsError;
 
-use crate::constants::IGNORE_TAGS;
+use crate::{constants::IGNORE_TAGS, errors::PreProcessError};
 
 /// Used for pre-processing HTML to return all of the elements down to the specified `depth_level`,
 /// which **must be greater than 0**.
@@ -275,8 +274,8 @@ pub fn write_close_tag(line: &str) -> Option<String> {
 /// Ok(())
 /// }
 /// ```
-pub fn format_html(html: &str) -> Result<String, JsError> {
-    let regex = Regex::new(r">\s*<").map_err(|e| JsError::new(&e.to_string()))?;
+pub fn format_html(html: &str) -> Result<String, PreProcessError> {
+    let regex = Regex::new(r">\s*<")?;
 
     Ok(regex.replace_all(html, ">\n<").trim().to_string())
 }
