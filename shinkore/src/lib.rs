@@ -128,11 +128,15 @@ impl CompatEngine {
                     let tag_name = el.tag_name();
                     let attributes = el.attributes();
 
-                    let compat_results = compat_check(
-                        &tag_name,
+                    let ctx = ElementContext {
+                        tag_name: &tag_name,
                         attributes,
                         html_data,
                         svg_data,
+                    };
+
+                    let compat_results = compat_check(
+                        ctx,
                         vec![
                             BrowserDataParamType::BrowserData(browser_data.to_owned()),
                             BrowserDataParamType::UsageData(usage_data.to_owned()),
@@ -197,8 +201,10 @@ impl CompatEngine {
         let usage_data = &self.browser_usage_data;
 
         // Create HashSet cache to prevent repeated element/ attribute searches
-        let mut element_cache: HashSet<String> = HashSet::new();
-        let mut attrib_cache: HashSet<String> = HashSet::new();
+        let mut caches = LookupCaches {
+            element_cache: HashSet::new(),
+            attrib_cache: HashSet::new(),
+        };
 
         // Use rewrite_str to find tags for compatibility checks
         let rewrite = rewrite_str(
@@ -208,13 +214,16 @@ impl CompatEngine {
                     let tag_name = el.tag_name();
                     let attributes = el.attributes();
 
-                    let compat_results = multi_compat_check(
-                        &tag_name,
+                    let ctx = ElementContext {
+                        tag_name: &tag_name,
                         attributes,
                         html_data,
                         svg_data,
-                        &mut element_cache,
-                        &mut attrib_cache,
+                    };
+
+                    let compat_results = multi_compat_check(
+                        ctx,
+                        &mut caches,
                         vec![
                             BrowserDataParamType::BrowserData(browser_data.to_owned()),
                             BrowserDataParamType::UsageData(usage_data.to_owned()),
@@ -274,8 +283,10 @@ impl CompatEngine {
         let usage_data = &self.browser_usage_data;
 
         // Create HashSet cache to prevent repeated element/ attribute searches
-        let mut element_cache: HashSet<String> = HashSet::new();
-        let mut attrib_cache: HashSet<String> = HashSet::new();
+        let mut caches = LookupCaches {
+            element_cache: HashSet::new(),
+            attrib_cache: HashSet::new(),
+        };
 
         // Use rewrite_str to find tags for compatibility checks
         let rewrite = rewrite_str(
@@ -285,13 +296,16 @@ impl CompatEngine {
                     let tag_name = el.tag_name();
                     let attributes = el.attributes();
 
-                    let compat_results = multi_compat_check(
-                        &tag_name,
+                    let ctx = ElementContext {
+                        tag_name: &tag_name,
                         attributes,
                         html_data,
                         svg_data,
-                        &mut element_cache,
-                        &mut attrib_cache,
+                    };
+
+                    let compat_results = multi_compat_check(
+                        ctx,
+                        &mut caches,
                         vec![
                             BrowserDataParamType::BrowserData(browser_data.to_owned()),
                             BrowserDataParamType::UsageData(usage_data.to_owned()),

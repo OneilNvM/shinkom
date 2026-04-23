@@ -1,5 +1,33 @@
 //! This module exports all structs and enums in shinkore.
+use std::collections::HashSet;
+
+use lol_html::html_content::Attribute;
+
 pub use crate::schema::*;
+
+pub struct ElementContext<'a> {
+    pub tag_name: &'a str,
+    pub attributes: &'a [Attribute<'a>],
+    pub html_data: &'a HTMLData,
+    pub svg_data: &'a SVGData,
+}
+
+pub struct LookupElementsContext<'a> {
+    pub tag: &'a str,
+    pub el_data: &'a HashMap<String, CompatElement>,
+}
+
+pub struct LookupAttribsContext<'a> {
+    pub tag: &'a str,
+    pub attribs: HashMap<String, String>,
+    pub el_data: &'a HashMap<String, CompatElement>,
+    pub g_attrib_data: &'a HashMap<String, CompatGlobalAttribs>,
+}
+
+pub struct LookupCaches {
+    pub element_cache: HashSet<String>,
+    pub attrib_cache: HashSet<String>,
+}
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct HTMLData {

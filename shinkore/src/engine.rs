@@ -10,8 +10,8 @@ use crate::{
     compat::check::{compat_check, multi_compat_check},
     errors::{CheckError, PreProcessError},
     prelude::{
-        BrowserData, BrowserDataParamType, BrowserUsageData, CompatResult, HTMLData, LookupResults,
-        SVGData,
+        BrowserData, BrowserDataParamType, BrowserUsageData, CompatResult, ElementContext,
+        HTMLData, LookupCaches, LookupResults, SVGData,
     },
     preprocess::{format_html, pre_process_html},
 };
@@ -44,14 +44,10 @@ impl RustCompatEngine {
         let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
 
         // Format HTML tags onto individual lines
-        let formatted =
-            format_html(html).map_err(<PreProcessError as Into<CheckError>>::into)?;
+        let formatted = format_html(html).map_err(<PreProcessError as Into<CheckError>>::into)?;
 
         // Only get the first line of the HTML String
-        let first_line = formatted
-            .lines()
-            .next()
-            .ok_or(CheckError::NoLines)?;
+        let first_line = formatted.lines().next().ok_or(CheckError::NoLines)?;
 
         // Store references to compatibility data to be used in element_content_handlers closure
         let html_data = &self.html;
@@ -67,11 +63,15 @@ impl RustCompatEngine {
                     let tag_name = el.tag_name();
                     let attributes = el.attributes();
 
-                    let compat_results = compat_check(
-                        &tag_name,
+                    let ctx = ElementContext {
+                        tag_name: &tag_name,
                         attributes,
                         html_data,
                         svg_data,
+                    };
+
+                    let compat_results = compat_check(
+                        ctx,
                         vec![
                             BrowserDataParamType::BrowserData(browser_data.to_owned()),
                             BrowserDataParamType::UsageData(usage_data.to_owned()),
@@ -120,8 +120,7 @@ impl RustCompatEngine {
     pub fn check_elements(&self, html: &str, depth_level: u32) -> Result<CompatResult, CheckError> {
         let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
 
-        let formatted =
-            format_html(html).map_err(<PreProcessError as Into<CheckError>>::into)?;
+        let formatted = format_html(html).map_err(<PreProcessError as Into<CheckError>>::into)?;
 
         // Pre-process HTML to return the appropriate String of elements
         let elements = pre_process_html(&formatted, depth_level);
@@ -133,8 +132,10 @@ impl RustCompatEngine {
         let usage_data = &self.browser_usage_data;
 
         // Create HashSet cache to prevent repeated element/ attribute searches
-        let mut element_cache: HashSet<String> = HashSet::new();
-        let mut attrib_cache: HashSet<String> = HashSet::new();
+        let mut caches = LookupCaches {
+            element_cache: HashSet::new(),
+            attrib_cache: HashSet::new(),
+        };
 
         // Use rewrite_str to find tags for compatibility checks
         let rewrite = rewrite_str(
@@ -144,13 +145,16 @@ impl RustCompatEngine {
                     let tag_name = el.tag_name();
                     let attributes = el.attributes();
 
-                    let compat_results = multi_compat_check(
-                        &tag_name,
+                    let ctx = ElementContext {
+                        tag_name: &tag_name,
                         attributes,
                         html_data,
                         svg_data,
-                        &mut element_cache,
-                        &mut attrib_cache,
+                    };
+
+                    let compat_results = multi_compat_check(
+                        ctx,
+                        &mut caches,
                         vec![
                             BrowserDataParamType::BrowserData(browser_data.to_owned()),
                             BrowserDataParamType::UsageData(usage_data.to_owned()),
@@ -195,8 +199,7 @@ impl RustCompatEngine {
         let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
 
         // Format the HTML tags onto individual lines
-        let formatted =
-            format_html(html).map_err(<PreProcessError as Into<CheckError>>::into)?;
+        let formatted = format_html(html).map_err(<PreProcessError as Into<CheckError>>::into)?;
 
         // Store references to compatibility data to be used in element_content_handlers closure
         let html_data = &self.html;
@@ -205,8 +208,10 @@ impl RustCompatEngine {
         let usage_data = &self.browser_usage_data;
 
         // Create HashSet cache to prevent repeated element/ attribute searches
-        let mut element_cache: HashSet<String> = HashSet::new();
-        let mut attrib_cache: HashSet<String> = HashSet::new();
+        let mut caches = LookupCaches {
+            element_cache: HashSet::new(),
+            attrib_cache: HashSet::new(),
+        };
 
         // Use rewrite_str to find tags for compatibility checks
         let rewrite = rewrite_str(
@@ -216,13 +221,16 @@ impl RustCompatEngine {
                     let tag_name = el.tag_name();
                     let attributes = el.attributes();
 
-                    let compat_results = multi_compat_check(
-                        &tag_name,
+                    let ctx = ElementContext {
+                        tag_name: &tag_name,
                         attributes,
                         html_data,
                         svg_data,
-                        &mut element_cache,
-                        &mut attrib_cache,
+                    };
+
+                    let compat_results = multi_compat_check(
+                        ctx,
+                        &mut caches,
                         vec![
                             BrowserDataParamType::BrowserData(browser_data.to_owned()),
                             BrowserDataParamType::UsageData(usage_data.to_owned()),

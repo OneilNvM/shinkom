@@ -1,6 +1,6 @@
 //! Module contains functions for performing compatibility data lookup logic to calculate the
 //! compatibility score.
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use wasm_bindgen::JsValue;
 
@@ -8,7 +8,7 @@ use crate::{
     BrowserDataParamType, LookupResults,
     compat::{CompatType, LookupType, calculate::calculate_compat_score},
     errors::CheckError,
-    schema::{CompatElement, CompatGlobalAttribs},
+    prelude::{LookupAttribsContext, LookupElementsContext},
 };
 
 /// Perform a compatibility lookup for a single element.
@@ -16,24 +16,26 @@ use crate::{
 /// ## Errors
 /// A [`JsError`] is returned if there are any errors in score calculations.
 pub fn lookup_element(
-    tag: &str,
+    ctx: LookupElementsContext,
     results: &mut Vec<LookupResults>,
-    el_data: &HashMap<String, CompatElement>,
     browser_data_params: &Vec<BrowserDataParamType>,
     rust_engine: bool,
 ) -> Result<(), CheckError> {
-    if let Some(el) = el_data.get(tag) {
+    if let Some(el) = ctx.el_data.get(ctx.tag) {
         calculate_compat_score(
-            String::from(tag),
+            String::from(ctx.tag),
             CompatType::Element(el),
-            LookupType::Element(String::from(tag)),
+            LookupType::Element(String::from(ctx.tag)),
             results,
             browser_data_params,
         )?;
     } else if rust_engine {
-        eprintln!("<{tag}> is not an element")
+        eprintln!("<{}> is not an element", ctx.tag)
     } else {
-        web_sys::console::error_1(&JsValue::from_str(&format!("<{tag}> is not an element")));
+        web_sys::console::error_1(&JsValue::from_str(&format!(
+            "<{}> is not an element",
+            ctx.tag
+        )));
     }
 
     Ok(())
@@ -44,35 +46,35 @@ pub fn lookup_element(
 /// ## Errors
 /// A [`JsError`] is returned if there are any errors in score calculations.
 pub fn multi_lookup_element(
-    tag: &str,
+    ctx: LookupElementsContext,
     results: &mut Vec<LookupResults>,
-    el_data: &HashMap<String, CompatElement>,
     element_cache: &mut HashSet<String>,
     browser_data_params: &Vec<BrowserDataParamType>,
     rust_engine: bool,
 ) -> Result<(), CheckError> {
-    if let Some(el) = el_data.get(tag) {
+    if let Some(el) = ctx.el_data.get(ctx.tag) {
         // Store tag name in element cache to prevent duplicate element lookups
-        if !element_cache.contains(tag) {
+        if !element_cache.contains(ctx.tag) {
             calculate_compat_score(
-                String::from(tag),
+                String::from(ctx.tag),
                 CompatType::Element(el),
-                LookupType::Element(String::from(tag)),
+                LookupType::Element(String::from(ctx.tag)),
                 results,
                 browser_data_params,
             )?;
 
-            element_cache.insert(tag.to_string());
+            element_cache.insert(ctx.tag.to_string());
         }
-    } else if !element_cache.contains(tag) {
+    } else if !element_cache.contains(ctx.tag) {
         if rust_engine {
-            eprintln!("<{tag}> is not an element or has no compat data")
+            eprintln!("<{}> is not an element or has no compat data", ctx.tag)
         } else {
             web_sys::console::error_1(&JsValue::from_str(&format!(
-                "<{tag}> is not an element or has no compat data"
+                "<{}> is not an element or has no compat data",
+                ctx.tag
             )));
         }
-        element_cache.insert(tag.to_string());
+        element_cache.insert(ctx.tag.to_string());
     }
 
     Ok(())
@@ -83,16 +85,13 @@ pub fn multi_lookup_element(
 /// ## Errors
 /// A [`JsError`] is returned if there are any errors in score calculations.
 pub fn lookup_attribs(
-    tag: &str,
-    attribs: HashMap<String, String>,
+    ctx: LookupAttribsContext,
     results: &mut Vec<LookupResults>,
-    el_data: &HashMap<String, CompatElement>,
-    g_attrib_data: &HashMap<String, CompatGlobalAttribs>,
     browser_data_params: &Vec<BrowserDataParamType>,
     rust_engine: bool,
 ) -> Result<(), CheckError> {
-    for (name, value) in attribs {
-        if let Some(g_attrib) = g_attrib_data.get(&name) {
+    for (name, value) in ctx.attribs {
+        if let Some(g_attrib) = ctx.g_attrib_data.get(&name) {
             // Handle global attribute lookups
             calculate_compat_score(
                 name.clone(),
@@ -103,7 +102,7 @@ pub fn lookup_attribs(
             )?;
             continue;
         } else if name.starts_with("data-")
-            && let Some(d_attrib) = g_attrib_data.get("data_attributes")
+            && let Some(d_attrib) = ctx.g_attrib_data.get("data_attributes")
         {
             // Handle special data-* attribute lookups
             calculate_compat_score(
@@ -115,8 +114,8 @@ pub fn lookup_attribs(
             )?;
             continue;
         }
-        if let Some(el) = el_data.get(tag) {
-            if tag == "input"
+        if let Some(el) = ctx.el_data.get(ctx.tag) {
+            if ctx.tag == "input"
                 && let Some(input_attrib) = el.sub_features.get(&format!("type_{value}"))
             {
                 // Handle input attribute lookups
@@ -142,9 +141,12 @@ pub fn lookup_attribs(
                 continue;
             }
         } else if rust_engine {
-            eprintln!("<{tag}> is not an element")
+            eprintln!("<{}> is not an element", ctx.tag)
         } else {
-            web_sys::console::error_1(&JsValue::from_str(&format!("<{tag}> is not an element")));
+            web_sys::console::error_1(&JsValue::from_str(&format!(
+                "<{}> is not an element",
+                ctx.tag
+            )));
         }
 
         if rust_engine {
@@ -162,17 +164,14 @@ pub fn lookup_attribs(
 /// ## Errors
 /// A [`JsError`] is returned if there are any errors in score calculations.
 pub fn multi_lookup_attribs(
-    tag: &str,
-    attribs: HashMap<String, String>,
+    ctx: LookupAttribsContext,
     results: &mut Vec<LookupResults>,
-    el_data: &HashMap<String, CompatElement>,
-    g_attrib_data: &HashMap<String, CompatGlobalAttribs>,
     attrib_cache: &mut HashSet<String>,
     browser_data_params: &Vec<BrowserDataParamType>,
     rust_engine: bool,
 ) -> Result<(), CheckError> {
-    for (name, value) in attribs {
-        if let Some(g_attrib) = g_attrib_data.get(&name) {
+    for (name, value) in ctx.attribs {
+        if let Some(g_attrib) = ctx.g_attrib_data.get(&name) {
             // Store global attribute name in attribute cache to prevent duplicate attribute lookups
             if !attrib_cache.contains(&name) {
                 calculate_compat_score(
@@ -186,7 +185,7 @@ pub fn multi_lookup_attribs(
             }
             continue;
         } else if name.starts_with("data-")
-            && let Some(d_attrib) = g_attrib_data.get("data_attributes")
+            && let Some(d_attrib) = ctx.g_attrib_data.get("data_attributes")
         {
             // Store special data-* attribute name in attribute cache to prevent duplicate attribute lookups
             calculate_compat_score(
@@ -200,8 +199,8 @@ pub fn multi_lookup_attribs(
 
             continue;
         }
-        if let Some(el) = el_data.get(tag) {
-            if tag == "input"
+        if let Some(el) = ctx.el_data.get(ctx.tag) {
+            if ctx.tag == "input"
                 && let Some(input_attrib) = el.sub_features.get(&format!("type_{value}"))
             {
                 // Store input attribute name in attribute cache to prevent duplicate attribute lookups
@@ -232,10 +231,11 @@ pub fn multi_lookup_attribs(
                 continue;
             }
         } else if rust_engine {
-            eprintln!("<{tag}> is not an element or has no compat data");
+            eprintln!("<{}> is not an element or has no compat data", ctx.tag);
         } else {
             web_sys::console::error_1(&JsValue::from_str(&format!(
-                "<{tag}> is not an element or has no compat data"
+                "<{}> is not an element or has no compat data",
+                ctx.tag
             )));
         }
 

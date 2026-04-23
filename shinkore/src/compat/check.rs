@@ -1,13 +1,12 @@
 /// Module contains functions involved in performing compatibility checks.
-use std::collections::{HashMap, HashSet};
-
-use lol_html::html_content::Attribute;
+use std::collections::HashMap;
 
 use crate::{
-    BrowserDataParamType, HTMLData, LookupResults, SVGData,
+    BrowserDataParamType, LookupResults,
     compat::lookup::{lookup_attribs, lookup_element, multi_lookup_attribs, multi_lookup_element},
     constants::{IGNORE_TAGS, SKIP_TAGS},
     errors::CheckError,
+    prelude::{ElementContext, LookupAttribsContext, LookupCaches, LookupElementsContext},
 };
 
 /// Perform a compatibility check for a single element and its attributes.
@@ -17,52 +16,63 @@ use crate::{
 /// ## Errors
 /// A [`JsError`] is returned if there are any errors in lookups.
 pub fn compat_check(
-    tag_name: &str,
-    attributes: &[Attribute<'_>],
-    html_data: &HTMLData,
-    svg_data: &SVGData,
+    ctx: ElementContext,
     browser_data_params: Vec<BrowserDataParamType>,
     rust_engine: bool,
 ) -> Result<Vec<LookupResults>, CheckError> {
     let mut overall_results: Vec<LookupResults> = vec![];
     let mut attribs: HashMap<String, String> = HashMap::new();
 
-    for attribute in attributes {
+    for attribute in ctx.attributes {
         attribs.insert(attribute.name_preserve_case(), attribute.value());
     }
 
     // If the element is an SVG element, opt for an SVG data lookup
-    if svg_data.el_data.contains_key(tag_name) && !IGNORE_TAGS.contains(&tag_name) {
+    if ctx.svg_data.el_data.contains_key(ctx.tag_name) && !IGNORE_TAGS.contains(&ctx.tag_name) {
+        let lookup_el_ctx = LookupElementsContext {
+            tag: ctx.tag_name,
+            el_data: &ctx.svg_data.el_data,
+        };
+        let lookup_attribs_ctx = LookupAttribsContext {
+            tag: ctx.tag_name,
+            attribs,
+            el_data: &ctx.svg_data.el_data,
+            g_attrib_data: &ctx.svg_data.g_attrib_data,
+        };
+
         lookup_element(
-            tag_name,
+            lookup_el_ctx,
             &mut overall_results,
-            &svg_data.el_data,
             &browser_data_params,
             rust_engine,
         )?;
         lookup_attribs(
-            tag_name,
-            attribs,
+            lookup_attribs_ctx,
             &mut overall_results,
-            &svg_data.el_data,
-            &svg_data.g_attrib_data,
             &browser_data_params,
             rust_engine,
         )?;
     } else {
+        let lookup_el_ctx = LookupElementsContext {
+            tag: ctx.tag_name,
+            el_data: &ctx.html_data.el_data,
+        };
+        let lookup_attribs_ctx = LookupAttribsContext {
+            tag: ctx.tag_name,
+            attribs,
+            el_data: &ctx.html_data.el_data,
+            g_attrib_data: &ctx.html_data.g_attrib_data,
+        };
+
         lookup_element(
-            tag_name,
+            lookup_el_ctx,
             &mut overall_results,
-            &html_data.el_data,
             &browser_data_params,
             rust_engine,
         )?;
         lookup_attribs(
-            tag_name,
-            attribs,
+            lookup_attribs_ctx,
             &mut overall_results,
-            &html_data.el_data,
-            &html_data.g_attrib_data,
             &browser_data_params,
             rust_engine,
         )?;
@@ -78,58 +88,68 @@ pub fn compat_check(
 /// ## Errors
 /// A [`JsError`] is returned if there are any errors in lookups.
 pub fn multi_compat_check(
-    tag_name: &str,
-    attributes: &[Attribute<'_>],
-    html_data: &HTMLData,
-    svg_data: &SVGData,
-    element_cache: &mut HashSet<String>,
-    attrib_cache: &mut HashSet<String>,
+    ctx: ElementContext,
+    caches: &mut LookupCaches,
     browser_data_params: Vec<BrowserDataParamType>,
     rust_engine: bool,
 ) -> Result<Vec<LookupResults>, CheckError> {
     let mut overall_results: Vec<LookupResults> = vec![];
     let mut attribs: HashMap<String, String> = HashMap::new();
 
-    for attribute in attributes {
+    for attribute in ctx.attributes {
         attribs.insert(attribute.name_preserve_case(), attribute.value());
     }
 
     // If the element is an SVG element, opt for an SVG data lookup
-    if svg_data.el_data.contains_key(tag_name) && !SKIP_TAGS.contains(&tag_name) {
+    if ctx.svg_data.el_data.contains_key(ctx.tag_name) && !SKIP_TAGS.contains(&ctx.tag_name) {
+        let lookup_el_ctx = LookupElementsContext {
+            tag: ctx.tag_name,
+            el_data: &ctx.svg_data.el_data,
+        };
+        let lookup_attribs_ctx = LookupAttribsContext {
+            tag: ctx.tag_name,
+            attribs,
+            el_data: &ctx.svg_data.el_data,
+            g_attrib_data: &ctx.svg_data.g_attrib_data,
+        };
+
         multi_lookup_element(
-            tag_name,
+            lookup_el_ctx,
             &mut overall_results,
-            &svg_data.el_data,
-            element_cache,
+            &mut caches.element_cache,
             &browser_data_params,
             rust_engine,
         )?;
         multi_lookup_attribs(
-            tag_name,
-            attribs,
+            lookup_attribs_ctx,
             &mut overall_results,
-            &svg_data.el_data,
-            &svg_data.g_attrib_data,
-            attrib_cache,
+            &mut caches.attrib_cache,
             &browser_data_params,
             rust_engine,
         )?;
     } else {
+        let lookup_el_ctx = LookupElementsContext {
+            tag: ctx.tag_name,
+            el_data: &ctx.html_data.el_data,
+        };
+        let lookup_attribs_ctx = LookupAttribsContext {
+            tag: ctx.tag_name,
+            attribs,
+            el_data: &ctx.html_data.el_data,
+            g_attrib_data: &ctx.html_data.g_attrib_data,
+        };
+
         multi_lookup_element(
-            tag_name,
+            lookup_el_ctx,
             &mut overall_results,
-            &html_data.el_data,
-            element_cache,
+            &mut caches.element_cache,
             &browser_data_params,
             rust_engine,
         )?;
         multi_lookup_attribs(
-            tag_name,
-            attribs,
+            lookup_attribs_ctx,
             &mut overall_results,
-            &html_data.el_data,
-            &html_data.g_attrib_data,
-            attrib_cache,
+            &mut caches.attrib_cache,
             &browser_data_params,
             rust_engine,
         )?;
