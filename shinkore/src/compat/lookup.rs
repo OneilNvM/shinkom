@@ -14,7 +14,7 @@ use crate::{
 /// Perform a compatibility lookup for a single element.
 ///
 /// ## Errors
-/// A [`JsError`] is returned if there are any errors in score calculations.
+/// A [`CheckError`] is returned if there are any errors in score calculations.
 pub fn lookup_element(
     ctx: LookupElementsContext,
     results: &mut Vec<LookupResults>,
@@ -46,7 +46,7 @@ pub fn lookup_element(
 /// Perform compatibility lookups for multiple elements.
 ///
 /// ## Errors
-/// A [`JsError`] is returned if there are any errors in score calculations.
+/// A [`CheckError`] is returned if there are any errors in score calculations.
 pub fn multi_lookup_element(
     ctx: LookupElementsContext,
     results: &mut Vec<LookupResults>,
@@ -87,7 +87,7 @@ pub fn multi_lookup_element(
 /// Perform compatibility lookups for an element's attributes.
 ///
 /// ## Errors
-/// A [`JsError`] is returned if there are any errors in score calculations.
+/// A [`CheckError`] is returned if there are any errors in score calculations.
 pub fn lookup_attribs(
     ctx: LookupAttribsContext,
     results: &mut Vec<LookupResults>,
@@ -174,7 +174,7 @@ pub fn lookup_attribs(
 /// Perform compatibility lookups for multiple elements' attributes.
 ///
 /// ## Errors
-/// A [`JsError`] is returned if there are any errors in score calculations.
+/// A [`CheckError`] is returned if there are any errors in score calculations.
 pub fn multi_lookup_attribs(
     ctx: LookupAttribsContext,
     results: &mut Vec<LookupResults>,

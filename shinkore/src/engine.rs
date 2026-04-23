@@ -1,17 +1,24 @@
 //! This module contains a Rust compatible version of the compatibility engine.
 //! It contains the same functionality of the [`crate::CompatEngine`] version but removes any usage of the [`wasm_bindgen`] implementations
 //! and replaces [`wasm_bindgen::JsValue`] and [`wasm_bindgen::JsError`] usage with native Rust types.
-use std::{cell::RefCell, collections::HashSet, num::ParseFloatError, rc::Rc};
+use std::{
+    cell::RefCell,
+    collections::{HashMap, HashSet},
+    num::ParseFloatError,
+    rc::Rc,
+};
 
 use lol_html::{RewriteStrSettings, element, rewrite_str};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    compat::check::{compat_check, multi_compat_check},
+    compat::lookup::{lookup_attribs, lookup_element, multi_lookup_attribs, multi_lookup_element},
+    constants::{IGNORE_TAGS, SKIP_TAGS},
     errors::{CheckError, PreProcessError},
     prelude::{
         BrowserData, BrowserDataParamType, BrowserUsageData, CompatResult, ElementContext,
-        HTMLData, LookupCaches, LookupResults, SVGData,
+        HTMLData, LookupAttribsContext, LookupCaches, LookupElementsContext, LookupResults,
+        SVGData,
     },
     preprocess::{format_html, pre_process_html},
 };
@@ -49,12 +56,6 @@ impl RustCompatEngine {
         // Only get the first line of the HTML String
         let first_line = formatted.lines().next().ok_or(CheckError::NoLines)?;
 
-        // Store references to compatibility data to be used in element_content_handlers closure
-        let html_data = &self.html;
-        let svg_data = &self.svg;
-        let browser_data = &self.browser_data;
-        let usage_data = &self.browser_usage_data;
-
         // Use rewrite_str to find tag for compatibility check
         let rewrite = rewrite_str(
             first_line,
@@ -66,18 +67,9 @@ impl RustCompatEngine {
                     let ctx = ElementContext {
                         tag_name: &tag_name,
                         attributes,
-                        html_data,
-                        svg_data,
                     };
 
-                    let compat_results = compat_check(
-                        ctx,
-                        vec![
-                            BrowserDataParamType::BrowserData(browser_data.to_owned()),
-                            BrowserDataParamType::UsageData(usage_data.to_owned()),
-                        ],
-                        true,
-                    );
+                    let compat_results = self.compat_check(ctx, true);
 
                     match compat_results {
                         Ok(res) => results.borrow_mut().extend(res),
@@ -116,7 +108,7 @@ impl RustCompatEngine {
     /// `depth_level` is used to control how far down in a nested HTML structure to go before
     /// returning element tags.
     ///
-    /// See [`preprocess::pre_process_html`] to learn more about how `depth_level` works.
+    /// See [`crate::preprocess::pre_process_html`] to learn more about how `depth_level` works.
     pub fn check_elements(&self, html: &str, depth_level: u32) -> Result<CompatResult, CheckError> {
         let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
 
@@ -124,12 +116,6 @@ impl RustCompatEngine {
 
         // Pre-process HTML to return the appropriate String of elements
         let elements = pre_process_html(&formatted, depth_level);
-
-        // Store references to compatibility data to be used in element_content_handlers closure
-        let html_data = &self.html;
-        let svg_data = &self.svg;
-        let browser_data = &self.browser_data;
-        let usage_data = &self.browser_usage_data;
 
         // Create HashSet cache to prevent repeated element/ attribute searches
         let mut caches = LookupCaches {
@@ -148,19 +134,9 @@ impl RustCompatEngine {
                     let ctx = ElementContext {
                         tag_name: &tag_name,
                         attributes,
-                        html_data,
-                        svg_data,
                     };
 
-                    let compat_results = multi_compat_check(
-                        ctx,
-                        &mut caches,
-                        vec![
-                            BrowserDataParamType::BrowserData(browser_data.to_owned()),
-                            BrowserDataParamType::UsageData(usage_data.to_owned()),
-                        ],
-                        true,
-                    );
+                    let compat_results = self.multi_compat_check(ctx, &mut caches, true);
 
                     match compat_results {
                         Ok(res) => results.borrow_mut().extend(res),
@@ -201,12 +177,6 @@ impl RustCompatEngine {
         // Format the HTML tags onto individual lines
         let formatted = format_html(html).map_err(<PreProcessError as Into<CheckError>>::into)?;
 
-        // Store references to compatibility data to be used in element_content_handlers closure
-        let html_data = &self.html;
-        let svg_data = &self.svg;
-        let browser_data = &self.browser_data;
-        let usage_data = &self.browser_usage_data;
-
         // Create HashSet cache to prevent repeated element/ attribute searches
         let mut caches = LookupCaches {
             element_cache: HashSet::new(),
@@ -224,19 +194,9 @@ impl RustCompatEngine {
                     let ctx = ElementContext {
                         tag_name: &tag_name,
                         attributes,
-                        html_data,
-                        svg_data,
                     };
 
-                    let compat_results = multi_compat_check(
-                        ctx,
-                        &mut caches,
-                        vec![
-                            BrowserDataParamType::BrowserData(browser_data.to_owned()),
-                            BrowserDataParamType::UsageData(usage_data.to_owned()),
-                        ],
-                        true,
-                    );
+                    let compat_results = self.multi_compat_check(ctx, &mut caches, true);
 
                     match compat_results {
                         Ok(res) => results.borrow_mut().extend(res),
@@ -268,5 +228,172 @@ impl RustCompatEngine {
         };
 
         Ok(compat_result)
+    }
+
+    /// Perform a compatibility check for a single element and its attributes.
+    ///
+    /// Returns a Vector of [`LookupResults`] when successful.
+    ///
+    /// ## Errors
+    /// A [`CheckError`] is returned if there are any errors in lookups.
+    fn compat_check(
+        &self,
+        ctx: ElementContext,
+        rust_engine: bool,
+    ) -> Result<Vec<LookupResults>, CheckError> {
+        let mut overall_results: Vec<LookupResults> = vec![];
+        let mut attribs: HashMap<String, String> = HashMap::new();
+
+        for attribute in ctx.attributes {
+            attribs.insert(attribute.name_preserve_case(), attribute.value());
+        }
+
+        // If the element is an SVG element, opt for an SVG data lookup
+        if self.svg.el_data.contains_key(ctx.tag_name) && !IGNORE_TAGS.contains(&ctx.tag_name) {
+            let lookup_el_ctx = LookupElementsContext {
+                tag: ctx.tag_name,
+                el_data: &self.svg.el_data,
+            };
+            let lookup_attribs_ctx = LookupAttribsContext {
+                tag: ctx.tag_name,
+                attribs,
+                el_data: &self.svg.el_data,
+                g_attrib_data: &self.svg.g_attrib_data,
+            };
+
+            lookup_element(
+                lookup_el_ctx,
+                &mut overall_results,
+                &vec![
+                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
+                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                ],
+                rust_engine,
+            )?;
+            lookup_attribs(
+                lookup_attribs_ctx,
+                &mut overall_results,
+                &vec![
+                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
+                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                ],
+                rust_engine,
+            )?;
+        } else {
+            let lookup_el_ctx = LookupElementsContext {
+                tag: ctx.tag_name,
+                el_data: &self.html.el_data,
+            };
+            let lookup_attribs_ctx = LookupAttribsContext {
+                tag: ctx.tag_name,
+                attribs,
+                el_data: &self.html.el_data,
+                g_attrib_data: &self.html.g_attrib_data,
+            };
+
+            lookup_element(
+                lookup_el_ctx,
+                &mut overall_results,
+                &vec![
+                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
+                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                ],
+                rust_engine,
+            )?;
+            lookup_attribs(
+                lookup_attribs_ctx,
+                &mut overall_results,
+                &vec![
+                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
+                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                ],
+                rust_engine,
+            )?;
+        }
+
+        Ok(overall_results)
+    }
+
+    /// Perform a compatibility check for multiple elements and their attributes
+    ///
+    /// Returns a Vector of [`LookupResults`] when successful
+    ///
+    /// ## Errors
+    /// A [`CheckError`] is returned if there are any errors in lookups.
+    fn multi_compat_check(
+        &self,
+        ctx: ElementContext,
+        caches: &mut LookupCaches,
+        rust_engine: bool,
+    ) -> Result<Vec<LookupResults>, CheckError> {
+        let mut overall_results: Vec<LookupResults> = vec![];
+        let mut attribs: HashMap<String, String> = HashMap::new();
+
+        for attribute in ctx.attributes {
+            attribs.insert(attribute.name_preserve_case(), attribute.value());
+        }
+
+        // If the element is an SVG element, opt for an SVG data lookup
+        if self.svg.el_data.contains_key(ctx.tag_name) && !SKIP_TAGS.contains(&ctx.tag_name) {
+            multi_lookup_element(
+                LookupElementsContext {
+                    tag: ctx.tag_name,
+                    el_data: &self.svg.el_data,
+                },
+                &mut overall_results,
+                &mut caches.element_cache,
+                &vec![
+                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
+                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                ],
+                rust_engine,
+            )?;
+            multi_lookup_attribs(
+                LookupAttribsContext {
+                    tag: ctx.tag_name,
+                    attribs,
+                    el_data: &self.svg.el_data,
+                    g_attrib_data: &self.svg.g_attrib_data,
+                },
+                &mut overall_results,
+                &mut caches.attrib_cache,
+                &vec![
+                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
+                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                ],
+                rust_engine,
+            )?;
+        } else {
+            multi_lookup_element(
+                LookupElementsContext {
+                    tag: ctx.tag_name,
+                    el_data: &self.html.el_data,
+                },
+                &mut overall_results,
+                &mut caches.element_cache,
+                &vec![
+                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
+                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                ],
+                rust_engine,
+            )?;
+            multi_lookup_attribs(
+                LookupAttribsContext {
+                    tag: ctx.tag_name,
+                    attribs,
+                    el_data: &self.html.el_data,
+                    g_attrib_data: &self.html.g_attrib_data,
+                },
+                &mut overall_results,
+                &mut caches.attrib_cache,
+                &vec![
+                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
+                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                ],
+                rust_engine,
+            )?;
+        }
+
+        Ok(overall_results)
     }
 }

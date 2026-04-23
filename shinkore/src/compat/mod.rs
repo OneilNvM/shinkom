@@ -1,7 +1,5 @@
 //! Contains modules related to the main compatibility data analysis and scoring calculations.
 //!
-//! [`check`] contains functions for performing compatibility checks on single or multiple HTML elements.
-//!
 //! [`lookup`] contains functions performing lookup logic for compatibility data related to the elements or attributes.
 //!
 //! [`calculate`] contains functions performing the scoring logic and calculating the compatibility score for a web feature
@@ -9,7 +7,6 @@
 
 use crate::schema::{CompatElement, CompatGlobalAttribs};
 pub mod calculate;
-pub mod check;
 pub mod lookup;
 
 pub enum LookupType {

@@ -9,8 +9,6 @@ pub use crate::schema::*;
 pub struct ElementContext<'a> {
     pub tag_name: &'a str,
     pub attributes: &'a [Attribute<'a>],
-    pub html_data: &'a HTMLData,
-    pub svg_data: &'a SVGData,
 }
 
 pub struct LookupElementsContext<'a> {
