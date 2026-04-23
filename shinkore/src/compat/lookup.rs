@@ -8,7 +8,7 @@ use crate::{
     BrowserDataParamType, LookupResults,
     compat::{CompatType, LookupType, calculate::calculate_compat_score},
     errors::CheckError,
-    prelude::{LookupAttribsContext, LookupElementsContext},
+    prelude::{LookupAttribsContext, LookupElementsContext, WebFeatureContext},
 };
 
 /// Perform a compatibility lookup for a single element.
@@ -23,9 +23,11 @@ pub fn lookup_element(
 ) -> Result<(), CheckError> {
     if let Some(el) = ctx.el_data.get(ctx.tag) {
         calculate_compat_score(
-            String::from(ctx.tag),
-            CompatType::Element(el),
-            LookupType::Element(String::from(ctx.tag)),
+            WebFeatureContext {
+                name: String::from(ctx.tag),
+                compat_type: CompatType::Element(el),
+                lookup_type: LookupType::Element(String::from(ctx.tag)),
+            },
             results,
             browser_data_params,
         )?;
@@ -56,9 +58,11 @@ pub fn multi_lookup_element(
         // Store tag name in element cache to prevent duplicate element lookups
         if !element_cache.contains(ctx.tag) {
             calculate_compat_score(
-                String::from(ctx.tag),
-                CompatType::Element(el),
-                LookupType::Element(String::from(ctx.tag)),
+                WebFeatureContext {
+                    name: String::from(ctx.tag),
+                    compat_type: CompatType::Element(el),
+                    lookup_type: LookupType::Element(String::from(ctx.tag)),
+                },
                 results,
                 browser_data_params,
             )?;
@@ -94,9 +98,11 @@ pub fn lookup_attribs(
         if let Some(g_attrib) = ctx.g_attrib_data.get(&name) {
             // Handle global attribute lookups
             calculate_compat_score(
-                name.clone(),
-                CompatType::GlobalAttributes(g_attrib),
-                LookupType::Attribute(name),
+                WebFeatureContext {
+                    name: name.clone(),
+                    compat_type: CompatType::GlobalAttributes(g_attrib),
+                    lookup_type: LookupType::Attribute(name),
+                },
                 results,
                 browser_data_params,
             )?;
@@ -106,9 +112,11 @@ pub fn lookup_attribs(
         {
             // Handle special data-* attribute lookups
             calculate_compat_score(
-                "data-attributes".to_string(),
-                CompatType::GlobalAttributes(d_attrib),
-                LookupType::Attribute("data-attributes".to_string()),
+                WebFeatureContext {
+                    name: "data-attributes".to_string(),
+                    compat_type: CompatType::GlobalAttributes(d_attrib),
+                    lookup_type: LookupType::Attribute("data-attributes".to_string()),
+                },
                 results,
                 browser_data_params,
             )?;
@@ -120,9 +128,11 @@ pub fn lookup_attribs(
             {
                 // Handle input attribute lookups
                 calculate_compat_score(
-                    name.clone(),
-                    CompatType::Element(input_attrib),
-                    LookupType::Attribute(name),
+                    WebFeatureContext {
+                        name: format!("type_{value}"),
+                        compat_type: CompatType::Element(input_attrib),
+                        lookup_type: LookupType::Attribute(name),
+                    },
                     results,
                     browser_data_params,
                 )?;
@@ -132,9 +142,11 @@ pub fn lookup_attribs(
             if let Some(l_attrib) = el.sub_features.get(&name) {
                 // Handle local attribute lookups
                 calculate_compat_score(
-                    name.clone(),
-                    CompatType::Element(l_attrib),
-                    LookupType::Attribute(name),
+                    WebFeatureContext {
+                        name: name.clone(),
+                        compat_type: CompatType::Element(l_attrib),
+                        lookup_type: LookupType::Attribute(name),
+                    },
                     results,
                     browser_data_params,
                 )?;
@@ -175,9 +187,11 @@ pub fn multi_lookup_attribs(
             // Store global attribute name in attribute cache to prevent duplicate attribute lookups
             if !attrib_cache.contains(&name) {
                 calculate_compat_score(
-                    name.clone(),
-                    CompatType::GlobalAttributes(g_attrib),
-                    LookupType::Attribute(name.clone()),
+                    WebFeatureContext {
+                        name: name.clone(),
+                        compat_type: CompatType::GlobalAttributes(g_attrib),
+                        lookup_type: LookupType::Attribute(name.clone()),
+                    },
                     results,
                     browser_data_params,
                 )?;
@@ -189,9 +203,11 @@ pub fn multi_lookup_attribs(
         {
             // Store special data-* attribute name in attribute cache to prevent duplicate attribute lookups
             calculate_compat_score(
-                "data-attributes".to_string(),
-                CompatType::GlobalAttributes(d_attrib),
-                LookupType::Attribute("data-attributes".to_string()),
+                WebFeatureContext {
+                    name: "data-attributes".to_string(),
+                    compat_type: CompatType::GlobalAttributes(d_attrib),
+                    lookup_type: LookupType::Attribute("data-attributes".to_string()),
+                },
                 results,
                 browser_data_params,
             )?;
@@ -206,9 +222,11 @@ pub fn multi_lookup_attribs(
                 // Store input attribute name in attribute cache to prevent duplicate attribute lookups
                 if !attrib_cache.contains(&format!("type_{value}")) {
                     calculate_compat_score(
-                        format!("type_{value}"),
-                        CompatType::Element(input_attrib),
-                        LookupType::Attribute(format!("type_{value}")),
+                        WebFeatureContext {
+                            name: format!("type_{value}"),
+                            compat_type: CompatType::Element(input_attrib),
+                            lookup_type: LookupType::Attribute(name),
+                        },
                         results,
                         browser_data_params,
                     )?;
@@ -220,9 +238,11 @@ pub fn multi_lookup_attribs(
                 // Store local attribute name in attribute cache to prevent duplicate attribute lookups
                 if !attrib_cache.contains(&name) {
                     calculate_compat_score(
-                        name.clone(),
-                        CompatType::Element(l_attrib),
-                        LookupType::Attribute(name.clone()),
+                        WebFeatureContext {
+                            name: name.clone(),
+                            compat_type: CompatType::Element(l_attrib),
+                            lookup_type: LookupType::Attribute(name.clone()),
+                        },
                         results,
                         browser_data_params,
                     )?;

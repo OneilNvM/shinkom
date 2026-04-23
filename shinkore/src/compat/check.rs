@@ -102,52 +102,46 @@ pub fn multi_compat_check(
 
     // If the element is an SVG element, opt for an SVG data lookup
     if ctx.svg_data.el_data.contains_key(ctx.tag_name) && !SKIP_TAGS.contains(&ctx.tag_name) {
-        let lookup_el_ctx = LookupElementsContext {
-            tag: ctx.tag_name,
-            el_data: &ctx.svg_data.el_data,
-        };
-        let lookup_attribs_ctx = LookupAttribsContext {
-            tag: ctx.tag_name,
-            attribs,
-            el_data: &ctx.svg_data.el_data,
-            g_attrib_data: &ctx.svg_data.g_attrib_data,
-        };
-
         multi_lookup_element(
-            lookup_el_ctx,
+            LookupElementsContext {
+                tag: ctx.tag_name,
+                el_data: &ctx.svg_data.el_data,
+            },
             &mut overall_results,
             &mut caches.element_cache,
             &browser_data_params,
             rust_engine,
         )?;
         multi_lookup_attribs(
-            lookup_attribs_ctx,
+            LookupAttribsContext {
+                tag: ctx.tag_name,
+                attribs,
+                el_data: &ctx.svg_data.el_data,
+                g_attrib_data: &ctx.svg_data.g_attrib_data,
+            },
             &mut overall_results,
             &mut caches.attrib_cache,
             &browser_data_params,
             rust_engine,
         )?;
     } else {
-        let lookup_el_ctx = LookupElementsContext {
-            tag: ctx.tag_name,
-            el_data: &ctx.html_data.el_data,
-        };
-        let lookup_attribs_ctx = LookupAttribsContext {
-            tag: ctx.tag_name,
-            attribs,
-            el_data: &ctx.html_data.el_data,
-            g_attrib_data: &ctx.html_data.g_attrib_data,
-        };
-
         multi_lookup_element(
-            lookup_el_ctx,
+            LookupElementsContext {
+                tag: ctx.tag_name,
+                el_data: &ctx.html_data.el_data,
+            },
             &mut overall_results,
             &mut caches.element_cache,
             &browser_data_params,
             rust_engine,
         )?;
         multi_lookup_attribs(
-            lookup_attribs_ctx,
+            LookupAttribsContext {
+                tag: ctx.tag_name,
+                attribs,
+                el_data: &ctx.html_data.el_data,
+                g_attrib_data: &ctx.html_data.g_attrib_data,
+            },
             &mut overall_results,
             &mut caches.attrib_cache,
             &browser_data_params,

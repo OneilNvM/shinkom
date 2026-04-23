@@ -3,6 +3,7 @@ use std::collections::HashSet;
 
 use lol_html::html_content::Attribute;
 
+use crate::compat::{CompatType, LookupType};
 pub use crate::schema::*;
 
 pub struct ElementContext<'a> {
@@ -29,6 +30,27 @@ pub struct LookupCaches {
     pub attrib_cache: HashSet<String>,
 }
 
+pub struct WebFeatureContext<'a> {
+    pub name: String,
+    pub compat_type: CompatType<'a>,
+    pub lookup_type: LookupType,
+}
+
+pub struct BrowserSupportContext<'a> {
+    pub browser_name: &'a String,
+    pub support: &'a SupportData,
+}
+
+pub struct SupportDetailContext<'a> {
+    pub browser_name: &'a String,
+    pub detail: &'a SupportDetails,
+}
+
+pub struct BrowserUsageContext<'a> {
+    pub browser_name: &'a String,
+    pub usage_data: &'a BrowserUsageData,
+}
+
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct HTMLData {
     #[serde(rename = "elements")]
@@ -36,6 +58,7 @@ pub struct HTMLData {
     #[serde(rename = "global_attributes")]
     pub g_attrib_data: HashMap<String, CompatGlobalAttribs>,
 }
+
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct SVGData {
     #[serde(rename = "elements")]
