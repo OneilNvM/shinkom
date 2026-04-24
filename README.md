@@ -135,9 +135,74 @@ then consider contributing by creating a **pull request** on the **dev** branch 
 
 ## Usage
 
-**\*\*WIP\*\***
-Package is currently still being developed.
-Once a few more features are finished, proper usage will be written.
+### Basic
+
+The simplest and **recommended** way to utilize Shinkom is through the main entry-point.
+
+```javascript
+import { Shinkom } from 'shinkom'
+
+const shinkom = new Shinkom()
+
+shinkom.init()
+```
+
+This enables the use of the **interactive UI and Rust/WASM engine** in order to inspect elements on a page.
+
+### Modular
+
+Shinkom was made to be **modular**, meaning you can also choose to use individual modules that you would
+like to make use of for finer control.
+
+```javascript
+import { ShinkomBus, ShinkomState, SKEngine, CompatInspector, CompatUI } from 'shinkom'
+
+const bus = new ShinkomBus()
+const state = new ShinkomState()
+const engine = new SKEngine(bus)
+const inspector = new CompatInspector(bus, state)
+const ui = new CompatUI(bus, state, [inspector])
+
+ui.init()
+engine.initEngine()
+```
+
+### Engine
+
+The **Rust/WASM engine** can be used separately from the UI components in cases where you may want to automate
+compatibility inspection without manually having to interact with a page.
+
+```javascript
+import { SKEngine } from 'shinkom/engine'
+
+const engine = new SKEngine()
+
+const run = async () => {
+    await engine.initEngine()
+}
+
+await run()
+```
+
+If needed, you can also **preload** the WASM file for **lazy initialization** of the engine,
+this can be particularly useful when using the engine in **SSR applications** to eliminate,
+constant cold starts.
+
+```javascript
+import { SKEngine } from 'shinkom/engine'
+
+const engine = new SKEngine()
+
+const preLoad = async () => {
+    await engine.loadWasm()
+}
+
+await preLoad()
+
+// other operations //
+
+await engine.initEngine()
+```
 
 ---
 
@@ -173,6 +238,37 @@ const run = async () => {
 
 run()
 ```
+
+---
+
+## Contributing
+
+In order to contribute to this project, there are a few prerequisites before doing so:
+
+- Install the latest stable version of Rust on the [official Rust website](https://rust-lang.org/learn/get-started/)
+- Install `wasm-pack` via this command: `cargo install wasm-pack`
+  
+After that, make sure to run `npm i` to install project dependencies, create a branch **from the dev branch**, add your code,
+and **create a pull request to the dev branch**.
+
+After review and approval of the pull request, we can introduce your changes to the dev branch and eventually to the main branch.
+
+---
+
+## Development Scripts
+
+When cloning or forking this library, refer to this table in regards to the NPM scripts:
+
+| Scripts     |                                             Actions                                            |
+|-------------|:----------------------------------------------------------------------------------------------:|
+| dev:nobuild | Runs Vite dev server without running `build:wasm`                                              |
+| dev         | Runs Vite dev server and builds a new WASM files through `build:wasm`.                         |
+| build       | Builds the WASM and JS through `build:wasm` and `build:js` and outputs files to `dist` folder. |
+| build:js    | Builds the ESM bundles and CJS modules for the Javascript library.                             |
+| build:wasm  | Builds the WASM files through `wasm-pack` and outputs files to a `pkg` directory.              |
+| test        | Runs tests through Vitest.                                                                     |
+| type:check  | Runs `tsc` to check types in the `src` directory.                                              |
+| gen:data    | Generates JSON files and outputs them to the `gen` directory.                                  |
 
 ---
 
