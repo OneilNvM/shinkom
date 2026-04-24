@@ -208,6 +208,94 @@ await engine.initEngine()
 
 ---
 
+## Compatibility Checks
+
+### Schema
+
+In order to discover potential compatibility issues, Shinkom implements a score metric for the result of the compatibility check.
+
+The general schema that an average compatibility check will follow goes like this:
+
+```json
+{
+    "lookup_results": [
+        // results for each web feature
+        {
+            "name": "fake-element", // name of the web feature
+            "mdn_url": "https://developer.mozilla.org/docs/web/HTML/Reference/Elements/fake-element", // link that leads to MDN documentation of the web feature
+            "compat_score": "100.00", // score based on the sum of the browser_score and status_score over the max compat score
+            "browser_score": "100.00", // score based on the sum of weighted scores in each browser
+            "status_score": "100.00", // score based on the status object in compatibility data
+            "browsers": [
+                // results for each checked browser
+                {
+                    "browser_name": "edge", // name of the browser
+                    "score": {
+                        "raw_score": "100.00", // score based on the safety of feature in browser
+                        "weighted_score": "5.74", // score based on the usage of edge over the total market share between checked browsers
+                    },
+                    "versions": {
+                        "version_added": "34" // feature added in edge engine version 34
+                    }
+                }
+            ]
+        }
+    ],
+    // the overall score of the compatibility check
+    "overall_score": 100
+}
+```
+
+This object consists of the following:
+
+- The `overall_score` property is a number that represents the final score of the compatibility check. It is a sum of each `compat_score` a
+  web feature has been given.
+- The `lookup_results` property is an array of objects that contains each web feature's individual compatibility results.
+- The `name` property is a string representing the name of the web feature.
+- The `mdn_url` property is a string containing a link to the MDN Web Docs documentation for the web feature.
+- The `compat_score` property is a string representing the calculated score for the web feature. It is calculated by summing the `browser_score` and `status_score`
+  and then dividing that sum by the total compatibility score a feature can get (currently 200).
+- The `browser_score` property is a string representing the sum of the `weighted_score`'s between each browser for the web feature.
+- The `status_score` property is a string representing the calculated score based on the current status of this web feature (standard_track, experimental, or deprecated).
+- The `browsers` property is an array of objects that contains each browsers individual compatibility results.
+- The `browser_name` property is a string representing the name of the checked browser.
+- The `score` property is an object containing the `raw_score` and `weighted_score` for the web feature in a particular browser.
+  - `raw_score` is the calculated score before weighting is applied, which can be interpreted as the *safety* of a web feature.
+  - `weighted_score` is the raw score but with a weighting multiplier calculated as such: **total_browser_usage / market_share**.
+- The `versions` property can be either an object or an array of objects depending on whether the web feature has been added, removed or partially implemented
+  in many different versions or just one version.
+
+### Scoring
+
+The scoring for the compatibility check is an important feature to make sure that it gives fair and understandable results that won't leave you
+guessing why a check resulted in a particular score.
+
+The table below lists the score types and their respective formulas:
+
+| Score Type     |                                           Formula                                           |
+|----------------|:-------------------------------------------------------------------------------------------:|
+| overall_score  |                (compat_score~1~ + compat_score~2~ + ... compat_score~n~) / N                |
+| compat_score   |                  ((browser_score + status_score) / MAX_COMPAT_SCORE) * 100                  |
+| browser_score  | ((weighted_score~1~ + weighted_score~2~ + ... weighted_score~n~) / MAX_BROWSER_SCORE) * 100 |
+| status_score   |                           (status_score / MAX_STATUS_SCORE) * 100                           |
+| raw_score      |                            Raw score calculation explained later                            |
+| weighted_score |                           raw_score * (total_usage / market_share)                          |
+
+Here are a few things to clarify about these formulas:
+
+- In `overall_score`, *N* represents the number of lookup results returned.
+- `MAX_COMPAT_SCORE` has a value of 200, whereas `MAX_BROWSER_SCORE` and `MAX_STATUS_SCORE` have a value of 100.
+- The `raw_score` is calculated based on many different factors.
+  - If the current version of the browser is greater than the `version_added` value, the score is 100. This is
+    also the case if `version_added` is set to `true`.
+  - If the `version_removed` value is greater than the `version_added` value, the score is 0 since it is a removed feature.
+  - If the `partial_implementation` value is set to true, the score is 80.
+- `total_usage` is the usage of a browser across all of its versions, and the `market_share` is the sum of `total_usage`
+  between every browser.
+- The `browser_score` is the sum of the weighted scores from each browser divided by the `MAX_BROWSER_SCORE`.
+
+---
+
 ## Node.js
 
 Shinkom can be utilised in Node environments through its Engine module.
