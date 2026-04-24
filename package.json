@@ -71,9 +71,8 @@
     "build": "npm run build:wasm && npm run build:js",
     "build:js": "tsdown --config-loader unrun && cp src/types/public.d.ts dist/bundles/types/public.d.ts",
     "build:wasm": "wasm-pack build shinkore --target web --out-dir ../pkg --release",
-    "preview": "vite preview",
     "test": "vitest",
-    "type-check": "tsc --project tsconfig.json",
+    "type:check": "tsc --project tsconfig.json",
     "gen:data": "tsx ./scripts/extract-compat.ts && tsx ./scripts/extract-browser-data.ts && tsx ./scripts/extract-usage-data.ts"
   },
   "devDependencies": {
