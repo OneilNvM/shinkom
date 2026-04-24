@@ -13,6 +13,8 @@ import { getModulePath } from "../core/helpers.js";
 //#region src/engine/engine.js
 /**@typedef {import('../types/public').CustomEventEngineDetail} CustomEventEngineDetail */
 var SKEngine = class {
+	/**@type {Promise<void> | null} */
+	#wasmLoaded = null;
 	/**
 	* @param {ShinkomBus | null} bus
 	*/
@@ -36,6 +38,7 @@ var SKEngine = class {
 	* @param {string | undefined} wasmURL
 	*/
 	async loadWasm(wasmURL = void 0) {
+		if (this.#wasmLoaded) return this.#wasmLoaded;
 		const isNode = typeof window === "undefined";
 		try {
 			if (isNode) {
@@ -49,10 +52,18 @@ var SKEngine = class {
 						wasmPath = path.resolve(__dirname, "../../pkg/shinkore_bg.wasm");
 						wasmBuffer = fs.readFileSync(wasmPath);
 					}
-					await __wbg_init({ module_or_path: wasmBuffer });
+					this.#wasmLoaded = (async () => {
+						await __wbg_init({ module_or_path: wasmBuffer });
+					})();
 				} else throw new Error("Path does not lead to WASM file.");
-			} else if (wasmURL) await __wbg_init({ module_or_path: wasmURL });
-			else await __wbg_init();
+			} else if (wasmURL) this.#wasmLoaded = (async () => {
+				await __wbg_init({ module_or_path: wasmURL });
+			})();
+			else this.#wasmLoaded = (async () => {
+				await __wbg_init();
+			})();
+			console.log("loaded WASM");
+			return this.#wasmLoaded;
 		} catch (error) {
 			throw error;
 		}
@@ -64,9 +75,13 @@ var SKEngine = class {
 	async initEngine(wasmURL = void 0) {
 		try {
 			if (!this.compatEngine) {
-				if (wasmURL) await this.loadWasm(wasmURL);
-				else await this.loadWasm();
+				if (!this.#wasmLoaded) {
+					console.log("loading WASM through initializer");
+					if (wasmURL) await this.loadWasm(wasmURL);
+					else await this.loadWasm();
+				}
 				this.compatEngine = new CompatEngine(gen_default.html, gen_default.svg, browser_data_default, browser_usage_data_default);
+				console.log("initialized engine");
 			}
 		} catch (error) {
 			console.error(`Engine initialization error: ${error}`);
@@ -77,7 +92,11 @@ var SKEngine = class {
 	* @param {string} element 
 	*/
 	checkElement(element) {
-		console.dir(this.compatEngine?.check_element(element));
+		try {
+			console.dir(this.compatEngine?.check_element(element));
+		} catch (error) {
+			console.error(error);
+		}
 	}
 	/**
 	* Used for checking the compatibility of a multiple elements, depending on `depthLevel`.
@@ -85,7 +104,11 @@ var SKEngine = class {
 	* @param {number} depthLevel 
 	*/
 	checkElements(html, depthLevel) {
-		console.dir(this.compatEngine?.check_elements(html, depthLevel));
+		try {
+			console.dir(this.compatEngine?.check_elements(html, depthLevel));
+		} catch (error) {
+			console.error(error);
+		}
 	}
 	/**
 	* Used for checking the compatibility of a full page.
@@ -109,6 +132,7 @@ var SKEngine = class {
 			return;
 		}
 		this.compatEngine?.free();
+		this.#wasmLoaded = null;
 		this.compatEngine = null;
 	}
 };

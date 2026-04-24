@@ -6,8 +6,13 @@
 */
 
 //#region pkg/shinkore.d.ts
+/**
+ * The [`CompatEngine`] struct stores the compatibility data
+ * and acts as an entry-point for the Rust/WASM engine.
+ */
 declare class CompatEngine {
   /**
+   * Constructs an new engine instance
    * @param {any} bcd_html_data
    * @param {any} bcd_svg_data
    * @param {any} bcd_browser_data
@@ -29,7 +34,7 @@ declare class CompatEngine {
    * `depth_level` is used to control how far down in a nested HTML structure to go before
    * returning element tags.
    *
-   * See [`helpers::pre_process_html`] to learn more about how `depth_level` works.
+   * See [`preprocess::pre_process_html`] to learn more about how `depth_level` works.
    * @param {string} html
    * @param {number} depth_level
    * @returns {any}

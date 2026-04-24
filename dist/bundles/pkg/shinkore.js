@@ -6,6 +6,10 @@
 */
 
 //#region pkg/shinkore.js
+/**
+* The [`CompatEngine`] struct stores the compatibility data
+* and acts as an entry-point for the Rust/WASM engine.
+*/
 var CompatEngine = class {
 	__destroy_into_raw() {
 		const ptr = this.__wbg_ptr;
@@ -25,7 +29,9 @@ var CompatEngine = class {
 	check_element(html) {
 		const ptr0 = passStringToWasm0(html, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
 		const len0 = WASM_VECTOR_LEN;
-		return wasm.compatengine_check_element(this.__wbg_ptr, ptr0, len0);
+		const ret = wasm.compatengine_check_element(this.__wbg_ptr, ptr0, len0);
+		if (ret[2]) throw takeFromExternrefTable0(ret[1]);
+		return takeFromExternrefTable0(ret[0]);
 	}
 	/**
 	* Used for checking the compatibility of multiple elements and their attributes
@@ -33,7 +39,7 @@ var CompatEngine = class {
 	* `depth_level` is used to control how far down in a nested HTML structure to go before
 	* returning element tags.
 	*
-	* See [`helpers::pre_process_html`] to learn more about how `depth_level` works.
+	* See [`preprocess::pre_process_html`] to learn more about how `depth_level` works.
 	* @param {string} html
 	* @param {number} depth_level
 	* @returns {any}
@@ -41,7 +47,9 @@ var CompatEngine = class {
 	check_elements(html, depth_level) {
 		const ptr0 = passStringToWasm0(html, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
 		const len0 = WASM_VECTOR_LEN;
-		return wasm.compatengine_check_elements(this.__wbg_ptr, ptr0, len0, depth_level);
+		const ret = wasm.compatengine_check_elements(this.__wbg_ptr, ptr0, len0, depth_level);
+		if (ret[2]) throw takeFromExternrefTable0(ret[1]);
+		return takeFromExternrefTable0(ret[0]);
 	}
 	/**
 	* Used for performing a full page compatibility check.
@@ -51,9 +59,12 @@ var CompatEngine = class {
 	full_inspect(html) {
 		const ptr0 = passStringToWasm0(html, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
 		const len0 = WASM_VECTOR_LEN;
-		return wasm.compatengine_full_inspect(this.__wbg_ptr, ptr0, len0);
+		const ret = wasm.compatengine_full_inspect(this.__wbg_ptr, ptr0, len0);
+		if (ret[2]) throw takeFromExternrefTable0(ret[1]);
+		return takeFromExternrefTable0(ret[0]);
 	}
 	/**
+	* Constructs an new engine instance
 	* @param {any} bcd_html_data
 	* @param {any} bcd_svg_data
 	* @param {any} bcd_browser_data
@@ -368,6 +379,11 @@ function passStringToWasm0(arg, malloc, realloc) {
 	}
 	WASM_VECTOR_LEN = offset;
 	return ptr;
+}
+function takeFromExternrefTable0(idx) {
+	const value = wasm.__wbindgen_externrefs.get(idx);
+	wasm.__externref_table_dealloc(idx);
+	return value;
 }
 let cachedTextDecoder = new TextDecoder("utf-8", {
 	ignoreBOM: true,

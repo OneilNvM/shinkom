@@ -50,6 +50,7 @@ declare class SKEngine {
    * Free WASM memory and dereference engine.
    */
   destroy(): void;
+  #private;
 }
 type CustomEventEngineDetail = CustomEventEngineDetail$1;
 //#endregion
