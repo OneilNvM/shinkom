@@ -11,6 +11,6 @@
   "license": "ISC",
   "type": "module",
   "devDependencies": {
-    "shinkom": "file:../../shinkom-1.0.0.tgz"
+    "shinkom": "^1.0.0"
   }
 }

@@ -20,7 +20,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
-    "shinkom": "file:../../shinkom-1.0.0.tgz",
+    "shinkom": "^1.0.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

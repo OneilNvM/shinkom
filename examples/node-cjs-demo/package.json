@@ -11,6 +11,6 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "shinkom": "file:../../shinkom-1.0.0.tgz"
+    "shinkom": "^1.0.0"
   }
 }
