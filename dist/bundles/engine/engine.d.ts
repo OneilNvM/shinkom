@@ -6,7 +6,7 @@
 */
 
 import { ShinkomBus } from "../core/event-bus.js";
-import { CustomEventEngineDetail as CustomEventEngineDetail$1 } from "../types/public.js";
+import { CompatResult as CompatResult$1, CustomEventEngineDetail as CustomEventEngineDetail$1 } from "../types/public.js";
 import { CompatEngine } from "../pkg/shinkore.js";
 
 //#region src/engine/engine.d.ts
@@ -32,20 +32,23 @@ declare class SKEngine {
   /**
    * Used for checking the compatibility of a single element.
    * @param {string} element
+   * @returns {CompatResult | null}
    */
-  checkElement(element: string): void;
+  checkElement(element: string): CompatResult | null;
   /**
    * Used for checking the compatibility of a multiple elements, depending on `depthLevel`.
    * @param {string} html
    * @param {number} depthLevel
+   * @returns {CompatResult | null}
    */
-  checkElements(html: string, depthLevel: number): void;
+  checkElements(html: string, depthLevel: number): CompatResult | null;
   /**
    * Used for checking the compatibility of a full page.
    *
    * Only available in `browser` environments.
+   * @returns {CompatResult | null}
    */
-  fullInspect(): void;
+  fullInspect(): CompatResult | null;
   /**
    * Free WASM memory and dereference engine.
    */
@@ -53,5 +56,6 @@ declare class SKEngine {
   #private;
 }
 type CustomEventEngineDetail = CustomEventEngineDetail$1;
+type CompatResult = CompatResult$1;
 //#endregion
-export { CustomEventEngineDetail, SKEngine };
+export { CompatResult, CustomEventEngineDetail, SKEngine };

@@ -15,25 +15,25 @@ var browser_data_default = { browsers: {
 		"release_notes": "https://developer.chrome.com/release-notes/147",
 		"status": "current"
 	} },
-	"edge": { "146": {
+	"edge": { "147": {
 		"engine": "Blink",
-		"engine_version": "146",
-		"release_date": "2026-03-13",
-		"release_notes": "https://learn.microsoft.com/en-us/microsoft-edge/web-platform/release-notes/146",
+		"engine_version": "147",
+		"release_date": "2026-04-10",
+		"release_notes": "https://learn.microsoft.com/en-us/microsoft-edge/web-platform/release-notes/147",
 		"status": "current"
 	} },
-	"firefox": { "149": {
+	"firefox": { "150": {
 		"engine": "Gecko",
-		"engine_version": "149",
-		"release_date": "2026-03-24",
-		"release_notes": "https://developer.mozilla.org/docs/Mozilla/Firefox/Releases/149",
+		"engine_version": "150",
+		"release_date": "2026-04-21",
+		"release_notes": "https://developer.mozilla.org/docs/Mozilla/Firefox/Releases/150",
 		"status": "current"
 	} },
-	"firefox_android": { "149": {
+	"firefox_android": { "150": {
 		"engine": "Gecko",
-		"engine_version": "149",
-		"release_date": "2026-03-24",
-		"release_notes": "https://developer.mozilla.org/docs/Mozilla/Firefox/Releases/149",
+		"engine_version": "150",
+		"release_date": "2026-04-21",
+		"release_notes": "https://developer.mozilla.org/docs/Mozilla/Firefox/Releases/150",
 		"status": "current"
 	} },
 	"oculus": { "42.0": {
@@ -50,11 +50,11 @@ var browser_data_default = { browsers: {
 		"release_notes": "https://blogs.opera.com/desktop/2026/04/opera-130-stable/",
 		"status": "current"
 	} },
-	"opera_android": { "96": {
+	"opera_android": { "97": {
 		"engine": "Blink",
-		"engine_version": "145",
-		"release_date": "2026-03-10",
-		"release_notes": "https://forums.opera.com/topic/88254/opera-for-android-96",
+		"engine_version": "146",
+		"release_date": "2026-04-16",
+		"release_notes": "https://forums.opera.com/topic/88511/opera-for-android-97",
 		"status": "current"
 	} },
 	"safari": { "26.4": {

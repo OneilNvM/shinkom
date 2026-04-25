@@ -76,7 +76,8 @@ var browser_usage_data_default = {
 			"143": .073644,
 			"144": .138624,
 			"145": 2.56888,
-			"146": 2.44758
+			"146": 2.44758,
+			"147": 0
 		},
 		"firefox": {
 			"2": 0,
@@ -230,6 +231,7 @@ var browser_usage_data_default = {
 			"150": 0,
 			"151": 0,
 			"152": 0,
+			"153": 0,
 			"3.5": 0,
 			"3.6": 0
 		},
@@ -553,6 +555,7 @@ var browser_usage_data_default = {
 			"125": 0,
 			"126": .012996,
 			"127": .441864,
+			"131": 0,
 			"9.5-9.6": 0,
 			"10.0-10.1": 0,
 			"10.5": 0,
@@ -630,7 +633,7 @@ var browser_usage_data_default = {
 			"4.4.3-4.4.4": 25506e-9
 		},
 		"chrome_android": { "147": 44.7569 },
-		"firefox_android": { "149": .351416 },
+		"firefox_android": { "150": .351416 },
 		"samsunginternet_android": {
 			"4": 0,
 			"20": 0,

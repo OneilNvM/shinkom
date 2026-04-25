@@ -1,3 +1,5 @@
+import { SupportStatement } from '@mdn/browser-compat-data/types'
+
 export type ShinkomEventMap = {
     "ci:toggle": CustomEvent<void>;
     "engine:inspect": CustomEvent<CustomEventEngineDetail>;
@@ -43,6 +45,29 @@ export type UISharedState = {
     multiElements: boolean;
     depthLevel: number;
     ignorePanelEl: HTMLDivElement | null;
+}
+
+export type CompatResult = {
+    overall_score: number;
+    lookup_results: LookupResult[];
+}
+
+export type LookupResult = {
+    name: string;
+    mdn_url: string;
+    compat_score: string;
+    browser_score: string;
+    status_score: string;
+    browsers: BrowserResult[];
+}
+
+export type BrowserResult = {
+    browser_name: string;
+    score: {
+        raw_score: string;
+        weighted_score: string;
+    };
+    versions: SupportStatement
 }
 
 export type UISharedStateProps = keyof UISharedState

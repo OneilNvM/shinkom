@@ -12,6 +12,7 @@ import gen_default from "../gen/index.js";
 import { getModulePath } from "../core/helpers.js";
 //#region src/engine/engine.js
 /**@typedef {import('../types/public').CustomEventEngineDetail} CustomEventEngineDetail */
+/**@typedef {import('../types/public').CompatResult} CompatResult */
 var SKEngine = class {
 	/**@type {Promise<void> | null} */
 	#wasmLoaded = null;
@@ -90,37 +91,50 @@ var SKEngine = class {
 	/**
 	* Used for checking the compatibility of a single element.
 	* @param {string} element 
+	* @returns {CompatResult | null}
 	*/
 	checkElement(element) {
 		try {
-			console.dir(this.compatEngine?.check_element(element));
+			/**@type {CompatResult} */
+			const result = this.compatEngine?.check_element(element);
+			console.dir(result);
+			return result;
 		} catch (error) {
 			console.error(error);
+			return null;
 		}
 	}
 	/**
 	* Used for checking the compatibility of a multiple elements, depending on `depthLevel`.
 	* @param {string} html 
 	* @param {number} depthLevel 
+	* @returns {CompatResult | null}
 	*/
 	checkElements(html, depthLevel) {
 		try {
-			console.dir(this.compatEngine?.check_elements(html, depthLevel));
+			const result = this.compatEngine?.check_elements(html, depthLevel);
+			console.dir(result);
+			return result;
 		} catch (error) {
 			console.error(error);
+			return null;
 		}
 	}
 	/**
 	* Used for checking the compatibility of a full page.
 	* 
 	* Only available in `browser` environments.
+	* @returns {CompatResult | null}
 	*/
 	fullInspect() {
 		try {
-			console.dir(this.compatEngine?.full_inspect(document.documentElement.outerHTML));
+			const result = this.compatEngine?.full_inspect(document.documentElement.outerHTML);
+			console.dir(result);
+			return result;
 		} catch (error) {
 			if (error instanceof ReferenceError) console.error("fullInspect is only available in browser environments");
 			else console.error(`fullInspect error: ${error}`);
+			return null;
 		}
 	}
 	/**
