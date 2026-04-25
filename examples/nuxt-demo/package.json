@@ -15,6 +15,6 @@
     "vue-router": "^5.0.4"
   },
   "devDependencies": {
-    "shinkom": "file:../../shinkom-1.0.0.tgz"
+    "shinkom": "^1.0.0"
   }
 }
