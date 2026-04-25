@@ -361,16 +361,16 @@ After review and approval of the pull request, we can introduce your changes to 
 
 When cloning or forking this library, refer to this table in regards to the NPM scripts:
 
-| Scripts     |                                             Actions                                            |
-|-------------|:----------------------------------------------------------------------------------------------:|
-| dev:nobuild | Runs Vite dev server without running `build:wasm`                                              |
-| dev         | Runs Vite dev server and builds a new WASM files through `build:wasm`.                         |
-| build       | Builds the WASM and JS through `build:wasm` and `build:js` and outputs files to `dist` folder. |
-| build:js    | Builds the ESM bundles and CJS modules for the Javascript library.                             |
-| build:wasm  | Builds the WASM files through `wasm-pack` and outputs files to a `pkg` directory.              |
-| test        | Runs tests through Vitest.                                                                     |
-| type:check  | Runs `tsc` to check types in the `src` directory.                                              |
-| gen:data    | Generates JSON files and outputs them to the `gen` directory.                                  |
+| Scripts     |                                             Actions                                                 |
+|-------------|:---------------------------------------------------------------------------------------------------:|
+| dev:nobuild | Runs Vite dev server without running `build:wasm`                                                   |
+| dev         | Runs Vite dev server and builds a new WASM files through `build:wasm`.                              |
+| build       | Builds the WASM and JS through `build:wasm` and `build:js` and outputs files to `dist` folder.      |
+| build:js    | Builds the ESM bundles and CJS modules for the Javascript library.                                  |
+| build:wasm  | Builds the WASM files through `wasm-pack` and outputs files to a `pkg` directory.                   |
+| test        | Runs tests through Vitest.                                                                          |
+| type:check  | Runs `tsc` to check types in the `src` directory.                                                   |
+| gen:data    | Generates JSON files for compatibility data and usage data and outputs them to the `gen` directory. |
 
 ---
 
