@@ -49,10 +49,18 @@ to check if a feature works on a particular browser or test the website on every
 
 ## IMPORTANT
 
+### WebAssembly
+
 It is important to mention that this project is made with **WebAssembly** through [wasm-bindgen](https://github.com/wasm-bindgen/wasm-bindgen).
 Therefore, the engine will need to be initialized asynchronously and your server will need to accept the `application/wasm` MIME type.
 It is recommended to read relevant documentation in whichever framework or bundler you are using to apply the correct configuration to accept
-wasm files on your server or visit the [examples](/examples) directory, if your framework or bundler of choice is listed there for a working example.
+WASM files on your server or visit the [examples](/examples) directory, if your framework or bundler of choice is listed there for a working example.
+
+### Server-side Rendering Applications
+
+The core engine of Shinkom can be run in Node.js environments, but this is not true for the UI components and the Shinkom entry-point as they are browser-only.
+If using a framework that uses SSR, make sure to initialize the library in hooks that perform side-effects (i.e. `useEffect` or `onMounted`) to prevent
+`window is undefined` errors during SSR pre-rendering.
 
 ---
 
@@ -187,7 +195,7 @@ await run()
 ```
 
 If needed, you can also **preload** the WASM file for **lazy initialization** of the engine,
-this can be particularly useful when using the engine in **SSR applications** to eliminate,
+this can be particularly useful when using the engine in **SSR applications** to eliminate
 constant cold starts.
 
 ```javascript
@@ -278,7 +286,7 @@ The table below lists the score types and their respective formulas:
 | compat_score   |                  ((browser_score + status_score) / MAX_COMPAT_SCORE) * 100                  |
 | browser_score  | ((weighted_score~1~ + weighted_score~2~ + ... weighted_score~n~) / MAX_BROWSER_SCORE) * 100 |
 | status_score   |                           (status_score / MAX_STATUS_SCORE) * 100                           |
-| raw_score      |                            Raw score calculation explained later                            |
+| raw_score      |                            Raw score calculation explained below                            |
 | weighted_score |                           raw_score * (total_usage / market_share)                          |
 
 Here are a few things to clarify about these formulas:
@@ -336,8 +344,12 @@ run()
 In order to contribute to this project, there are a few prerequisites before doing so:
 
 - Install the latest stable version of Rust on the [official Rust website](https://rust-lang.org/learn/get-started/)
-- Install `wasm-pack` via this command: `cargo install wasm-pack`
-  
+- Install `wasm-pack` via this command:
+
+  ```bash
+  cargo install wasm-pack
+  ```
+
 After that, make sure to run `npm i` to install project dependencies, create a branch **from the dev branch**, add your code,
 and **create a pull request to the dev branch**.
 
@@ -359,6 +371,19 @@ When cloning or forking this library, refer to this table in regards to the NPM 
 | test        | Runs tests through Vitest.                                                                     |
 | type:check  | Runs `tsc` to check types in the `src` directory.                                              |
 | gen:data    | Generates JSON files and outputs them to the `gen` directory.                                  |
+
+---
+
+## Credits
+
+This project wouldn't be possible without amazing projects providing the data necessary to perform these compatibility checks.
+
+The [browser-compat-data](https://github.com/mdn/browser-compat-data) project by [MDN](https://github.com/mdn) is the single reason why this project was made possible. Make sure to check out their project as it compiles a large majority of modern
+web features across multiple different browser environments.
+
+The [caniuse-db](https://github.com/Fyrd/caniuse) package also plays a big role in keeping up-to-date with the global usage data of browsers and their market share.
+
+Make sure to check out both of these great projects!
 
 ---
 
