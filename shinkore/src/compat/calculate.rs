@@ -118,7 +118,9 @@ pub fn calculate_status_score(
     let mut status_score = 0.0;
     if let Some(status) = compat_status {
         if status.standard_track {
-            if status.experimental {
+            if status.deprecated {
+                status_score = 0.0;
+            } else if status.experimental {
                 status_score = 50.0;
             } else {
                 status_score = 100.0;
