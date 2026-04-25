@@ -5,7 +5,6 @@
   "license": "MIT",
   "author": "OneilNvM <oneil324@outlook.com>",
   "type": "module",
-  "private": true,
   "files": [
     "dist"
   ],
@@ -57,11 +56,6 @@
       "import": "./dist/bundles/ui/control-panel/control-panel.js",
       "require": "./dist/modules/ui/control-panel/control-panel.cjs"
     },
-    "./ui/compatibility-view": {
-      "types": "./dist/bundles/ui/compatibility-view/compatibility-view.d.ts",
-      "import": "./dist/bundles/ui/compatibility-view/compatibility-view.js",
-      "require": "./dist/modules/ui/compatibility-view/compatibility-view.cjs"
-    },
     "./ui/compat-ui": {
       "types": "./dist/bundles/ui/compat-ui/compat-ui.d.ts",
       "import": "./dist/bundles/ui/compat-ui/compat-ui.js",
@@ -71,18 +65,19 @@
     "./wasm": "./dist/bundles/pkg/shinkore_bg.wasm"
   },
   "scripts": {
+    "dev:nobuild": "vite",
     "dev": "npm run build:wasm && vite",
     "build": "npm run build:wasm && npm run build:js",
     "build:js": "tsdown --config-loader unrun && cp src/types/public.d.ts dist/bundles/types/public.d.ts",
     "build:wasm": "wasm-pack build shinkore --target web --out-dir ../pkg --release",
-    "preview": "vite preview",
     "test": "vitest",
-    "type-check": "tsc --project tsconfig.json",
-    "gen:data": "tsx ./scripts/extract-compat.ts"
+    "type:check": "tsc --project tsconfig.json",
+    "gen:data": "tsx ./scripts/extract-compat.ts && tsx ./scripts/extract-browser-data.ts && tsx ./scripts/extract-usage-data.ts"
   },
   "devDependencies": {
-    "@mdn/browser-compat-data": "7.3.6",
-    "@types/node": "^25.5.2",
+    "@mdn/browser-compat-data": "7.3.13",
+    "@types/node": "^25.6.0",
+    "caniuse-db": "^1.0.30001790",
     "jsdom": "^28.1.0",
     "node": "^25.9.0",
     "tsdown": "^0.21.2",

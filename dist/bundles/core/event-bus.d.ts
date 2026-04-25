@@ -2,7 +2,7 @@
     * Shinkom - core
     * @version 1.0.0
     * @license MIT
-    * @copyright 2026 - Oneil Achord
+    * @copyright 2026 - OneilNvM
 */
 
 import { ShinkomEventListener as ShinkomEventListener$1, ShinkomEventMap as ShinkomEventMap$1, ShinkomEventTarget as ShinkomEventTarget$1 } from "../types/public.js";

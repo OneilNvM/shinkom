@@ -1,11 +1,10 @@
 //! This module contains types which map the schema for the compatiblity data from the [@mdn/browser-compat-data](https://github.com/mdn/browser-compat-data) package.
-//! You can find the data for the schema at this link: https://github.com/mdn/browser-compat-data/blob/main/schemas/compat-data.schema.json
-
+//! You can find the data for the schema [here](https://github.com/mdn/browser-compat-data/blob/main/schemas/compat-data.schema.json).
 pub use std::collections::HashMap;
 
 pub use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(untagged)]
 pub enum VersionValue {
     Version(String),
@@ -14,7 +13,7 @@ pub enum VersionValue {
     Unknown(serde_json::Value),
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(untagged)]
 pub enum SupportData {
     Multiple(Vec<SupportDetails>),
@@ -23,21 +22,21 @@ pub enum SupportData {
     Unknown(serde_json::Value),
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(untagged)]
 pub enum ImplementURLValue {
     Multiple(Vec<String>),
     Single(String),
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(untagged)]
 pub enum NotesValue {
     Multiple(Vec<String>),
     Single(String),
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SupportDetails {
     pub version_added: VersionValue,
 
@@ -66,7 +65,7 @@ pub struct SupportDetails {
     pub notes: Option<NotesValue>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct FlagStatement {
     #[serde(rename = "type")]
     pub flag_type: bool,
@@ -76,14 +75,14 @@ pub struct FlagStatement {
     pub value_to_set: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default, Debug)]
 pub struct Status {
     pub deprecated: bool,
     pub experimental: bool,
     pub standard_track: bool,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Compat {
     #[serde(default)]
     pub description: Option<String>,
@@ -103,7 +102,7 @@ pub struct Compat {
     pub status: Option<Status>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CompatElement {
     #[serde(rename = "__compat")]
     pub compat: Compat,
@@ -112,8 +111,44 @@ pub struct CompatElement {
     pub sub_features: HashMap<String, CompatElement>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CompatGlobalAttribs {
     #[serde(rename = "__compat")]
     pub compat: Compat,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ReleaseStatement {
+    release_date: Option<String>,
+    release_notes: Option<String>,
+    status: BrowserStatus,
+    engine: Option<BrowserEngine>,
+    pub engine_version: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum BrowserEngine {
+    Blink,
+    EdgeHTML,
+    Gecko,
+    Presto,
+    Trident,
+    WebKit,
+    V8,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum BrowserStatus {
+    #[serde(rename = "retired")]
+    Retired,
+    #[serde(rename = "current")]
+    Current,
+    #[serde(rename = "beta")]
+    Beta,
+    #[serde(rename = "nightly")]
+    Nightly,
+    #[serde(rename = "esr")]
+    Esr,
+    #[serde(rename = "planned")]
+    Planned,
 }

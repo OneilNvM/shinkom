@@ -1,10 +1,13 @@
 /**@typedef {import('../types/public').CustomEventEngineDetail} CustomEventEngineDetail */
+/**@typedef {import('../types/public').CompatResult} CompatResult */
 import init, { CompatEngine } from '../../pkg/shinkore'
-import compatData from '../../gen/compat-data.json'
+import compatData, { browserData, usageData } from '../../gen/index'
 import { ShinkomBus } from '../core'
 import { getModulePath } from '../core/helpers'
 
 export class SKEngine {
+    /**@type {Promise<void> | null} */
+    #wasmLoaded = null;
     /**
      * @param {ShinkomBus | null} bus
      */
@@ -36,6 +39,7 @@ export class SKEngine {
      * @param {string | undefined} wasmURL
      */
     async loadWasm(wasmURL = undefined) {
+        if (this.#wasmLoaded) return this.#wasmLoaded
         const isNode = typeof window === "undefined"
 
         try {
@@ -54,17 +58,27 @@ export class SKEngine {
 
                         wasmBuffer = fs.readFileSync(wasmPath)
                     }
-                    await init({ module_or_path: wasmBuffer })
+                    this.#wasmLoaded = (async () => {
+                        await init({ module_or_path: wasmBuffer })
+                    })()
                 } else {
                     throw new Error("Path does not lead to WASM file.")
                 }
             } else {
                 if (wasmURL) {
-                    await init({ module_or_path: wasmURL })
+                    this.#wasmLoaded = (async () => {
+                        await init({ module_or_path: wasmURL })
+                    })()
                 } else {
-                    await init()
+                    this.#wasmLoaded = (async () => {
+                        await init()
+                    })()
                 }
             }
+
+            console.log("loaded WASM")
+
+            return this.#wasmLoaded
         } catch (error) {
             throw error
         }
@@ -77,14 +91,19 @@ export class SKEngine {
     async initEngine(wasmURL = undefined) {
         try {
             if (!this.compatEngine) {
-                if (wasmURL) {
-                    await this.loadWasm(wasmURL)
-                }
-                else {
-                    await this.loadWasm()
+                if (!this.#wasmLoaded) {
+                    console.log("loading WASM through initializer")
+                    if (wasmURL) {
+                        await this.loadWasm(wasmURL)
+                    }
+                    else {
+                        await this.loadWasm()
+                    }
                 }
 
-                this.compatEngine = new CompatEngine(compatData.html, compatData.svg)
+                this.compatEngine = new CompatEngine(compatData.html, compatData.svg, browserData, usageData)
+
+                console.log("initialized engine")
             }
         } catch (error) {
             console.error(`Engine initialization error: ${error}`)
@@ -94,34 +113,61 @@ export class SKEngine {
     /**
      * Used for checking the compatibility of a single element.
      * @param {string} element 
+     * @returns {CompatResult | null}
      */
     checkElement(element) {
-        console.dir(this.compatEngine?.check_element(element))
+        try {
+            /**@type {CompatResult} */
+            const result = this.compatEngine?.check_element(element)
+
+            console.dir(result)
+
+            return result
+        } catch (error) {
+            console.error(error)
+            return null
+        }
     }
 
     /**
      * Used for checking the compatibility of a multiple elements, depending on `depthLevel`.
      * @param {string} html 
      * @param {number} depthLevel 
+     * @returns {CompatResult | null}
      */
     checkElements(html, depthLevel) {
-        console.dir(this.compatEngine?.check_elements(html, depthLevel))
+        try {
+            const result = this.compatEngine?.check_elements(html, depthLevel)
+
+            console.dir(result)
+
+            return result
+        } catch (error) {
+            console.error(error)
+            return null
+        }
     }
 
     /**
      * Used for checking the compatibility of a full page.
      * 
      * Only available in `browser` environments.
+     * @returns {CompatResult | null}
      */
     fullInspect() {
         try {
-            console.dir(this.compatEngine?.full_inspect(document.documentElement.outerHTML))
+            const result = this.compatEngine?.full_inspect(document.documentElement.outerHTML)
+
+            console.dir(result)
+
+            return result
         } catch (error) {
             if (error instanceof ReferenceError) {
                 console.error("fullInspect is only available in browser environments")
             } else {
                 console.error(`fullInspect error: ${error}`)
             }
+            return null
         }
     }
 
@@ -135,6 +181,7 @@ export class SKEngine {
         }
         this.compatEngine?.free()
 
+        this.#wasmLoaded = null
         this.compatEngine = null
     }
 }

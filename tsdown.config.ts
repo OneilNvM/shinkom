@@ -16,7 +16,7 @@ const banner = (c: any) => {
     * Shinkom - ${fileName}
     * @version ${pkg.version}
     * @license ${pkg.license}
-    * @copyright ${date.getFullYear()} - Oneil Achord
+    * @copyright ${date.getFullYear()} - OneilNvM
 */
 `
 }
@@ -35,7 +35,6 @@ export default defineConfig([
             'ui/index': './src/ui/index.js',
             'ui/inspector/inspector': './src/ui/inspector/inspector.js',
             'ui/control-panel/control-panel': './src/ui/control-panel/control-panel.js',
-            'ui/compatibility-view/compatibility-view': './src/ui/compatibility-view/compatibility-view.js',
             'ui/compat-ui/compat-ui': './src/ui/compat-ui/compat-ui.js',
         },
         platform: 'browser',
@@ -70,7 +69,6 @@ export default defineConfig([
             'ui/index': './src/ui/index.js',
             'ui/inspector/inspector': './src/ui/inspector/inspector.js',
             'ui/control-panel/control-panel': './src/ui/control-panel/control-panel.js',
-            'ui/compatibility-view/compatibility-view': './src/ui/compatibility-view/compatibility-view.js',
             'ui/compat-ui/compat-ui': './src/ui/compat-ui/compat-ui.js',
         },
         platform: 'node',

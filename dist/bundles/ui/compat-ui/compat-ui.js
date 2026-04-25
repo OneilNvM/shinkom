@@ -2,7 +2,7 @@
     * Shinkom - compat-ui
     * @version 1.0.0
     * @license MIT
-    * @copyright 2026 - Oneil Achord
+    * @copyright 2026 - OneilNvM
 */
 
 //#region src/ui/compat-ui/compat-ui.js

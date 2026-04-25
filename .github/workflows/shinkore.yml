@@ -42,3 +42,4 @@ jobs:
             with:
               name: shinkore-wasm
               path: pkg
+              retention-days: 1

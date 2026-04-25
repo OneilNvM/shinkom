@@ -4,8 +4,6 @@ import { afterEach, describe, expect, it, test, beforeEach, vi } from "vitest";
 import { CompatControlPanel, CompatInspector, CompatUI, Shinkom, SKEngine } from "../../src";
 import { ShinkomBus, ShinkomState } from "../../src/core";
 
-
-
 describe("Power the Shinkore WASM engine", () => {
     const shinkom = new Shinkom()
     afterEach(() => {
@@ -41,7 +39,7 @@ describe("Analyze compatibility of HTML elements and attributes", () => {
         document.body.innerHTML = ""
     })
 
-    it("should console.dir <video> tag as not deprecated", () => {
+    it("should console.dir <video> tag with a score of 100", () => {
         const dirSpy = vi.spyOn(console, 'dir')
 
         document.body.innerHTML = `
@@ -61,7 +59,7 @@ describe("Analyze compatibility of HTML elements and attributes", () => {
         expect(dirSpy).toHaveBeenCalled()
     })
 
-    it("should console.dir <big> tag as deprecated", () => {
+    it("should console.dir <big> with a score of 0", () => {
         const dirSpy = vi.spyOn(console, 'dir')
 
         document.body.innerHTML = `
