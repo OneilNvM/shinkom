@@ -224,7 +224,7 @@ In order to discover potential compatibility issues, Shinkom implements a score 
 
 The general schema that an average compatibility check will follow goes like this:
 
-```json
+```javascript
 {
     "lookup_results": [
         // results for each web feature
