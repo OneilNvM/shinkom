@@ -75,9 +75,9 @@
     "gen:data": "tsx ./scripts/extract-compat.ts && tsx ./scripts/extract-browser-data.ts && tsx ./scripts/extract-usage-data.ts"
   },
   "devDependencies": {
-    "@mdn/browser-compat-data": "7.3.11",
+    "@mdn/browser-compat-data": "7.3.13",
     "@types/node": "^25.6.0",
-    "caniuse-db": "^1.0.30001787",
+    "caniuse-db": "^1.0.30001790",
     "jsdom": "^28.1.0",
     "node": "^25.9.0",
     "tsdown": "^0.21.2",
