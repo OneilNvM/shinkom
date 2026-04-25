@@ -26,34 +26,37 @@ describe("Analyze compatibility of HTML elements and attributes", () => {
         skEngine.destroy()
     })
 
-    it("should console.dir <header> tag as not deprecated", () => {
-        const dirSpy = vi.spyOn(console, 'dir')
+    it("should return a score of 100 for <header> tag", () => {
         const mockHTML = `<header></header>`
 
-        skEngine.checkElement(mockHTML)
+        const result = skEngine.checkElement(mockHTML)
 
-        expect(dirSpy).toHaveBeenCalled()
+        expect(result).not.toBeNull()
+
+        expect(result?.overall_score).toBe(100)
     })
 
-    it("should console.dir align attribute as deprecated", () => {
-        const dirSpy = vi.spyOn(console, 'dir')
+    it("should return a score of 50 for div tag and align attribute", () => {
         const mockHTML = `<div align="center"></div>`
 
-        skEngine.checkElement(mockHTML)
+        const result = skEngine.checkElement(mockHTML)
 
-        expect(dirSpy).toHaveBeenCalled()
+        expect(result).not.toBeNull()
+
+        expect(result?.overall_score).toBe(50)
     })
 
-    it("should console.dir data-level attribute as not deprecated", () => {
-        const dirSpy = vi.spyOn(console, 'dir')
+    it("should return a score of 100 for div tag and data-level attribute", () => {
         const mockHTML = `<div data-level=20></div>`
 
-        skEngine.checkElement(mockHTML)
+        const result = skEngine.checkElement(mockHTML)
 
-        expect(dirSpy).toHaveBeenCalled()
+        expect(result).not.toBeNull()
+
+        expect(result?.overall_score).toBe(100)
     })
 
-    it("should call console.dir 2 times when checking elements twice", () => {
+    it("should call console.dir 3 times when checking elements three times", () => {
         const dirSpy = vi.spyOn(console, 'dir')
         const mockHTML = `
         <main class="flex flex-col gap-32">
@@ -101,6 +104,6 @@ describe("Analyze compatibility of HTML elements and attributes", () => {
         skEngine.checkElements(mockHTML, 2)
         skEngine.checkElements(mockHTML, 3)
 
-        expect(dirSpy).toBeCalledTimes(6)
+        expect(dirSpy).toBeCalledTimes(3)
     })
 })
