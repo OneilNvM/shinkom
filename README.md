@@ -5,6 +5,9 @@
     A JavaScript library powered by a Rust/WASM engine, providing native speed cross-browser compatibility data processing and analysis.<br>
     </strong>
 </p>
+<div align="center">
+    <img width="500" height="500" alt="shinkom-logo" src="https://github.com/user-attachments/assets/54e9aa80-3a85-44d5-9d7f-9266303eb156" />
+</div>
 
 ## Introduction
 
