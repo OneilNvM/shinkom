@@ -1,0 +1,62 @@
+name: Build Shinkom and Shinkore
+
+on:
+    push:
+        branches: ["master", "dev"]
+    pull_request:
+        branches: ["master", "dev"]
+
+permissions:
+    actions: read
+
+jobs:
+    buildShinkore:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: ./shinkore
+        env:
+            CARGO_TERM_COLOR: always
+            RUSTFLAGS: "-Dwarnings"
+        steps:
+          - uses: actions/checkout@v6
+          - name: Install wasm-pack
+            run: cargo install wasm-pack
+          - name: Run Clippy
+            run: cargo clippy
+          - name: Run Build Release
+            run: cargo build -r
+          - name: Run Tests
+            run: cargo test
+          - name: Build WASM files
+            run: npm run build:wasm
+          - name: Upload WASM
+            uses: actions/upload-artifact@v7
+            with:
+              name: shinkore-wasm
+              path: pkg
+              retention-days: 1
+    
+    buildShinkom:
+        runs-on: ubuntu-latest
+        needs: buildShinkore
+        strategy:
+            fail-fast: true
+            matrix:
+                node-version: ["20.x", "25.x"]
+        steps:
+            - uses: actions/checkout@v6
+            - name: Download WASM artifact
+              uses: actions/download-artifact@v8
+              with:
+                name: shinkore-wasm
+                path: pkg
+            - name: Use Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v6
+              with:
+                  node-version: ${{ matrix.node-version }}
+            - run: npm ci
+            - name: Run Build
+              run: npm run build:js
+            - name: Run Tests
+              run: npm test
