@@ -120,6 +120,12 @@ export class SKEngine {
             /**@type {CompatResult} */
             const result = this.compatEngine?.check_element(element)
 
+            if (this.bus) {
+                this.bus.emit('results:ready', {
+                    detail: result
+                })
+            }
+
             console.dir(result)
 
             return result
@@ -139,6 +145,12 @@ export class SKEngine {
         try {
             const result = this.compatEngine?.check_elements(html, depthLevel)
 
+            if (this.bus) {
+                this.bus.emit('results:ready', {
+                    detail: result
+                })
+            }
+
             console.dir(result)
 
             return result
@@ -157,6 +169,12 @@ export class SKEngine {
     fullInspect() {
         try {
             const result = this.compatEngine?.full_inspect(document.documentElement.outerHTML)
+
+            if (this.bus) {
+                this.bus.emit('results:ready', {
+                    detail: result
+                })
+            }
 
             console.dir(result)
 

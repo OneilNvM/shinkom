@@ -2,12 +2,13 @@ import { SupportStatement } from '@mdn/browser-compat-data/types'
 
 export type ShinkomEventMap = {
     "ci:toggle": CustomEvent<void>;
-    "engine:inspect": CustomEvent<CustomEventEngineDetail>;
     "ci:switch": CustomEvent<void>;
     "ci:create": CustomEvent<void>;
     "ci:reset": CustomEvent<void>;
     "ci:destroy": CustomEvent<void>;
+    "engine:inspect": CustomEvent<CustomEventEngineDetail>;
     "engine:full": CustomEvent<CustomEventEngineDetail>;
+    "results:ready": CustomEvent<CompatResult>
 }
 
 export type CustomEventEngineDetail = {

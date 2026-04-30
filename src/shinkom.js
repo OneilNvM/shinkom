@@ -1,7 +1,7 @@
 /**@typedef {import("./types/public").ShinkomConfig} ShinkomConfig */
 import { ShinkomBus, ShinkomState } from "./core"
 import { SKEngine } from "./engine"
-import { CompatControlPanel, CompatInspector, CompatUI } from "./ui"
+import { CompatControlPanel, CompatInspector, CompatUI, CompatView } from "./ui"
 
 export class Shinkom {
     #config;
@@ -23,7 +23,8 @@ export class Shinkom {
         /**@type {CompatUI} */
         this.compatUI = new CompatUI(bus, state, [
             new CompatInspector(bus, state, this.#config?.inspector),
-            new CompatControlPanel(bus, state)
+            new CompatControlPanel(bus, state),
+            new CompatView(bus, state)
         ])
     }
 
