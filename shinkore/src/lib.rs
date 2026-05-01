@@ -132,7 +132,7 @@ impl CompatEngine {
                         attributes,
                     };
 
-                    let compat_results = self.compat_check(ctx, true);
+                    let compat_results = self.compat_check(ctx, false);
 
                     match compat_results {
                         Ok(res) => results.borrow_mut().extend(res),
@@ -203,7 +203,7 @@ impl CompatEngine {
                         attributes,
                     };
 
-                    let compat_results = self.multi_compat_check(ctx, &mut caches, true);
+                    let compat_results = self.multi_compat_check(ctx, &mut caches, false);
 
                     match compat_results {
                         Ok(res) => results.borrow_mut().extend(res),
@@ -269,7 +269,7 @@ impl CompatEngine {
                         attributes,
                     };
 
-                    let compat_results = self.multi_compat_check(ctx, &mut caches, true);
+                    let compat_results = self.multi_compat_check(ctx, &mut caches, false);
 
                     match compat_results {
                         Ok(res) => results.borrow_mut().extend(res),
