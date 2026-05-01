@@ -34,7 +34,7 @@ pub fn lookup_element(
     } else if rust_engine {
         eprintln!("<{}> is not an element", ctx.tag)
     } else {
-        web_sys::console::error_1(&JsValue::from_str(&format!(
+        web_sys::console::warn_1(&JsValue::from_str(&format!(
             "<{}> is not an element",
             ctx.tag
         )));
@@ -73,7 +73,7 @@ pub fn multi_lookup_element(
         if rust_engine {
             eprintln!("<{}> is not an element or has no compat data", ctx.tag)
         } else {
-            web_sys::console::error_1(&JsValue::from_str(&format!(
+            web_sys::console::warn_1(&JsValue::from_str(&format!(
                 "<{}> is not an element or has no compat data",
                 ctx.tag
             )));
@@ -155,7 +155,7 @@ pub fn lookup_attribs(
         } else if rust_engine {
             eprintln!("<{}> is not an element", ctx.tag)
         } else {
-            web_sys::console::error_1(&JsValue::from_str(&format!(
+            web_sys::console::warn_1(&JsValue::from_str(&format!(
                 "<{}> is not an element",
                 ctx.tag
             )));
@@ -164,7 +164,7 @@ pub fn lookup_attribs(
         if rust_engine {
             eprintln!("{name} is not an attribute")
         } else {
-            web_sys::console::error_1(&JsValue::from_str(&format!("{name} is not an attribute")));
+            web_sys::console::warn_1(&JsValue::from_str(&format!("{name} is not an attribute")));
         }
     }
 
@@ -253,7 +253,7 @@ pub fn multi_lookup_attribs(
         } else if rust_engine {
             eprintln!("<{}> is not an element or has no compat data", ctx.tag);
         } else {
-            web_sys::console::error_1(&JsValue::from_str(&format!(
+            web_sys::console::warn_1(&JsValue::from_str(&format!(
                 "<{}> is not an element or has no compat data",
                 ctx.tag
             )));
@@ -264,7 +264,7 @@ pub fn multi_lookup_attribs(
             if rust_engine {
                 eprintln!("{name} is not an attribute or has no compat data")
             } else {
-                web_sys::console::error_1(&JsValue::from_str(&format!(
+                web_sys::console::warn_1(&JsValue::from_str(&format!(
                     "{name} is not an attribute or has no compat data"
                 )));
             }
