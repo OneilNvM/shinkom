@@ -2,6 +2,7 @@
 /**@typedef {import('../../types/public').InspectorConfig} InspectorConfig */
 /**@typedef {import('../../types/public').UISharedStateProps} UISharedStateProps */
 import { ShinkomBus, ShinkomState, UIComponent } from '../../core';
+import { CompatControlPanelElement, CompatInspectorElement } from '../../core/elements';
 
 /**@extends {UIComponent} */
 export class CompatInspector extends UIComponent {
@@ -13,7 +14,7 @@ export class CompatInspector extends UIComponent {
     /**@type {AbortController | null} */
     #inspectorController = null;
 
-    /**@type {HTMLDivElement | null} */
+    /**@type {CompatControlPanelElement | null} */
     #ignorePanelEl = null;
 
     /**
@@ -24,13 +25,15 @@ export class CompatInspector extends UIComponent {
     constructor(bus, stateService, config = undefined) {
         super(bus, stateService)
 
+        CompatInspector.register()
+
         /**@type {InspectorConfig | undefined} */
         this.config = config
 
         /**@type {boolean} */
         this.enableSwitching = false;
 
-        /**@type {HTMLDivElement | null} */
+        /**@type {CompatInspectorElement | null} */
         this.inspectorEl = null;
 
         /**@type {HTMLElement | null} */
@@ -52,6 +55,12 @@ export class CompatInspector extends UIComponent {
         this.bus.on('ci:destroy', () => {
             this.unmount()
         })
+    }
+
+    static register() {
+        if (!customElements.get('sk-compat-inspector')) {
+            customElements.define('sk-compat-inspector', CompatInspectorElement)
+        }
     }
 
     /**
@@ -118,7 +127,7 @@ export class CompatInspector extends UIComponent {
 
         this.#inspect(this.frozenTarget.outerHTML)
 
-        Object.assign(this.inspectorEl.style, {
+        Object.assign(this.inspectorEl.shadowHost.style, {
             backgroundColor: 'rgba(255,0,0,.3)',
             outlineColor: 'rgb(255,0,0)'
         })
@@ -147,7 +156,7 @@ export class CompatInspector extends UIComponent {
         this.#freezeInspector = false
         this.frozenTarget = null
 
-        Object.assign(this.inspectorEl.style, {
+        Object.assign(this.inspectorEl.shadowHost.style, {
             backgroundColor: 'rgba(0,255,0,.3)',
             outlineColor: 'rgb(0,255,0)'
         })
@@ -197,7 +206,7 @@ export class CompatInspector extends UIComponent {
         const scrollTop = window.scrollY
         const scrollLeft = window.scrollX
 
-        Object.assign(this.inspectorEl.style, {
+        Object.assign(this.inspectorEl.shadowHost.style, {
             width: `${width}px`,
             height: `${height}px`,
             transform: `translateX(${left + scrollLeft}px) translateY(${top + scrollTop}px)`
@@ -205,42 +214,11 @@ export class CompatInspector extends UIComponent {
     }
 
     /**
-     * Creates the inspector element.
-     */
-    createInspector() {
-        if (this.inspectorEl) {
-            console.warn("Inspector element already exists.")
-            return;
-        }
-
-        this.inspectorEl = document.createElement('div')
-
-        this.inspectorEl.id = 'compat-inspector'
-        Object.assign(this.inspectorEl.style, {
-            position: 'absolute',
-            top: '0',
-            backgroundColor: 'rgba(0, 255, 0, .3)',
-            outlineWidth: '1px',
-            outlineStyle: 'dashed',
-            outlineColor: 'rgb(0, 255, 0)',
-            outlineOffset: '4px',
-            zIndex: '9998',
-            transitionProperty: 'width, height, transform',
-            transitionDuration: '300ms',
-            transitionTimingFunction: 'ease-out',
-            willChange: 'width, height, transform',
-            pointerEvents: 'none'
-        })
-
-        document.body.appendChild(this.inspectorEl)
-    }
-
-    /**
      * Set inspector to ignore control panel div.
-     * @param {HTMLDivElement | null} el 
+     * @param {CompatControlPanelElement | null} el 
      */
     #setIgnorePanel(el) {
-        if (!(el instanceof HTMLDivElement) && el !== null)
+        if (!(el instanceof CompatControlPanelElement) && el !== null)
             throw new Error("el must be of type HTMLDivElement or null")
 
         this.#ignorePanelEl = el
@@ -280,7 +258,10 @@ export class CompatInspector extends UIComponent {
             return;
         }
 
-        this.createInspector()
+        this.inspectorEl = /**@type {CompatInspectorElement}*/(document.createElement('sk-compat-inspector'))
+
+        document.body.appendChild(this.inspectorEl)
+
         this.#setupGlobalListeners()
 
         if (this.#stateBind) {

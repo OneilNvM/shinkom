@@ -1,5 +1,7 @@
-/**@typedef {import('../types/public').CompatResult} CompatResult */
-/**@typedef {import('../types/public').CompatSnapshot} CompatSnapshot */
+/**@typedef {import('../../types/public').CompatResult} CompatResult */
+/**@typedef {import('../../types/public').CompatSnapshot} CompatSnapshot */
+
+/**@extends {HTMLElement} */
 export class CompatViewElement extends HTMLElement {
     constructor() {
         super()

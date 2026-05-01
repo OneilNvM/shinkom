@@ -1,4 +1,5 @@
 import { SupportStatement } from '@mdn/browser-compat-data/types'
+import { CompatControlPanelElement } from '../core/elements';
 
 export type ShinkomEventMap = {
     "ci:toggle": CustomEvent<void>;
@@ -45,7 +46,7 @@ export type UISharedState = {
     inspectorSwitching: boolean;
     multiElements: boolean;
     depthLevel: number;
-    ignorePanelEl: HTMLDivElement | null;
+    ignorePanelEl: CompatControlPanelElement | null;
 }
 
 export type CompatResult = {

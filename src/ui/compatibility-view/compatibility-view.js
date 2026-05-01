@@ -5,12 +5,16 @@ import { ShinkomBus, ShinkomState, UIComponent, CompatViewElement } from "../../
 
 /**@extends {UIComponent} */
 export class CompatView extends UIComponent {
+    /**@type {UISharedState | null} */
+    #state = null
     /**
      * @param {ShinkomBus} bus 
      * @param {ShinkomState} state 
      */
     constructor(bus, state) {
         super(bus, state)
+
+        CompatView.register()
 
         /**@type {CompatViewElement | null} */
         this.compatViewEl = null
@@ -20,14 +24,18 @@ export class CompatView extends UIComponent {
                 this.compatViewEl.results = e
             }
         })
+    }
 
-        customElements.define('compat-view', CompatViewElement)
+    static register() {
+        if (!customElements.get('sk-compat-view')) {
+            customElements.define('sk-compat-view', CompatViewElement)
+        }
     }
 
     mount() {
         if (this.compatViewEl) return
 
-        this.compatViewEl = /**@type {CompatViewElement}*/(document.createElement('compat-view'))
+        this.compatViewEl = /**@type {CompatViewElement}*/(document.createElement('sk-compat-view'))
 
         document.body.appendChild(this.compatViewEl)
     }
@@ -43,7 +51,8 @@ export class CompatView extends UIComponent {
      * @param {UISharedState} state 
      */
     bindState(state) {
-
+        if (!this.#state)
+            this.#state = state
     }
 
     /**
