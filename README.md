@@ -148,8 +148,7 @@ then consider contributing by creating a **pull request** on the **dev** branch 
 
 ### Basic
 
-https://github.com/user-attachments/assets/fc0dda8d-1f1b-44cf-bcbe-db7a5f4c76c9
-
+<https://github.com/user-attachments/assets/fc0dda8d-1f1b-44cf-bcbe-db7a5f4c76c9>
 The simplest and **recommended** way to utilize Shinkom is through the main entry-point.
 
 ```javascript

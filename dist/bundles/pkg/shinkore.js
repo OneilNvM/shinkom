@@ -1,6 +1,6 @@
 /**
     * Shinkom - pkg
-    * @version 1.0.0
+    * @version 1.0.2
     * @license MIT
     * @copyright 2026 - OneilNvM
 */
@@ -252,6 +252,9 @@ function __wbg_get_imports() {
 		},
 		__wbg_value_ee3a06f4579184fa: function(arg0) {
 			return arg0.value;
+		},
+		__wbg_warn_3cc416af27dbdc02: function(arg0) {
+			console.warn(arg0);
 		},
 		__wbindgen_cast_0000000000000001: function(arg0) {
 			return arg0;
