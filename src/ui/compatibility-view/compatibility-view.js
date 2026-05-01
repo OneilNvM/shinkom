@@ -16,7 +16,9 @@ export class CompatView extends UIComponent {
         this.compatViewEl = null
 
         this.bus.on('results:ready', (/**@type {CompatResult}*/e) => {
-            if (this.compatViewEl) this.compatViewEl.results = e
+            if (this.compatViewEl) {
+                this.compatViewEl.results = e
+            }
         })
 
         customElements.define('compat-view', CompatViewElement)

@@ -53,6 +53,10 @@ export type CompatResult = {
     lookup_results: LookupResult[];
 }
 
+export type CompatSnapshot = CompatResult & {
+    checkedAt: string
+}
+
 export type LookupResult = {
     name: string;
     mdn_url: string;
