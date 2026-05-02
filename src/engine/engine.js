@@ -1,4 +1,4 @@
-/**@typedef {import('../types/public').CustomEventEngineDetail} CustomEventEngineDetail */
+/**@typedef {import('../types/types').CustomEventEngineDetail} CustomEventEngineDetail */
 /**@typedef {import('../types/public').CompatResult} CompatResult */
 import init, { CompatEngine } from '../../pkg/shinkore'
 import compatData, { browserData, usageData } from '../../gen/index'
@@ -168,7 +168,7 @@ export class SKEngine {
      */
     fullInspect() {
         try {
-            const result = this.compatEngine?.full_inspect(document.documentElement.outerHTML)
+            const result = this.compatEngine?.full_inspect(document.documentElement.outerHTML.replace(/<sk-[\w-]+><\/sk-[\w-]+>/g, ""))
 
             console.dir(result)
 
