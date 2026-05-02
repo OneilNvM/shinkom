@@ -23,12 +23,10 @@ export class CompatViewElement extends HTMLElement {
 
         this._results = val;
 
-        const newResult = {
+        this.updateResultHistory({
             ...val,
             checkedAt: new Date().toISOString()
-        }
-
-        this.updateResultHistory(newResult)
+        })
 
         console.log(`The score of this result is ${this._results?.overall_score}`)
     }
