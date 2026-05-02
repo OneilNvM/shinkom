@@ -72,7 +72,7 @@
     "dev:nobuild": "vite",
     "dev": "npm run build:wasm && vite",
     "build": "npm run build:wasm && npm run build:js",
-    "build:js": "tsdown --config-loader unrun && cp src/types/public.d.ts dist/bundles/types/public.d.ts",
+    "build:js": "tsdown --config-loader unrun && cp src/types/public.d.ts dist/bundles/types/public.d.ts && cp src/types/types.d.ts dist/bundles/types/types.d.ts",
     "build:wasm": "wasm-pack build shinkore --target web --out-dir ../pkg --release",
     "test": "vitest",
     "type:check": "tsc --project tsconfig.json",

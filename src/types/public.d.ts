@@ -1,30 +1,5 @@
-import { SupportStatement } from '@mdn/browser-compat-data/types'
 import { CompatControlPanelElement } from '../core/elements';
-
-export type ShinkomEventMap = {
-    "ci:toggle": CustomEvent<void>;
-    "ci:switch": CustomEvent<void>;
-    "ci:create": CustomEvent<void>;
-    "ci:reset": CustomEvent<void>;
-    "ci:destroy": CustomEvent<void>;
-    "engine:inspect": CustomEvent<CustomEventEngineDetail>;
-    "engine:full": CustomEvent<CustomEventEngineDetail>;
-    "results:ready": CustomEvent<CompatResult>
-}
-
-export type CustomEventEngineDetail = {
-    elem: string;
-    depthLevel: number;
-    multiElements: boolean;
-}
-
-export interface ShinkomEventTarget extends EventTarget {
-    addEventListener: <K extends keyof ShinkomEventMap>(type: K | string, listener: ShinkomEventListener<K> | EventListenerOrEventListenerObject | null, options?: EventListenerOptions | boolean) => void;
-    removeEventListener: <K extends keyof ShinkomEventMap>(type: K | string, callback: ShinkomEventListener<K> | EventListenerOrEventListenerObject | null) => void;
-    dispatchEvent: <K extends keyof ShinkomEventMap>(event: ShinkomEventMap[K]) => boolean;
-}
-
-export type ShinkomEventListener<K extends keyof ShinkomEventMap> = (this: ShinkomEventTarget, ev: ShinkomEventMap[K]) => void
+import { SupportStatement } from './types';
 
 export type ShinkomConfig = {
     inspector?: InspectorConfig
@@ -48,6 +23,8 @@ export type UISharedState = {
     depthLevel: number;
     ignorePanelEl: CompatControlPanelElement | null;
 }
+
+export type UISharedStateProps = keyof UISharedState
 
 export type CompatResult = {
     overall_score: number;
@@ -75,5 +52,3 @@ export type BrowserResult = {
     };
     versions: SupportStatement
 }
-
-export type UISharedStateProps = keyof UISharedState
