@@ -70,10 +70,7 @@ export class CompatControlPanel extends UIComponent {
                 break;
             case "inspectorActive":
                 if (this.toggleInspectorEl)
-                    this.toggleInspectorEl.innerHTML = val ? "Active" : "Deactive"
-
-                if (this.ciStatusEl)
-                    this.ciStatusEl.innerHTML = val ? "Inspector Status: Active" : "Inspector Status: Deactive"
+                    this.toggleInspectorEl.innerHTML = val ? "Enabled" : "Disabled"
                 break;
             default:
                 break;
@@ -125,6 +122,8 @@ export class CompatControlPanel extends UIComponent {
 
         if (depthLevelInput) {
             this.depthLevelInput = /**@type {HTMLInputElement} */ (depthLevelInput)
+            this.depthLevelInput.disabled = !this.#stateBind?.multiElements
+
         }
         if (toggleInspector) {
             this.toggleInspectorEl = /**@type {HTMLButtonElement} */ (toggleInspector)
