@@ -1,4 +1,4 @@
-import { CompatControlPanelElement } from '../core/elements';
+import { CompatControlPanelElement, CompatViewElement } from '../core/elements';
 import { SupportStatement } from './types';
 
 export type ShinkomConfig = {
@@ -22,6 +22,7 @@ export type UISharedState = {
     multiElements: boolean;
     depthLevel: number;
     ignorePanelEl: CompatControlPanelElement | null;
+    ignoreCompatViewEl: CompatViewElement | null;
 }
 
 export type UISharedStateProps = keyof UISharedState
