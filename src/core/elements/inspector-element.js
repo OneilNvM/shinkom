@@ -19,7 +19,7 @@ export class CompatInspectorElement extends HTMLElement {
                 outline-style: dashed;
                 outline-color: rgb(0, 255, 0);
                 outline-offset: 4px;
-                z-index: 9998;
+                z-index: 990;
                 transition-property: width, height, transform;
                 transition-duration: 300ms;
                 transition-timing-function: ease-out;
