@@ -9,15 +9,63 @@ export class CompatControlPanelElement extends HTMLElement {
         this.shadowHost.id = 'sk-shadow-host'
     }
 
+    #injectHeadStyles() {
+        const style = document.createElement('style')
+        style.textContent = `
+            /* Styles injected from Shinkom */
+
+            ::part(control-panel) {
+                view-transition-name: control-panel;
+            }
+
+            @keyframes move-fade-in {
+                from {
+                    opacity: 0;
+                    transform: translateX(-2rem)
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateX(0%)
+                }
+            }
+
+            @keyframes move-fade-out {
+                from {
+                    opacity: 1;
+                    transform: translateX(0%);
+                }
+
+                to {
+                    opacity: 0;
+                    transform: translateX(-2rem);
+                }
+            }
+
+            ::view-transition-old(control-panel) {
+                animation: 300ms ease-out both move-fade-out;
+            }
+
+            ::view-transition-new(control-panel) {
+                animation: 300ms ease-out both move-fade-in;
+            }
+        `
+
+        document.head.appendChild(style)
+    }
+
     connectedCallback() {
+        this.#injectHeadStyles()
+
         Object.assign(this.shadowHost.style, {
             position: 'fixed',
             top: '2rem',
             left: '2rem',
-            zIndex: '9999'
+            zIndex: '992',
         })
+
         this.styles.textContent = `
-            :root {
+            :host {
                 --sk-primary: #050021;
                 --sk-secondary: #1E0074;
                 --sk-accent: #C9D1FF;
@@ -52,7 +100,6 @@ export class CompatControlPanelElement extends HTMLElement {
                 color: white;
                 font-family: Arial, Helvetica, sans-serif;
                 border-radius: 1rem;
-                z-index: 2;
                 overflow: hidden;
             }
 
@@ -294,7 +341,7 @@ export class CompatControlPanelElement extends HTMLElement {
                     <path d="m14 9 3 3-3 3" />
                 </svg>
             </button>
-            <div id="sk-control-panel" class="sk-control-panel" style="display: none;">
+            <div part="control-panel" id="sk-control-panel" class="sk-control-panel" style="display: none;">
                 <div class="sk-page-buttons">
                     <button class="sk-page-button">Inspector</button>
                     <div class="sk-page-line"></div>
@@ -353,6 +400,23 @@ export class CompatControlPanelElement extends HTMLElement {
             </div>
         </div>
         `
+    }
+
+    /**
+     * @param {"show" | "hide"} display
+     */
+    renderDisplayTransition(display) {
+        const panel = this.shadowRoot?.getElementById('sk-control-panel')
+        if (display === "show") {
+            if (panel) {
+                panel.style.display = "flex"
+            }
+
+        } else if (display === "hide") {
+            if (panel) {
+                panel.style.display = "none"
+            }
+        }
     }
 
     disconnectedCallback() {
