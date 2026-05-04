@@ -6,6 +6,7 @@ export const DEFAULT_STATE = {
     inspectorActive: false,
     inspectorSwitching: false,
     ignorePanelEl: null,
+    ignoreCompatViewEl: null,
     multiElements: false,
     depthLevel: 0
 }
