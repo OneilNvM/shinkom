@@ -2,7 +2,7 @@
 /**@typedef {import('../../types/public').InspectorConfig} InspectorConfig */
 /**@typedef {import('../../types/public').UISharedStateProps} UISharedStateProps */
 import { ShinkomBus, ShinkomState, UIComponent } from '../../core';
-import { CompatControlPanelElement, CompatInspectorElement } from '../../core/elements';
+import { CompatInspectorElement } from '../../core/elements';
 
 /**@extends {UIComponent} */
 export class CompatInspector extends UIComponent {
@@ -13,9 +13,6 @@ export class CompatInspector extends UIComponent {
 
     /**@type {AbortController | null} */
     #inspectorController = null;
-
-    /**@type {CompatControlPanelElement | null} */
-    #ignorePanelEl = null;
 
     /**
      * @param {ShinkomBus} bus
@@ -98,7 +95,10 @@ export class CompatInspector extends UIComponent {
      * @param {PointerEvent} e
      */
     #handleToggleFreeze = e => {
-        if (e.composedPath().includes(/**@type {EventTarget} */(this.#ignorePanelEl))) return;
+        if (
+            e.composedPath().includes(/**@type {EventTarget} */(this.#stateBind?.ignorePanelEl))
+            || e.composedPath().includes(/**@type {EventTarget} */(this.#stateBind?.ignoreCompatViewEl))
+        ) return;
 
         e.preventDefault()
         e.stopPropagation()
@@ -214,17 +214,6 @@ export class CompatInspector extends UIComponent {
     }
 
     /**
-     * Set inspector to ignore control panel div.
-     * @param {CompatControlPanelElement | null} el 
-     */
-    #setIgnorePanel(el) {
-        if (!(el instanceof CompatControlPanelElement) && el !== null)
-            throw new Error("el must be of type HTMLDivElement or null")
-
-        this.#ignorePanelEl = el
-    }
-
-    /**
      * @param {UISharedState} state 
      */
     bindState(state) {
@@ -243,9 +232,6 @@ export class CompatInspector extends UIComponent {
         switch (prop) {
             case "inspectorSwitching":
                 this.enableSwitching = val
-                break;
-            case "ignorePanelEl":
-                this.#setIgnorePanel(val)
                 break;
             default:
                 break;
