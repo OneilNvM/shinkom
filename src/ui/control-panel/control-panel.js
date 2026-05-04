@@ -24,12 +24,6 @@ export class CompatControlPanel extends UIComponent {
 
         /**@type {HTMLInputElement | null} */
         this.depthLevelInput = null
-        /**@type {HTMLParagraphElement | null} */
-        this.ciStatusEl = null
-        /**@type {HTMLButtonElement | null} */
-        this.toggleSwitchingEl = null
-        /**@type {HTMLButtonElement | null} */
-        this.toggleInspectorEl = null
 
         /**@type {number} */
         this.depthLevel = 0;
@@ -65,12 +59,20 @@ export class CompatControlPanel extends UIComponent {
     onStateChange(prop, val) {
         switch (prop) {
             case "inspectorSwitching":
-                if (this.toggleSwitchingEl)
-                    this.toggleSwitchingEl.innerHTML = val ? "Enabled" : "Disabled"
+                if (this.controlPanelEl && this.controlPanelEl.shadowRoot) {
+                    const toggleSwitchingButton = this.controlPanelEl.shadowRoot.getElementById('sk-toggle-switching')
+
+                    if (toggleSwitchingButton)
+                        toggleSwitchingButton.innerHTML = val ? "Enabled" : "Disabled"
+                }
                 break;
             case "inspectorActive":
-                if (this.toggleInspectorEl)
-                    this.toggleInspectorEl.innerHTML = val ? "Enabled" : "Disabled"
+                if (this.controlPanelEl && this.controlPanelEl.shadowRoot) {
+                    const toggleInspectorButton = this.controlPanelEl.shadowRoot.getElementById('sk-toggle-inspector')
+
+                    if (toggleInspectorButton)
+                        toggleInspectorButton.innerHTML = val ? "Enabled" : "Disabled"
+                }
                 break;
             default:
                 break;
@@ -97,42 +99,14 @@ export class CompatControlPanel extends UIComponent {
 
         const { signal } = this.#panelController
 
-        const toggleInspector = this.controlPanelEl.shadowRoot?.getElementById('sk-toggle-inspector')
-        const toggleSwitching = this.controlPanelEl.shadowRoot?.getElementById('sk-toggle-switching')
-        const createInspector = this.controlPanelEl.shadowRoot?.getElementById('sk-create-inspector')
-        const resetInspector = this.controlPanelEl.shadowRoot?.getElementById('sk-reset-inspector')
-        const destroyInspector = this.controlPanelEl.shadowRoot?.getElementById('sk-destroy-inspector')
-        const showButton = this.controlPanelEl.shadowRoot?.getElementById('sk-show-panel')
-        const closeButton = this.controlPanelEl.shadowRoot?.getElementById('sk-close-panel')
-        const toggleElements = this.controlPanelEl.shadowRoot?.getElementById('sk-toggle-elements')
         const depthLevelInput = this.controlPanelEl.shadowRoot?.getElementById('sk-depth-level')
-        const fullInspectButton = this.controlPanelEl.shadowRoot?.getElementById('sk-full-inspect')
-        const ciStatusEl = this.controlPanelEl.shadowRoot?.getElementById('sk-inspector-status')
 
-        toggleInspector?.addEventListener('click', this.#handleToggleClick, { signal })
-        toggleSwitching?.addEventListener('click', this.#handleToggleClick, { signal })
-        createInspector?.addEventListener('click', this.#handleToggleClick, { signal })
-        resetInspector?.addEventListener('click', this.#handleToggleClick, { signal })
-        destroyInspector?.addEventListener('click', this.#handleToggleClick, { signal })
-        showButton?.addEventListener('click', this.#handleToggleClick, { signal })
-        closeButton?.addEventListener('click', this.#handleToggleClick, { signal })
-        toggleElements?.addEventListener('click', this.#handleToggleClick, { signal })
+        this.controlPanelEl.shadowHost.addEventListener('click', this.#handleToggleClick, { signal })
         depthLevelInput?.addEventListener('change', this.#handleDepthLevelValue, { signal })
-        fullInspectButton?.addEventListener('click', this.#handleToggleClick, { signal })
 
         if (depthLevelInput) {
             this.depthLevelInput = /**@type {HTMLInputElement} */ (depthLevelInput)
             this.depthLevelInput.disabled = !this.#stateBind?.multiElements
-
-        }
-        if (toggleInspector) {
-            this.toggleInspectorEl = /**@type {HTMLButtonElement} */ (toggleInspector)
-        }
-        if (toggleSwitching) {
-            this.toggleSwitchingEl = /**@type {HTMLButtonElement} */ (toggleSwitching)
-        }
-        if (ciStatusEl) {
-            this.ciStatusEl = /**@type {HTMLParagraphElement} */ (ciStatusEl)
         }
     }
 
@@ -178,19 +152,23 @@ export class CompatControlPanel extends UIComponent {
         switch (/**@type {HTMLElement} */(e.target).id) {
             case 'sk-show-panel': {
                 if (!this.controlPanelEl) return;
-                const panel = this.controlPanelEl.shadowRoot?.getElementById('sk-control-panel')
-
-                if (panel) {
-                    panel.style.display = 'flex'
+                if (!document.startViewTransition) {
+                    this.controlPanelEl?.renderDisplayTransition("show")
+                } else {
+                    document.startViewTransition(() => {
+                        this.controlPanelEl?.renderDisplayTransition("show")
+                    })
                 }
                 break;
             }
             case 'sk-close-panel': {
                 if (!this.controlPanelEl) return;
-                const panel = this.controlPanelEl.shadowRoot?.getElementById('sk-control-panel')
-
-                if (panel) {
-                    panel.style.display = 'none'
+                if (!document.startViewTransition) {
+                    this.controlPanelEl.renderDisplayTransition("hide")
+                } else {
+                    document.startViewTransition(() => {
+                        this.controlPanelEl?.renderDisplayTransition("hide")
+                    })
                 }
                 break;
             }
@@ -226,7 +204,6 @@ export class CompatControlPanel extends UIComponent {
                 this.bus.emit('engine:full')
                 break;
             default:
-                console.error(`Could not dispatch an event for element of unknown id: ${/**@type {HTMLElement} */(e.target).id}`)
                 break;
         }
     }
