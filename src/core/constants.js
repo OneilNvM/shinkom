@@ -8,5 +8,6 @@ export const DEFAULT_STATE = {
     ignorePanelEl: null,
     ignoreCompatViewEl: null,
     multiElements: false,
-    depthLevel: 0
+    depthLevel: 0,
+    currentTab: "overview"
 }

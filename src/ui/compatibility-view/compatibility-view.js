@@ -2,6 +2,7 @@
 /**@typedef {import("../../types/public").UISharedStateProps} UISharedStateProps */
 /**@typedef {import("../../types/public").CompatResult} CompatResult */
 import { ShinkomBus, ShinkomState, UIComponent, CompatViewElement } from "../../core";
+import { RecentResultItem } from "../../core/elements";
 
 /**@extends {UIComponent} */
 export class CompatView extends UIComponent {
@@ -10,12 +11,17 @@ export class CompatView extends UIComponent {
 
     /**@type {UISharedState | null} */
     #stateBind = null
+
+    /**@type {ShinkomState | null} */
+    #stateService = null
     /**
      * @param {ShinkomBus} bus 
      * @param {ShinkomState} state 
      */
     constructor(bus, state) {
         super(bus, state)
+
+        this.#stateService = state
 
         CompatView.register()
 
@@ -39,12 +45,17 @@ export class CompatView extends UIComponent {
         if (!customElements.get('sk-compat-view')) {
             customElements.define('sk-compat-view', CompatViewElement)
         }
+        if (!customElements.get("sk-recent-result-item")) {
+            customElements.define("sk-recent-result-item", RecentResultItem)
+        }
     }
 
     mount() {
         if (this.compatViewEl) return
 
         this.compatViewEl = /**@type {CompatViewElement}*/(document.createElement('sk-compat-view'))
+
+        this.compatViewEl.state = this.#stateService
 
         document.body.appendChild(this.compatViewEl)
 
@@ -98,7 +109,9 @@ export class CompatView extends UIComponent {
      * @param {*} val 
      */
     onStateChange(prop, val) {
-
+        if (prop === "currentTab") {
+            this.currentTab = val
+        }
     }
 
     /**
@@ -133,20 +146,24 @@ export class CompatView extends UIComponent {
                     })
                 }
 
-                this.currentTab = "overview"
+                if (this.#stateBind)
+                        this.#stateBind.currentTab = "overview"
                 break;
             case 'sk-results-tab':
                 if (this.currentTab === "results") break;
 
-                if (!document.startViewTransition) {
-                    this.compatViewEl?.renderTabContent('results')
-                } else {
-                    document.startViewTransition(() => {
-                        this.compatViewEl?.renderTabContent('results')
-                    })
-                }
+                if (this.compatViewEl && this.compatViewEl._resultsHistory.length > 0) {
+                    if (!document.startViewTransition) {
+                        this.compatViewEl.renderTabContent('results')
+                    } else {
+                        document.startViewTransition(() => {
+                            this.compatViewEl?.renderTabContent('results')
+                        })
+                    }
 
-                this.currentTab = "results"
+                    if (this.#stateBind)
+                        this.#stateBind.currentTab = "results"
+                }
                 break;
             case 'sk-history-tab':
                 break;
