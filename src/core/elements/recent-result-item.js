@@ -10,7 +10,7 @@ export class RecentResultItem extends HTMLElement {
         /**
          * @type {function(CompatSnapshot): void}
          */
-        this.viewResult = (res) => {}
+        this.viewResult = () => {}
     }
 
     get result() {

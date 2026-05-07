@@ -7,7 +7,17 @@ import { RecentResultItem } from './recent-result-item'
 import { compatViewHTML, compatViewOverviewHTML, compatViewStyleSheet } from './templates/compat-view.templates'
 import { hostStyleSheet } from './templates/root-styles.template'
 
-/**@extends {HTMLElement} */
+/**
+ * A custom element for the `CompatView` UI component.
+ * 
+ * An autonomous custom element created via the [Web Components API](https://developer.mozilla.org/en-US/docs/Web/API/Web_components).
+ * This component contains methods for rendering components for the CompatView and handling how the results from the engine
+ * is stored and displayed for viewing.
+ * 
+ * Since this element is defined via the Web Components API, to use this element outside of the CompatView, it must be registered
+ * as a custom element on the `window` object.
+ * @extends {HTMLElement} 
+*/
 export class CompatViewElement extends HTMLElement {
     constructor() {
         super()
@@ -38,7 +48,7 @@ export class CompatViewElement extends HTMLElement {
 
         this._results = val;
 
-        this.updateResultHistory({
+        this.updateResultsHistory({
             ...val,
             checkedAt: new Date().toISOString()
         })
@@ -55,24 +65,25 @@ export class CompatViewElement extends HTMLElement {
     }
 
     /**
+     * Updates the results history and backs up the results to `localStorage`
      * @param {CompatSnapshot} val 
      */
-    updateResultHistory(val) {
+    updateResultsHistory(val) {
         this._resultsHistory = [val, ...this._resultsHistory].slice(0, 10)
 
-        this.backupResultsToLocalStorage()
+        this.#backupResultsToLocalStorage()
 
         console.dir(this._resultsHistory)
     }
 
-    retrieveResultsFromLocalStorage() {
+    #retrieveResultsFromLocalStorage() {
         const resultsHistory = localStorage.getItem("resultsHistory")
         if (resultsHistory) {
             this._resultsHistory = JSON.parse(resultsHistory)
         }
     }
 
-    backupResultsToLocalStorage() {
+    #backupResultsToLocalStorage() {
         localStorage.setItem("resultsHistory", JSON.stringify(this._resultsHistory))
     }
 
@@ -92,7 +103,7 @@ export class CompatViewElement extends HTMLElement {
             }
         })
 
-        this.retrieveResultsFromLocalStorage()
+        this.#retrieveResultsFromLocalStorage()
 
         this.#injectFontLink()
 
@@ -105,6 +116,7 @@ export class CompatViewElement extends HTMLElement {
     }
 
     /**
+     * Renders the `CompatViewElement` on the overview tab by default.
      * @param {"overview" | "results" | "history" | undefined} tab 
      */
     render(tab = undefined) {
@@ -118,7 +130,7 @@ export class CompatViewElement extends HTMLElement {
     }
 
     /**
-     * Renders recent results list items
+     * Renders list items for the 5 most recent results.
      */
     renderRecentResults() {
         const list = this.shadowRoot?.getElementById('sk-recent-results-list')
@@ -140,11 +152,11 @@ export class CompatViewElement extends HTMLElement {
                     }
                 }
                 recentResultItem.innerHTML = `
-                    <li class="sk-recent-results-item">
+                    <div class="sk-recent-results-item">
                             <p>${snap.checkedAt}</p>
                             <p>${snap.overall_score}</p>
                             <button class="sk-view-result sk-button-style">Details</button>
-                    </li>
+                    </div>
                     <hr class="sk-hr-line">
                 `
 
@@ -167,11 +179,11 @@ export class CompatViewElement extends HTMLElement {
                     }
                 }
                 recentResultItem.innerHTML = `
-                    <li class="sk-recent-results-item">
+                    <div class="sk-recent-results-item">
                             <p>${this._resultsHistory[counter].checkedAt}</p>
                             <p>${this._resultsHistory[counter].overall_score}</p>
                             <button class="sk-view-result sk-button-style">Details</button>
-                    </li>
+                    </div>
                     <hr class="sk-hr-line">
                 `
 
@@ -189,6 +201,7 @@ export class CompatViewElement extends HTMLElement {
     }
 
     /**
+     * Renders content for a specific tab.
      * @param {"overview" | "results" | "history"} tab 
      */
     renderTabContent(tab) {
@@ -210,6 +223,7 @@ export class CompatViewElement extends HTMLElement {
     }
 
     /**
+     * Renders the content of a compatibility result.
      * @param {CompatSnapshot | undefined} snapshot 
      */
     renderCompatResult(snapshot = undefined) {
@@ -265,8 +279,9 @@ export class CompatViewElement extends HTMLElement {
     }
 
     /**
+     * Renders the content of a browser result for a web feature.
      * @param {LookupResult} lookupResult 
-     * @returns {string} result string
+     * @returns {string} browser results HTML
      */
     renderBrowserResults(lookupResult) {
         /**@type {string[]} */
@@ -290,6 +305,7 @@ export class CompatViewElement extends HTMLElement {
     }
 
     /**
+     * Renders the display of the `CompatViewElement`
      * @param {"show" | "hide"} display 
      */
     renderDisplayTransition(display) {

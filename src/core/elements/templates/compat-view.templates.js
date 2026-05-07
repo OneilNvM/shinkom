@@ -10,7 +10,7 @@ export const compatViewHTML = `
         </g>
     </svg>
 </button>
-<div id="sk-compat-view-container" class="sk-compat-view-container" style="display: none;">
+<div part="compat-view" id="sk-compat-view-container" class="sk-compat-view-container" style="display: none;">
     <div class="sk-compat-view">
         <nav class="sk-compat-view-nav">
             <div class="sk-shinkom-logo">
@@ -33,7 +33,7 @@ export const compatViewHTML = `
             </div>
         </nav>
         <hr class="sk-hr-line">
-        <main id="sk-compat-view-main" class="sk-compat-view-main"></main>
+        <main part="compat-view-main" id="sk-compat-view-main" class="sk-compat-view-main"></main>
     </div>
 </div>
 `
