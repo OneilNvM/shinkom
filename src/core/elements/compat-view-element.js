@@ -37,6 +37,9 @@ export class CompatViewElement extends HTMLElement {
 
         /**@type {CompatSnapshot[]} */
         this._resultsHistory = []
+
+        /**@type {number} */
+        this.maxResultsHistory = 10
     }
 
     get results() {
@@ -69,7 +72,7 @@ export class CompatViewElement extends HTMLElement {
      * @param {CompatSnapshot} val 
      */
     updateResultsHistory(val) {
-        this._resultsHistory = [val, ...this._resultsHistory].slice(0, 10)
+        this._resultsHistory = [val, ...this._resultsHistory].slice(0, this.maxResultsHistory)
 
         this.#backupResultsToLocalStorage()
 
@@ -97,11 +100,15 @@ export class CompatViewElement extends HTMLElement {
     }
 
     connectedCallback() {
-        this.state?.subscribe((prop, val) => {
-            if (prop === "currentTab") {
-                this.currentTab = val
-            }
-        })
+        if (this.state) {
+            this.state?.subscribe((prop, val) => {
+                if (prop === "currentTab") {
+                    this.currentTab = val
+                }
+            })
+        } else {
+            console.warn("No state was provided to the CompatViewElement. This may cause syncing mistakes between it and the CompatView. If this was intentional, then ignore this warning.")
+        }
 
         this.#retrieveResultsFromLocalStorage()
 
