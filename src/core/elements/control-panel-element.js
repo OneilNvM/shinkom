@@ -14,7 +14,7 @@ export class CompatControlPanelElement extends HTMLElement {
     #injectHeadStyles() {
         const style = document.createElement('style')
         style.textContent = `
-            /* Styles injected from Shinkom */
+            /* Control panel styles injected from Shinkom */
 
             ::part(control-panel) {
                 view-transition-name: control-panel;
@@ -28,14 +28,14 @@ export class CompatControlPanelElement extends HTMLElement {
 
                 to {
                     opacity: 1;
-                    transform: translateX(0%)
+                    transform: translateX(0rem)
                 }
             }
 
             @keyframes move-fade-out {
                 from {
                     opacity: 1;
-                    transform: translateX(0%);
+                    transform: translateX(0rem);
                 }
 
                 to {

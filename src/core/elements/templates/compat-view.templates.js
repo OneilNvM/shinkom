@@ -10,7 +10,7 @@ export const compatViewHTML = `
         </g>
     </svg>
 </button>
-<div part="compat-view" id="sk-compat-view-container" class="sk-compat-view-container" style="display: none;">
+<div id="sk-compat-view-container" class="sk-compat-view-container" style="display: none;">
     <div class="sk-compat-view">
         <nav class="sk-compat-view-nav">
             <div class="sk-shinkom-logo">
@@ -46,7 +46,7 @@ export const compatViewOverviewHTML = `
     </div>
     <div class="sk-shinkom-version-container doto-regular">
         <div class="sk-shinkom-version">
-            <div class="sk-green-square"></div>
+            <div id="sk-version-indicator" class="sk-version-indicator"></div>
             <p class="sk-shinkom-version-text">Railway version ${pkg.version}</p>
         </div>
         <div>
@@ -221,13 +221,12 @@ compatViewStyleSheet.replaceSync(`
         font-size: var(--sk-text-md);
         color: #ffe600;
     }
-    .sk-green-square {
+    .sk-version-indicator {
         display: inline-block;
         width: 1.25rem;
         height: 1.25rem;
         border-radius: .2rem;
         background-size: 4px 4px;
-        background-image: radial-gradient(circle at center, #36ff46 1px, transparent 0);
     }
     .sk-shinkom-version {
         display: flex;
@@ -379,3 +378,57 @@ compatViewStyleSheet.replaceSync(`
         justify-self: flex-end;
     }`
 )
+
+export const transitionsStyleSheet = new CSSStyleSheet()
+transitionsStyleSheet.replaceSync(`
+    /* CompatView styles injected from Shinkom */
+
+    html {
+        view-transition-name: none;
+    }
+
+    ::part(compat-view) {
+        view-transition-name: compat-view;
+    }
+
+    @keyframes move-fade-in-y { from { opacity: 0; transform: translateY(-2rem) } }
+    @keyframes move-fade-out-y { to { opacity: 0; transform: translateY(-2rem); } }
+    @keyframes move-out-left { to { transform: translateX(-5rem); opacity: 0 } }
+    @keyframes move-in-right { from { transform: translateX(5rem); opacity: 0 } }
+    @keyframes move-out-right { to { transform: translateX(5rem); opacity: 0 } }
+    @keyframes move-in-left { from { transform: translateX(-5rem); opacity: 0 } }
+
+    ::view-transition-old(compat-view) {
+        animation: 150ms ease-out both move-fade-out-y;
+    }
+    ::view-transition-new(compat-view) {
+        animation: 150ms ease-out both move-fade-in-y;
+    }
+
+    [data-transition="forward"]::view-transition-group(compat-view),
+    [data-transition="backward"]::view-transition-group(compat-view) {
+        clip-path: inset(0 0 0 0);
+    }
+
+    [data-transition="forward"]::view-transition-new(compat-view),
+    [data-transition="backward"]::view-transition-old(compat-view) {
+        width: 100%;
+        height: 100%;
+    }
+
+    [data-transition="forward"]::view-transition-old(compat-view) {
+        animation: 300ms ease-out both move-out-left;
+    }
+
+    [data-transition="forward"]::view-transition-new(compat-view) {
+        animation: 300ms ease-out both move-in-right;
+    }
+
+    [data-transition="backward"]::view-transition-old(compat-view) {
+        animation: 300ms ease-out both move-out-right;
+    }
+
+    [data-transition="backward"]::view-transition-new(compat-view) {
+        animation: 300ms ease-out both move-in-left;
+    }
+`)

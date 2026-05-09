@@ -13,6 +13,10 @@ hostStyleSheet.replaceSync(`
         --sk-results-yellow-foreground: #ffe600;
         --sk-results-green-foreground: #40ff2f;
         --sk-results-red-foreground: #ff2b2b;
+        --sk-indicator-green: #36ff46;
+        --sk-indicator-yellow: #fafe09;
+        --sk-indicator-red: #de291f;
+        --sk-indicator-blue: #1b72e4;
 
         --sk-text-xs: 0.75rem;
         --sk-text-sm: 0.875rem;

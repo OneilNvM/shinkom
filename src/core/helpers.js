@@ -15,3 +15,10 @@ export const getModulePath = async (modulePath) => {
         return path.pathToFileURL(require.resolve(modulePath))
     }
 }
+
+/**
+ * @param {string} version 
+ */
+export function versionToParts(version) {
+    return version.replace(/^v/, '').split('.').map(Number)
+}

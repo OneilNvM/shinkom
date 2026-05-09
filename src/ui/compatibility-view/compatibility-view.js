@@ -118,7 +118,7 @@ export class CompatView extends UIComponent {
      * Handles click events within the control panel.
      * @param {PointerEvent} e
     */
-    #handleClickEvents = e => {
+    #handleClickEvents = async e => {
         switch (/**@type {HTMLElement} */(e.target).id) {
             case 'sk-toggle-compat-view':
                 if (!this.compatViewEl) break;
@@ -128,42 +128,32 @@ export class CompatView extends UIComponent {
 
                     this.active = !this.active
                 } else {
-                    const transition = document.startViewTransition(() => {
-                        this.compatViewEl?.renderDisplayTransition(this.active ? "hide" : "show")
-                    })
+                    const container = this.compatViewEl.shadowRoot?.getElementById('sk-compat-view-container')
+                    if (container) {
+                        container.part.value = "compat-view"
 
-                    transition.finished.then(() => this.active = !this.active)
+                        const transition = document.startViewTransition(() => {
+                            this.compatViewEl?.renderDisplayTransition(this.active ? "hide" : "show")
+                        })
+
+                        try {
+                            await transition.finished
+                        } finally {
+                            this.active = !this.active
+                            container.removeAttribute("part")
+                        }
+                    }
                 }
                 break;
             case 'sk-overview-tab':
                 if (this.currentTab === "overview") break;
 
-                if (!document.startViewTransition) {
-                    this.compatViewEl?.renderTabContent('overview')
-                } else {
-                    document.startViewTransition(() => {
-                        this.compatViewEl?.renderTabContent('overview')
-                    })
-                }
-
-                if (this.#stateBind)
-                        this.#stateBind.currentTab = "overview"
+                this.#handleTabChange("overview")
                 break;
             case 'sk-results-tab':
                 if (this.currentTab === "results") break;
 
-                if (this.compatViewEl && this.compatViewEl._resultsHistory.length > 0) {
-                    if (!document.startViewTransition) {
-                        this.compatViewEl.renderTabContent('results')
-                    } else {
-                        document.startViewTransition(() => {
-                            this.compatViewEl?.renderTabContent('results')
-                        })
-                    }
-
-                    if (this.#stateBind)
-                        this.#stateBind.currentTab = "results"
-                }
+                this.#handleTabChange("results")
                 break;
             case 'sk-history-tab':
                 break;
@@ -172,6 +162,41 @@ export class CompatView extends UIComponent {
                 break;
             default:
                 break;
+        }
+    }
+
+    /**
+     * @param {"overview" | "results" | "history"} tab 
+    */
+    async #handleTabChange(tab) {
+        if (this.compatViewEl?._resultsHistory.length === 0) return
+
+        if (!document.startViewTransition) {
+            this.compatViewEl?.renderTabContent(tab)
+        } else {
+            const mainSection = this.compatViewEl?.shadowRoot?.getElementById('sk-compat-view-main')
+
+            if (mainSection) {
+                const tabs = ["overview", "results", "history"]
+                const direction = tabs.indexOf(tab) > tabs.indexOf(this.currentTab) ? "forward" : "backward"
+
+                mainSection.part.value = "compat-view"
+                document.documentElement.dataset.transition = direction
+
+                const transition = document.startViewTransition(() => {
+                    this.compatViewEl?.renderTabContent(tab)
+                })
+
+                if (this.#stateBind)
+                    this.#stateBind.currentTab = tab
+
+                try {
+                    await transition.finished
+                } finally {
+                    mainSection.removeAttribute('part')
+                    delete document.documentElement.dataset.transition
+                }
+            }
         }
     }
 }

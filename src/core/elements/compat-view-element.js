@@ -2,9 +2,11 @@
 /**@typedef {import('../../types/public').CompatSnapshot} CompatSnapshot */
 /**@typedef {import('../../types/public').LookupResult} LookupResult */
 
+import pkg from '../../../package.json'
+import { versionToParts } from '../helpers'
 import { ShinkomState } from '../state-service'
 import { RecentResultItem } from './recent-result-item'
-import { compatViewHTML, compatViewOverviewHTML, compatViewStyleSheet } from './templates/compat-view.templates'
+import { compatViewHTML, compatViewOverviewHTML, compatViewStyleSheet, transitionsStyleSheet } from './templates/compat-view.templates'
 import { hostStyleSheet } from './templates/root-styles.template'
 
 /**
@@ -99,6 +101,56 @@ export class CompatViewElement extends HTMLElement {
         document.head.appendChild(link)
     }
 
+    async checkVersion() {
+        const shinkomVersion = sessionStorage.getItem('shinkom-latest-version')
+        if (shinkomVersion) {
+            this.#processVersions(pkg.version, shinkomVersion)
+        } else {
+            const version = await this.#checkLatestVersion()
+            if (version) sessionStorage.setItem('shinkom-latest-version', version)
+        }
+    }
+
+    /**
+     * @param {string} localV 
+     * @param {string} remoteV 
+     */
+    #processVersions(localV, remoteV) {
+        const versionIndicator = this.shadowRoot?.getElementById('sk-version-indicator')
+        const local = versionToParts(localV)
+        const remote = versionToParts(remoteV)
+        if (versionIndicator) {
+            if (remote[0] > local[0]) {
+                versionIndicator.style.backgroundImage = "radial-gradient(circle at center, var(--sk-indicator-red) 1px, transparent 0)"
+            } else if (remote[1] > local[1]) {
+                versionIndicator.style.backgroundImage = "radial-gradient(circle at center, var(--sk-indicator-yellow) 1px, transparent 0)"
+            } else if ((remote[2] || 0) > (local[2] || 0)) {
+                versionIndicator.style.backgroundImage = "radial-gradient(circle at center, var(--sk-indicator-blue) 1px, transparent 0)"
+            } else {
+                versionIndicator.style.backgroundImage = "radial-gradient(circle at center, var(--sk-indicator-green) 1px, transparent 0)"
+            }
+        }
+    }
+
+    /**
+     * 
+     * @returns {Promise<string | undefined>} latest version
+     */
+    async #checkLatestVersion() {
+        try {
+            const response = await fetch("https://api.github.com/repos/OneilNvM/shinkom/releases/latest")
+            if (!response.ok) throw new Error("Network response was not ok")
+
+            const data = await response.json()
+
+            this.#processVersions(pkg.version, data.tag_name)
+
+            return data.tag_name
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
     connectedCallback() {
         if (this.state) {
             this.state?.subscribe((prop, val) => {
@@ -112,6 +164,7 @@ export class CompatViewElement extends HTMLElement {
 
         this.#retrieveResultsFromLocalStorage()
 
+        document.adoptedStyleSheets = [transitionsStyleSheet]
         this.#injectFontLink()
 
         if (this.shadowRoot)
@@ -153,9 +206,7 @@ export class CompatViewElement extends HTMLElement {
                     if (!document.startViewTransition) {
                         this.renderCompatResult(res)
                     } else {
-                        document.startViewTransition(() => {
-                            this.renderCompatResult(res)
-                        })
+                        this.#handleDetailsTransition(res)
                     }
                 }
                 recentResultItem.innerHTML = `
@@ -180,9 +231,7 @@ export class CompatViewElement extends HTMLElement {
                     if (!document.startViewTransition) {
                         this.renderCompatResult(res)
                     } else {
-                        document.startViewTransition(() => {
-                            this.renderCompatResult(res)
-                        })
+                        this.#handleDetailsTransition(res)
                     }
                 }
                 recentResultItem.innerHTML = `
@@ -208,17 +257,48 @@ export class CompatViewElement extends HTMLElement {
     }
 
     /**
+     * @param {CompatSnapshot} res 
+     */
+    async #handleDetailsTransition(res) {
+        const sharedState = this.state?.getState()
+        const mainSection = this.shadowRoot?.getElementById('sk-compat-view-main')
+
+        if (mainSection) {
+            const tabs = ["overview", "results", "history"]
+            const direction = tabs.indexOf("results") > tabs.indexOf(this.currentTab) ? "forward" : "backward"
+
+            mainSection.part.value = "compat-view"
+            document.documentElement.dataset.transition = direction
+
+            if (sharedState)
+                sharedState.currentTab = "results"
+
+            const transition = document.startViewTransition(() => {
+                this.renderCompatResult(res)
+            })
+
+            try {
+                await transition.finished
+            } finally {
+                mainSection.removeAttribute('part')
+                delete document.documentElement.dataset.transition
+            }
+        }
+    }
+
+    /**
      * Renders content for a specific tab.
      * @param {"overview" | "results" | "history"} tab 
      */
     renderTabContent(tab) {
         const main = this.shadowRoot?.getElementById('sk-compat-view-main')
+
         switch (tab) {
             case 'overview':
                 if (main) {
                     main.innerHTML = compatViewOverviewHTML
                 }
-                this.currentTab = tab
+                this.checkVersion()
                 this.renderRecentResults()
                 break;
             case 'results':
@@ -234,10 +314,6 @@ export class CompatViewElement extends HTMLElement {
      * @param {CompatSnapshot | undefined} snapshot 
      */
     renderCompatResult(snapshot = undefined) {
-        const state = this.state?.getState()
-        if (state)
-            state.currentTab = "results"
-
         const main = this.shadowRoot?.getElementById('sk-compat-view-main')
         if (main) {
             main.innerHTML = `
