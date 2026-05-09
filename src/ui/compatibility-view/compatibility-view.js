@@ -2,7 +2,7 @@
 /**@typedef {import("../../types/public").UISharedStateProps} UISharedStateProps */
 /**@typedef {import("../../types/public").CompatResult} CompatResult */
 import { ShinkomBus, ShinkomState, UIComponent, CompatViewElement } from "../../core";
-import { RecentResultItem } from "../../core/elements";
+import { RecentResultItem, ResultsHistoryItem } from "../../core/elements";
 
 /**@extends {UIComponent} */
 export class CompatView extends UIComponent {
@@ -47,6 +47,9 @@ export class CompatView extends UIComponent {
         }
         if (!customElements.get("sk-recent-result-item")) {
             customElements.define("sk-recent-result-item", RecentResultItem)
+        }
+        if (!customElements.get("sk-history-item")) {
+            customElements.define("sk-history-item", ResultsHistoryItem)
         }
     }
 
@@ -156,6 +159,9 @@ export class CompatView extends UIComponent {
                 this.#handleTabChange("results")
                 break;
             case 'sk-history-tab':
+                if (this.currentTab === "history") break;
+
+                this.#handleTabChange("history")
                 break;
             case 'sk-full-inspect':
                 this.bus.emit('engine:full')

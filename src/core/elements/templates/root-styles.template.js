@@ -7,6 +7,7 @@ hostStyleSheet.replaceSync(`
         --sk-hover-color: #03001a;
         --sk-background-variant-1: #191B1C;
         --sk-background-variant-2: #1E1E1E;
+        --sk-background-variant-3: #0c0c0c;
 
         --sk-text-grey: #5f5f5f;
         --sk-results-blue-foreground: #3172ff;

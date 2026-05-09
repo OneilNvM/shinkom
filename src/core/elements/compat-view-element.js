@@ -6,6 +6,7 @@ import pkg from '../../../package.json'
 import { versionToParts } from '../helpers'
 import { ShinkomState } from '../state-service'
 import { RecentResultItem } from './recent-result-item'
+import { ResultsHistoryItem } from './results-history-item'
 import { compatViewHTML, compatViewOverviewHTML, compatViewStyleSheet, transitionsStyleSheet } from './templates/compat-view.templates'
 import { hostStyleSheet } from './templates/root-styles.template'
 
@@ -206,7 +207,7 @@ export class CompatViewElement extends HTMLElement {
                     if (!document.startViewTransition) {
                         this.renderCompatResult(res)
                     } else {
-                        this.#handleDetailsTransition(res)
+                        this.#handleViewResultTransition(res)
                     }
                 }
                 recentResultItem.innerHTML = `
@@ -224,14 +225,13 @@ export class CompatViewElement extends HTMLElement {
             let counter = 0
             while (counter < 5) {
                 const recentResultItem = /**@type {RecentResultItem} */(document.createElement('sk-recent-result-item'))
-                recentResultItem.setAttribute('is', 'sk-recent-result-item')
                 recentResultItem.classList.add("sk-recent-results-item-container")
                 recentResultItem.result = this._resultsHistory[counter]
                 recentResultItem.viewResult = (res) => {
                     if (!document.startViewTransition) {
                         this.renderCompatResult(res)
                     } else {
-                        this.#handleDetailsTransition(res)
+                        this.#handleViewResultTransition(res)
                     }
                 }
                 recentResultItem.innerHTML = `
@@ -259,7 +259,7 @@ export class CompatViewElement extends HTMLElement {
     /**
      * @param {CompatSnapshot} res 
      */
-    async #handleDetailsTransition(res) {
+    async #handleViewResultTransition(res) {
         const sharedState = this.state?.getState()
         const mainSection = this.shadowRoot?.getElementById('sk-compat-view-main')
 
@@ -305,7 +305,46 @@ export class CompatViewElement extends HTMLElement {
                 this.renderCompatResult()
                 break;
             case 'history':
+                this.renderHistoryResults()
                 break;
+        }
+    }
+
+    renderHistoryResults() {
+        const main = this.shadowRoot?.getElementById('sk-compat-view-main')
+
+        if (main) {
+            main.innerHTML = `<div id="sk-history-container" class="sk-history-container"></div>`
+        }
+
+        const historyContainer = this.shadowRoot?.getElementById('sk-history-container')
+
+        const historyResults = this._resultsHistory.map(snapshot => {
+            const historyItem = /**@type {ResultsHistoryItem} */(document.createElement('sk-history-item'))
+            historyItem.result = snapshot
+            historyItem.viewResult = (res) => {
+                if (!document.startViewTransition) {
+                    this.renderCompatResult(res)
+                } else {
+                    this.#handleViewResultTransition(res)
+                }
+            }
+
+            historyItem.innerHTML = `
+                <div class="sk-history-item">
+                    <p>Score ${snapshot.overall_score}</p>
+                    <p>Check performed at: ${snapshot.checkedAt}</p>
+                </div>
+            `
+
+            return historyItem
+        })
+
+        if (historyContainer) {
+            historyContainer.innerHTML = ""
+            historyResults.forEach(item => {
+                historyContainer.appendChild(item)
+            })
         }
     }
 

@@ -376,6 +376,32 @@ compatViewStyleSheet.replaceSync(`
     }
     .sk-browser-result-meta p:last-child {
         justify-self: flex-end;
+    }
+    .sk-history-container {
+        display: flex;
+        flex-direction: column;
+        gap: 3rem;
+        width: 100%;
+        height: 40rem;
+        padding-inline: 4rem;
+        padding-block: 2rem;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+    .sk-history-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-evenly;
+        padding-block: 1.5rem;
+        background-color: var(--sk-background-variant-3);
+        border: 1px solid var(--sk-secondary);
+        border-radius: 1rem;
+        font-size: var(--sk-text-2xl);
+        cursor: pointer;
+        user-select: none;
+    }
+    .sk-history-item:hover {
+        background-color: var(--sk-primary);
     }`
 )
 
