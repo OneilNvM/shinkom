@@ -84,18 +84,17 @@ export class CompatViewElement extends HTMLElement {
 
     #retrieveResultsFromLocalStorage() {
         const resultsHistory = localStorage.getItem("resultsHistory")
-        if (resultsHistory) {
-            this._resultsHistory = JSON.parse(resultsHistory)
-        }
+        if (resultsHistory) this._resultsHistory = JSON.parse(resultsHistory)
     }
 
-    #backupResultsToLocalStorage() {
-        localStorage.setItem("resultsHistory", JSON.stringify(this._resultsHistory))
-    }
+    #backupResultsToLocalStorage = () => localStorage.setItem("resultsHistory", JSON.stringify(this._resultsHistory))
 
     #injectFontLink() {
+        if (document.getElementById('sk-font-doto')) return
+
         const link = document.createElement('link')
 
+        link.id = "sk-font-doto"
         link.href = "https://fonts.googleapis.com/css2?family=Doto:wght,ROND@700,100&display=swap"
         link.rel = "stylesheet"
 
@@ -183,11 +182,7 @@ export class CompatViewElement extends HTMLElement {
     render(tab = undefined) {
         this.shadowHost.innerHTML = compatViewHTML
 
-        if (tab) {
-            this.renderTabContent(tab)
-        } else {
-            this.renderTabContent("overview")
-        }
+        tab ? this.renderTabContent(tab) : this.renderTabContent("overview")
     }
 
     /**
@@ -195,65 +190,32 @@ export class CompatViewElement extends HTMLElement {
      */
     renderRecentResults() {
         const list = this.shadowRoot?.getElementById('sk-recent-results-list')
-        /**@type {RecentResultItem[]} */
-        let recentSnapshots = []
 
-        if (this._resultsHistory.length < 5) {
-            recentSnapshots = this._resultsHistory.map(snap => {
-                const recentResultItem = /**@type {RecentResultItem} */(document.createElement('sk-recent-result-item'))
-                recentResultItem.classList.add("sk-recent-results-item-container")
-                recentResultItem.result = snap
-                recentResultItem.viewResult = (res) => {
-                    if (!document.startViewTransition) {
-                        this.renderCompatResult(res)
-                    } else {
-                        this.#handleViewResultTransition(res)
-                    }
-                }
-                recentResultItem.innerHTML = `
-                    <div class="sk-recent-results-item">
-                            <p>${snap.checkedAt}</p>
-                            <p>${snap.overall_score}</p>
-                            <button class="sk-view-result sk-button-style">Details</button>
-                    </div>
-                    <hr class="sk-hr-line">
-                `
+        if (!list) return
 
-                return recentResultItem
-            })
-        } else {
-            let counter = 0
-            while (counter < 5) {
-                const recentResultItem = /**@type {RecentResultItem} */(document.createElement('sk-recent-result-item'))
-                recentResultItem.classList.add("sk-recent-results-item-container")
-                recentResultItem.result = this._resultsHistory[counter]
-                recentResultItem.viewResult = (res) => {
-                    if (!document.startViewTransition) {
-                        this.renderCompatResult(res)
-                    } else {
-                        this.#handleViewResultTransition(res)
-                    }
-                }
-                recentResultItem.innerHTML = `
-                    <div class="sk-recent-results-item">
-                            <p>${this._resultsHistory[counter].checkedAt}</p>
-                            <p>${this._resultsHistory[counter].overall_score}</p>
-                            <button class="sk-view-result sk-button-style">Details</button>
-                    </div>
-                    <hr class="sk-hr-line">
-                `
-
-                recentSnapshots.push(recentResultItem)
-                counter++
-            }
+        if (this._resultsHistory.length === 0) {
+            if (list) list.innerHTML = `<p>NO PREVIOUS RESULTS</p>`
+            return
         }
 
-        if (list) {
-            list.innerHTML = ""
-            recentSnapshots.forEach(item => {
-                list.appendChild(item)
-            })
-        }
+        const recentSnapshots = this._resultsHistory.slice(0, 5).map(snap => {
+            const item = /**@type {RecentResultItem} */(document.createElement('sk-recent-result-item'))
+            item.classList.add("sk-recent-results-item-container")
+            item.result = snap
+            item.viewResult = (res) => !document.startViewTransition ? this.renderCompatResult(res) : this.#handleViewResultTransition(res)
+            item.innerHTML = `
+                <div class="sk-recent-results-item">
+                        <p>${snap.checkedAt}</p>
+                        <p>${snap.overall_score}</p>
+                        <button class="sk-view-result sk-button-style">Details</button>
+                </div>
+                <hr class="sk-hr-line">
+            `
+
+            return item
+        })
+
+        if (list) list.replaceChildren(...recentSnapshots)
     }
 
     /**
@@ -270,12 +232,9 @@ export class CompatViewElement extends HTMLElement {
             mainSection.part.value = "compat-view"
             document.documentElement.dataset.transition = direction
 
-            if (sharedState)
-                sharedState.currentTab = "results"
+            if (sharedState) sharedState.currentTab = "results"
 
-            const transition = document.startViewTransition(() => {
-                this.renderCompatResult(res)
-            })
+            const transition = document.startViewTransition(() => this.renderCompatResult(res))
 
             try {
                 await transition.finished
@@ -297,9 +256,9 @@ export class CompatViewElement extends HTMLElement {
             case 'overview':
                 if (main) {
                     main.innerHTML = compatViewOverviewHTML
+                    this.checkVersion()
+                    this.renderRecentResults()
                 }
-                this.checkVersion()
-                this.renderRecentResults()
                 break;
             case 'results':
                 this.renderCompatResult()
@@ -313,7 +272,12 @@ export class CompatViewElement extends HTMLElement {
     renderHistoryResults() {
         const main = this.shadowRoot?.getElementById('sk-compat-view-main')
 
-        if (main) {
+        if (!main) {
+            return
+        } else if (this._resultsHistory.length === 0) {
+            main.innerHTML = `<p>NO PREVIOUS RESULTS</p>`
+            return
+        } else {
             main.innerHTML = `<div id="sk-history-container" class="sk-history-container"></div>`
         }
 
@@ -322,13 +286,7 @@ export class CompatViewElement extends HTMLElement {
         const historyResults = this._resultsHistory.map(snapshot => {
             const historyItem = /**@type {ResultsHistoryItem} */(document.createElement('sk-history-item'))
             historyItem.result = snapshot
-            historyItem.viewResult = (res) => {
-                if (!document.startViewTransition) {
-                    this.renderCompatResult(res)
-                } else {
-                    this.#handleViewResultTransition(res)
-                }
-            }
+            historyItem.viewResult = (res) => !document.startViewTransition ? this.renderCompatResult(res) : this.#handleViewResultTransition(res)
 
             historyItem.innerHTML = `
                 <div class="sk-history-item">
@@ -341,10 +299,9 @@ export class CompatViewElement extends HTMLElement {
         })
 
         if (historyContainer) {
-            historyContainer.innerHTML = ""
-            historyResults.forEach(item => {
-                historyContainer.appendChild(item)
-            })
+            const fragment = document.createDocumentFragment()
+            historyResults.forEach(item => fragment.appendChild(item))
+            historyContainer.appendChild(fragment)
         }
     }
 
@@ -354,7 +311,14 @@ export class CompatViewElement extends HTMLElement {
      */
     renderCompatResult(snapshot = undefined) {
         const main = this.shadowRoot?.getElementById('sk-compat-view-main')
-        if (main) {
+        const data = snapshot || this._resultsHistory[0]
+
+        if (!main) {
+            return
+        } else if (!data) {
+            main.innerHTML = `<p>NO RESULTS ARRIVING</p>`
+            return
+        } else {
             main.innerHTML = `
                 <div class="sk-compat-result-container doto-regular">
                     <div class="sk-compat-result-header">
@@ -371,10 +335,7 @@ export class CompatViewElement extends HTMLElement {
 
         const compatResultsContainer = this.shadowRoot?.getElementById('sk-compat-results')
 
-        /**@type {string[]} */
-        let compatResults = []
-
-        compatResults = (snapshot ? snapshot : this._resultsHistory[0]).lookup_results.map((res, index) => {
+        const compatResults = (snapshot ? snapshot : this._resultsHistory[0]).lookup_results.map((res, index) => {
             const score = parseInt(res.compat_score, 10)
             const rating = score >= 90 ? "On time" : score >= 60 ? "Delayed" : "Cancelled"
             return `
@@ -396,8 +357,7 @@ export class CompatViewElement extends HTMLElement {
             `
         })
 
-        if (compatResultsContainer)
-            compatResultsContainer.innerHTML = compatResults.join("")
+        if (compatResultsContainer) compatResultsContainer.innerHTML = compatResults.join("")
     }
 
     /**
@@ -433,13 +393,9 @@ export class CompatViewElement extends HTMLElement {
     renderDisplayTransition(display) {
         const compatView = this.shadowRoot?.getElementById('sk-compat-view-container')
         if (display === "show") {
-            if (compatView) {
-                compatView.style.display = "block"
-            }
+            if (compatView) compatView.style.display = "block"
         } else if (display === "hide") {
-            if (compatView) {
-                compatView.style.display = "none"
-            }
+            if (compatView) compatView.style.display = "none"
         }
     }
 }

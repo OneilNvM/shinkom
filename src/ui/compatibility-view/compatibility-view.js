@@ -175,8 +175,6 @@ export class CompatView extends UIComponent {
      * @param {"overview" | "results" | "history"} tab 
     */
     async #handleTabChange(tab) {
-        if (this.compatViewEl?._resultsHistory.length === 0) return
-
         if (!document.startViewTransition) {
             this.compatViewEl?.renderTabContent(tab)
         } else {
