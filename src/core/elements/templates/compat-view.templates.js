@@ -405,13 +405,9 @@ compatViewStyleSheet.replaceSync(`
     }`
 )
 
-export const transitionsStyleSheet = new CSSStyleSheet()
-transitionsStyleSheet.replaceSync(`
-    /* CompatView styles injected from Shinkom */
-
-    html {
-        view-transition-name: none;
-    }
+export const compatViewTransitions = new CSSStyleSheet()
+compatViewTransitions.replaceSync(`
+    /* CompatView transition styles injected from Shinkom */
 
     ::part(compat-view) {
         view-transition-name: compat-view;

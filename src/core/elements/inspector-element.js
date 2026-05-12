@@ -30,6 +30,7 @@ export class CompatInspectorElement extends HTMLElement {
 
         this.shadowRoot?.appendChild(this.styles)
         this.shadowRoot?.appendChild(this.shadowHost)
-        console.log("Custom element added to page.");
+
+        this.shadowRoot?.replaceChildren(...[this.styles, this.shadowHost])
     }
 }

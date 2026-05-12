@@ -278,3 +278,42 @@ controlPanelStyleSheet.replaceSync(`
         transition-timing-function: ease-in-out;
     }`
 )
+
+export const controlPanelTransitions = new CSSStyleSheet()
+controlPanelTransitions.replaceSync(`
+    /* Control panel transition styles injected from Shinkom */
+
+    ::part(control-panel) {
+        view-transition-name: control-panel;
+    }
+
+    @keyframes move-fade-in {
+        from {
+            opacity: 0;
+            transform: translateX(-2rem)
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0rem)
+        }
+    }
+
+    @keyframes move-fade-out {
+        from {
+            opacity: 1;
+            transform: translateX(0rem);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(-2rem);
+        }
+    }
+
+    ::view-transition-old(control-panel) {
+        animation: 300ms ease-out both move-fade-out;
+    }
+
+    ::view-transition-new(control-panel) {
+        animation: 300ms ease-out both move-fade-in;
+    }
+`)

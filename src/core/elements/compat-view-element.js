@@ -7,7 +7,7 @@ import { versionToParts } from '../helpers'
 import { ShinkomState } from '../state-service'
 import { RecentResultItem } from './recent-result-item'
 import { ResultsHistoryItem } from './results-history-item'
-import { compatViewHTML, compatViewOverviewHTML, compatViewStyleSheet, transitionsStyleSheet } from './templates/compat-view.templates'
+import { compatViewHTML, compatViewOverviewHTML, compatViewStyleSheet, compatViewTransitions } from './templates/compat-view.templates'
 import { hostStyleSheet } from './templates/root-styles.template'
 
 /**
@@ -164,7 +164,7 @@ export class CompatViewElement extends HTMLElement {
 
         this.#retrieveResultsFromLocalStorage()
 
-        document.adoptedStyleSheets = [transitionsStyleSheet]
+        document.adoptedStyleSheets.push(compatViewTransitions)
         this.#injectFontLink()
 
         if (this.shadowRoot)
@@ -392,10 +392,13 @@ export class CompatViewElement extends HTMLElement {
      */
     renderDisplayTransition(display) {
         const compatView = this.shadowRoot?.getElementById('sk-compat-view-container')
-        if (display === "show") {
-            if (compatView) compatView.style.display = "block"
-        } else if (display === "hide") {
-            if (compatView) compatView.style.display = "none"
+
+        if (compatView) {
+            if (display === "show") {
+                compatView.style.display = "block"
+            } else if (display === "hide") {
+                compatView.style.display = "none"
+            }
         }
     }
 }
