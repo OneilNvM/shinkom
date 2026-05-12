@@ -1,4 +1,4 @@
-import { controlPanelHTML, controlPanelStyleSheet, controlPanelTransitions } from "./templates/control-panel.templates"
+import { controlPanelCompatViewTab, controlPanelHTML, controlPanelInspectorTab, controlPanelStyleSheet, controlPanelTransitions } from "./templates/control-panel.templates"
 import { hostStyleSheet } from "./templates/root-styles.template"
 
 /**@extends {HTMLElement} */
@@ -29,8 +29,33 @@ export class CompatControlPanelElement extends HTMLElement {
         this.render()
     }
 
-    render() {
+    /**
+     * 
+     * @param {"inspector" | "compatView" | undefined} tab 
+     */
+    render(tab = undefined) {
         this.shadowHost.innerHTML = controlPanelHTML
+
+        tab ? this.renderTabContent(tab) : this.renderTabContent("inspector")
+    }
+
+    /**
+     * 
+     * @param {"inspector" | "compatView"} tab 
+     */
+    renderTabContent(tab) {
+        const main = this.shadowRoot?.getElementById('sk-control-panel-main')
+
+        switch (tab) {
+            case "inspector":
+                if (main) main.innerHTML = controlPanelInspectorTab
+                break;
+            case "compatView":
+                if (main) main.innerHTML = controlPanelCompatViewTab
+                break;
+            default:
+                break;
+        }
     }
 
     /**

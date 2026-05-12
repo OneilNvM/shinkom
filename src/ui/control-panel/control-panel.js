@@ -31,6 +31,9 @@ export class CompatControlPanel extends UIComponent {
         /**@type {boolean} */
         this.multiElements = false;
 
+        /**@type {"inspector" | "compatView"} */
+        this.currentTab = "inspector"
+
         stateService.subscribe((prop, val) => {
             this.onStateChange(prop, val)
         })
@@ -63,7 +66,7 @@ export class CompatControlPanel extends UIComponent {
                     const toggleSwitchingButton = this.controlPanelEl.shadowRoot.getElementById('sk-toggle-switching')
 
                     if (toggleSwitchingButton)
-                        toggleSwitchingButton.innerHTML = val ? "Enabled" : "Disabled"
+                        toggleSwitchingButton.textContent = val ? "Enabled" : "Disabled"
                 }
                 break;
             case "inspectorActive":
@@ -71,7 +74,7 @@ export class CompatControlPanel extends UIComponent {
                     const toggleInspectorButton = this.controlPanelEl.shadowRoot.getElementById('sk-toggle-inspector')
 
                     if (toggleInspectorButton)
-                        toggleInspectorButton.innerHTML = val ? "Enabled" : "Disabled"
+                        toggleInspectorButton.textContent = val ? "Enabled" : "Disabled"
                 }
                 break;
             default:
@@ -154,7 +157,7 @@ export class CompatControlPanel extends UIComponent {
                 if (!this.controlPanelEl) return;
 
                 if (!document.startViewTransition) {
-                    this.controlPanelEl?.renderDisplayTransition("show")
+                    this.controlPanelEl.renderDisplayTransition("show")
                 } else {
                     this.#handleDisplayTransition("show")
                 }
@@ -164,9 +167,30 @@ export class CompatControlPanel extends UIComponent {
                 if (!this.controlPanelEl) return;
 
                 if (!document.startViewTransition) {
-                    this.controlPanelEl?.renderDisplayTransition("hide")
+                    this.controlPanelEl.renderDisplayTransition("hide")
                 } else {
                     this.#handleDisplayTransition("hide")
+                }
+                break;
+            }
+            case 'sk-inspector-tab': {
+                if (!this.controlPanelEl || this.currentTab === "inspector") return;
+
+                if (!document.startViewTransition) {
+                    this.controlPanelEl.renderTabContent("inspector")
+                } else {
+                    this.#handleTabChange("inspector")
+                }
+
+                break;
+            }
+            case 'sk-compat-view-tab': {
+                if (!this.controlPanelEl || this.currentTab === "compatView") return;
+
+                if (!document.startViewTransition) {
+                    this.controlPanelEl.renderTabContent("compatView")
+                } else {
+                    this.#handleTabChange("compatView")
                 }
                 break;
             }
@@ -198,11 +222,68 @@ export class CompatControlPanel extends UIComponent {
             case 'sk-destroy-inspector':
                 this.bus.emit('ci:destroy')
                 break;
-            case 'sk-full-inspect':
-                this.bus.emit('engine:full')
-                break;
             default:
                 break;
+        }
+    }
+
+    /**
+     * 
+     * @param {"inspector" | "compatView"} tab 
+     */
+    async #handleTabChange(tab) {
+        const mainSection = this.controlPanelEl?.shadowRoot?.getElementById('sk-control-panel-main')
+
+        if (mainSection) {
+            const transition = document.startViewTransition(() => {
+                this.controlPanelEl?.renderTabContent(tab)
+            })
+
+            this.currentTab = tab
+
+            try {
+                await transition.finished
+
+                if (this.currentTab === "inspector") {
+                    const depthLevel = this.controlPanelEl?.shadowRoot?.getElementById('sk-depth-level')
+                    if (depthLevel) {
+                        this.depthLevelInput = /**@type {HTMLInputElement} */ (depthLevel)
+                        this.depthLevelInput.addEventListener('change', this.#handleDepthLevelValue, { signal: this.#panelController?.signal })
+
+                        if (this.#stateBind) {
+                            if (this.#stateBind.multiElements) {
+                                const checkbox = /**@type {HTMLInputElement} */ (this.controlPanelEl?.shadowRoot?.getElementById('sk-toggle-elements'))
+                                checkbox.checked = true
+                            } else {
+                                this.depthLevelInput.disabled = true
+                            }
+                            if (this.#stateBind.depthLevel > 0)
+                                this.depthLevelInput.value = `${this.#stateBind.depthLevel}`
+                        }
+                    }
+
+                    if (this.#stateBind) {
+                        const switchingToggle = /**@type {HTMLButtonElement} */ (this.controlPanelEl?.shadowRoot?.getElementById('sk-toggle-switching'))
+                        const inspectorToggle = /**@type {HTMLButtonElement} */ (this.controlPanelEl?.shadowRoot?.getElementById('sk-toggle-inspector'))
+
+                        if (this.#stateBind.inspectorActive) {
+                            inspectorToggle.textContent = "Enabled"
+                        } else {
+                            inspectorToggle.textContent = "Disabled"
+                        }
+                        if (this.#stateBind.inspectorSwitching) {
+                            switchingToggle.textContent = "Enabled"
+                        } else {
+                            switchingToggle.textContent = "Disabled"
+                        }
+                    }
+
+                } else if (this.currentTab === "compatView") {
+
+                }
+            } finally {
+
+            }
         }
     }
 
