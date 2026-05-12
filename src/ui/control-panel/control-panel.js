@@ -152,23 +152,21 @@ export class CompatControlPanel extends UIComponent {
         switch (/**@type {HTMLElement} */(e.target).id) {
             case 'sk-show-panel': {
                 if (!this.controlPanelEl) return;
+
                 if (!document.startViewTransition) {
                     this.controlPanelEl?.renderDisplayTransition("show")
                 } else {
-                    document.startViewTransition(() => {
-                        this.controlPanelEl?.renderDisplayTransition("show")
-                    })
+                    this.#handleDisplayTransition("show")
                 }
                 break;
             }
             case 'sk-close-panel': {
                 if (!this.controlPanelEl) return;
+
                 if (!document.startViewTransition) {
-                    this.controlPanelEl.renderDisplayTransition("hide")
+                    this.controlPanelEl?.renderDisplayTransition("hide")
                 } else {
-                    document.startViewTransition(() => {
-                        this.controlPanelEl?.renderDisplayTransition("hide")
-                    })
+                    this.#handleDisplayTransition("hide")
                 }
                 break;
             }
@@ -205,6 +203,27 @@ export class CompatControlPanel extends UIComponent {
                 break;
             default:
                 break;
+        }
+    }
+
+    /**
+     * @param {"show" | "hide"} display 
+     */
+    async #handleDisplayTransition(display) {
+        const controlPanel = this.controlPanelEl?.shadowRoot?.getElementById('sk-control-panel')
+
+        if (controlPanel) {
+            controlPanel.part.value = "control-panel"
+
+            const transition = document.startViewTransition(() => {
+                this.controlPanelEl?.renderDisplayTransition(display)
+            })
+
+            try {
+                await transition.finished
+            } finally {
+                controlPanel.removeAttribute("part")
+            }
         }
     }
 
