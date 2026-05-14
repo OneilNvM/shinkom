@@ -59,6 +59,7 @@ export class CompatView extends UIComponent {
         this.compatViewEl = /**@type {CompatViewElement}*/(document.createElement('sk-compat-view'))
 
         this.compatViewEl.state = this.#stateService
+        this.compatViewEl.bus = this.bus
 
         document.body.appendChild(this.compatViewEl)
 
@@ -112,7 +113,7 @@ export class CompatView extends UIComponent {
      * @param {*} val 
      */
     onStateChange(prop, val) {
-        if (prop === "currentTab") {
+        if (prop === "compatViewTab") {
             this.currentTab = val
         }
     }
@@ -192,7 +193,7 @@ export class CompatView extends UIComponent {
                 })
 
                 if (this.#stateBind)
-                    this.#stateBind.currentTab = tab
+                    this.#stateBind.compatViewTab = tab
 
                 try {
                     await transition.finished

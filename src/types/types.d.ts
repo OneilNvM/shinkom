@@ -9,6 +9,7 @@ export type ShinkomEventMap = {
     "engine:inspect": CustomEvent<CustomEventEngineDetail>;
     "engine:full": CustomEvent<CustomEventEngineDetail>;
     "results:ready": CustomEvent<CompatResult>
+    "clear:history": CustomEvent<void>
 }
 
 export type CustomEventEngineDetail = {

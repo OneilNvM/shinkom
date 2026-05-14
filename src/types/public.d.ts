@@ -23,7 +23,8 @@ export type UISharedState = {
     depthLevel: number;
     ignorePanelEl: CompatControlPanelElement | null;
     ignoreCompatViewEl: CompatViewElement | null;
-    currentTab: "overview" | "results" | "history";
+    compatViewTab: "overview" | "results" | "history";
+    maxResultsHistory: number;
 }
 
 export type UISharedStateProps = keyof UISharedState

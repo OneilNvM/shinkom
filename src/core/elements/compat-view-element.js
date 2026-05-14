@@ -3,6 +3,7 @@
 /**@typedef {import('../../types/public').LookupResult} LookupResult */
 
 import pkg from '../../../package.json'
+import { ShinkomBus } from '../event-bus'
 import { versionToParts } from '../helpers'
 import { ShinkomState } from '../state-service'
 import { RecentResultItem } from './recent-result-item'
@@ -35,14 +36,14 @@ export class CompatViewElement extends HTMLElement {
         /**@type {ShinkomState | null} */
         this.state = null
 
+        /**@type {ShinkomBus | null} */
+        this.bus = null
+
         /**@type {CompatResult | null} */
         this._results = null
 
         /**@type {CompatSnapshot[]} */
         this._resultsHistory = []
-
-        /**@type {number} */
-        this.maxResultsHistory = 10
     }
 
     get results() {
@@ -75,11 +76,13 @@ export class CompatViewElement extends HTMLElement {
      * @param {CompatSnapshot} val 
      */
     updateResultsHistory(val) {
-        this._resultsHistory = [val, ...this._resultsHistory].slice(0, this.maxResultsHistory)
+        if (this.state) {
+            this._resultsHistory = [val, ...this._resultsHistory].slice(0, this.state.getState().maxResultsHistory)
+        } else {
+            this._resultsHistory = [val, ...this._resultsHistory].slice(0, 10)
+        }
 
         this.#backupResultsToLocalStorage()
-
-        console.dir(this._resultsHistory)
     }
 
     #retrieveResultsFromLocalStorage() {
@@ -152,9 +155,15 @@ export class CompatViewElement extends HTMLElement {
     }
 
     connectedCallback() {
+        if (this.bus) {
+            this.bus.on('clear:history', () => {
+                console.log("results cleared")
+                this._resultsHistory = []
+            })
+        }
         if (this.state) {
             this.state?.subscribe((prop, val) => {
-                if (prop === "currentTab") {
+                if (prop === "compatViewTab") {
                     this.currentTab = val
                 }
             })
@@ -232,7 +241,7 @@ export class CompatViewElement extends HTMLElement {
             mainSection.part.value = "compat-view"
             document.documentElement.dataset.transition = direction
 
-            if (sharedState) sharedState.currentTab = "results"
+            if (sharedState) sharedState.compatViewTab = "results"
 
             const transition = document.startViewTransition(() => this.renderCompatResult(res))
 

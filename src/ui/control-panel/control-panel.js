@@ -25,6 +25,12 @@ export class CompatControlPanel extends UIComponent {
         /**@type {HTMLInputElement | null} */
         this.depthLevelInput = null
 
+        /**@type {HTMLInputElement | null} */
+        this.maxResultsHistoryInput = null
+
+        /**@type {number} */
+        this.maxResultsHistory = 10
+
         /**@type {number} */
         this.depthLevel = 0;
 
@@ -222,6 +228,9 @@ export class CompatControlPanel extends UIComponent {
             case 'sk-destroy-inspector':
                 this.bus.emit('ci:destroy')
                 break;
+            case 'sk-clear-history':
+                this.bus.emit('clear:history')
+                break;
             default:
                 break;
         }
@@ -241,48 +250,57 @@ export class CompatControlPanel extends UIComponent {
 
             this.currentTab = tab
 
-            try {
-                await transition.finished
+            await transition.finished
 
-                if (this.currentTab === "inspector") {
-                    const depthLevel = this.controlPanelEl?.shadowRoot?.getElementById('sk-depth-level')
-                    if (depthLevel) {
-                        this.depthLevelInput = /**@type {HTMLInputElement} */ (depthLevel)
-                        this.depthLevelInput.addEventListener('change', this.#handleDepthLevelValue, { signal: this.#panelController?.signal })
-
-                        if (this.#stateBind) {
-                            if (this.#stateBind.multiElements) {
-                                const checkbox = /**@type {HTMLInputElement} */ (this.controlPanelEl?.shadowRoot?.getElementById('sk-toggle-elements'))
-                                checkbox.checked = true
-                            } else {
-                                this.depthLevelInput.disabled = true
-                            }
-                            if (this.#stateBind.depthLevel > 0)
-                                this.depthLevelInput.value = `${this.#stateBind.depthLevel}`
-                        }
-                    }
+            if (this.currentTab === "inspector") {
+                const depthLevel = this.controlPanelEl?.shadowRoot?.getElementById('sk-depth-level')
+                if (depthLevel) {
+                    this.depthLevelInput = /**@type {HTMLInputElement} */ (depthLevel)
+                    this.depthLevelInput.addEventListener('change', this.#handleDepthLevelValue, { signal: this.#panelController?.signal })
 
                     if (this.#stateBind) {
-                        const switchingToggle = /**@type {HTMLButtonElement} */ (this.controlPanelEl?.shadowRoot?.getElementById('sk-toggle-switching'))
-                        const inspectorToggle = /**@type {HTMLButtonElement} */ (this.controlPanelEl?.shadowRoot?.getElementById('sk-toggle-inspector'))
+                        if (this.#stateBind.multiElements) {
+                            const checkbox = /**@type {HTMLInputElement} */ (this.controlPanelEl?.shadowRoot?.getElementById('sk-toggle-elements'))
+                            checkbox.checked = true
+                        } else {
+                            this.depthLevelInput.disabled = true
+                        }
+                        if (this.#stateBind.depthLevel > 0)
+                            this.depthLevelInput.value = `${this.#stateBind.depthLevel}`
+                    }
+                }
 
+                if (this.#stateBind) {
+                    const switchingToggle = /**@type {HTMLButtonElement | null} */ (this.controlPanelEl?.shadowRoot?.getElementById('sk-toggle-switching'))
+                    const inspectorToggle = /**@type {HTMLButtonElement | null} */ (this.controlPanelEl?.shadowRoot?.getElementById('sk-toggle-inspector'))
+
+                    if (inspectorToggle) {
                         if (this.#stateBind.inspectorActive) {
                             inspectorToggle.textContent = "Enabled"
                         } else {
                             inspectorToggle.textContent = "Disabled"
                         }
+                    }
+                    if (switchingToggle) {
                         if (this.#stateBind.inspectorSwitching) {
                             switchingToggle.textContent = "Enabled"
                         } else {
                             switchingToggle.textContent = "Disabled"
                         }
                     }
-
-                } else if (this.currentTab === "compatView") {
-
                 }
-            } finally {
+            } else if (this.currentTab === "compatView") {
+                const maxHistory = this.controlPanelEl?.shadowRoot?.getElementById('sk-max-history')
 
+                if (maxHistory && maxHistory instanceof HTMLInputElement) {
+                    this.maxResultsHistoryInput = maxHistory
+                    this.maxResultsHistoryInput.addEventListener('change', this.#handleMaxHistoryValue, { signal: this.#panelController?.signal })
+
+                    if (this.#stateBind) {
+                        if (this.#stateBind.maxResultsHistory >= 0 && this.#stateBind.maxResultsHistory != 10)
+                            this.maxResultsHistoryInput.value = `${this.#stateBind.maxResultsHistory}`
+                    }
+                }
             }
         }
     }
@@ -306,6 +324,17 @@ export class CompatControlPanel extends UIComponent {
                 controlPanel.removeAttribute("part")
             }
         }
+    }
+
+    /**
+     * @param {Event} e 
+     */
+    #handleMaxHistoryValue = e => {
+        const value = parseInt(/**@type {HTMLInputElement} */(e.target).value, 10)
+        this.maxResultsHistory = value
+
+        if (this.#stateBind)
+            this.#stateBind.maxResultsHistory = value
     }
 
     /**
