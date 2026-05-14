@@ -156,13 +156,13 @@ export class CompatViewElement extends HTMLElement {
 
     connectedCallback() {
         if (this.bus) {
-            this.bus.on('clear:history', () => {
-                console.log("results cleared")
+            this._unsubEvent = this.bus.on('clear:history', () => {
+                localStorage.removeItem('resultsHistory')
                 this._resultsHistory = []
             })
         }
         if (this.state) {
-            this.state?.subscribe((prop, val) => {
+            this._unsubState = this.state.subscribe((prop, val) => {
                 if (prop === "compatViewTab") {
                     this.currentTab = val
                 }
@@ -182,6 +182,20 @@ export class CompatViewElement extends HTMLElement {
         this.shadowRoot?.appendChild(this.shadowHost)
 
         this.render()
+    }
+
+    disconnectedCallback() {
+        const fontLink = document.getElementById('sk-font-doto')
+        if (fontLink) 
+            document.head.removeChild(fontLink)
+        if (this._unsubEvent) {
+            this._unsubEvent()
+        }
+        if (this._unsubState) {
+            this._unsubState()
+        }
+
+        document.adoptedStyleSheets = document.adoptedStyleSheets.filter(sheet => sheet !== compatViewTransitions)
     }
 
     /**

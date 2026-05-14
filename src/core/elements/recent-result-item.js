@@ -7,9 +7,7 @@ export class RecentResultItem extends HTMLElement {
         /**@type {CompatSnapshot | null} */
         this._result = null
 
-        /**
-         * @type {function(CompatSnapshot): void}
-         */
+        /** @type {function(CompatSnapshot): void} */
         this.viewResult = () => {}
     }
 

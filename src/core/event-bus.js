@@ -20,6 +20,7 @@ export class ShinkomBus {
      * Registers a listener on the event bus.
      * @param {keyof ShinkomEventMap} eventName 
      * @param {Function} cb
+     * @returns {() => void} cleanup function
      */
     on(eventName, cb) {
         /**@type {ShinkomEventListener} */

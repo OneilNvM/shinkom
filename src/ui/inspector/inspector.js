@@ -36,22 +36,25 @@ export class CompatInspector extends UIComponent {
         /**@type {HTMLElement | null} */
         this.frozenTarget = null;
 
-        this.bus.on('ci:toggle', () => {
-            if (this.#stateBind?.inspectorActive) {
-                this.#removeGlobalListeners()
-            } else {
-                this.#setupGlobalListeners()
-            }
-        })
-        this.bus.on('ci:create', () => {
-            this.mount()
-        })
-        this.bus.on('ci:reset', () => {
-            this.reset()
-        })
-        this.bus.on('ci:destroy', () => {
-            this.unmount()
-        })
+        /**@type {(() => void)[]} */
+        this.unsubEvents = [
+            this.bus.on('ci:toggle', () => {
+                if (this.#stateBind?.inspectorActive) {
+                    this.#removeGlobalListeners()
+                } else {
+                    this.#setupGlobalListeners()
+                }
+            }),
+            this.bus.on('ci:create', () => {
+                this.mount()
+            }),
+            this.bus.on('ci:reset', () => {
+                this.reset()
+            }),
+            this.bus.on('ci:destroy', () => {
+                this.unmount()
+            })
+        ]
     }
 
     static register() {
@@ -323,6 +326,8 @@ export class CompatInspector extends UIComponent {
             this.#resetInternalState()
             this.inspectorEl.remove()
             this.inspectorEl = null
+
+            this.unsubEvents.forEach(cleanup => cleanup())
         } catch (error) {
             console.error(`Inspector destroy error: ${error}`)
         }

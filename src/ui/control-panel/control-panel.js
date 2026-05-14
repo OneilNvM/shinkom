@@ -40,7 +40,8 @@ export class CompatControlPanel extends UIComponent {
         /**@type {"inspector" | "compatView"} */
         this.currentTab = "inspector"
 
-        stateService.subscribe((prop, val) => {
+        /**@type {() => void} */
+        this.unsubState = stateService.subscribe((prop, val) => {
             this.onStateChange(prop, val)
         })
     }
@@ -125,6 +126,7 @@ export class CompatControlPanel extends UIComponent {
 
             this.controlPanelEl.remove()
             this.controlPanelEl = null;
+            this.unsubState()
 
             this.#resetInternalState()
         } catch (error) {

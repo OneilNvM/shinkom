@@ -34,7 +34,8 @@ export class CompatView extends UIComponent {
         /**@type {boolean} */
         this.active = false
 
-        this.bus.on('results:ready', (/**@type {CompatResult}*/e) => {
+        /**@type {() => void} */
+        this.unsubEvent = this.bus.on('results:ready', (/**@type {CompatResult}*/e) => {
             if (this.compatViewEl) {
                 this.compatViewEl.results = e
             }
@@ -81,6 +82,7 @@ export class CompatView extends UIComponent {
 
         this.compatViewEl.remove()
         this.compatViewEl = null
+        this.unsubEvent()
 
         this.#resetInternalState()
     }

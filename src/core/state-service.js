@@ -55,6 +55,7 @@ export class ShinkomState {
      * Used to subscribe listener to the state service to listen for changes
      * to the state.
      * @param {Listener} callback
+     * @returns {() => void} cleanup function
      */
     subscribe(callback) {
         this.#listeners.push(callback)

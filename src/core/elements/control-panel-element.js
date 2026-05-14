@@ -29,6 +29,10 @@ export class CompatControlPanelElement extends HTMLElement {
         this.render()
     }
 
+    disconnectedCallback() {
+        document.adoptedStyleSheets = document.adoptedStyleSheets.filter(sheet => sheet !== controlPanelTransitions)
+    }
+
     /**
      * 
      * @param {"inspector" | "compatView" | undefined} tab 
