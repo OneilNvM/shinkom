@@ -9,5 +9,6 @@ export const DEFAULT_STATE = {
     ignoreCompatViewEl: null,
     multiElements: false,
     depthLevel: 0,
-    currentTab: "overview"
+    compatViewTab: "overview",
+    maxResultsHistory: 10
 }

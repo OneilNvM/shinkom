@@ -30,6 +30,10 @@ export class CompatInspectorElement extends HTMLElement {
             }
         `
 
-        this.shadowRootRef.replaceChildren(...[this.styles, this.shadowHost])
+        try {
+            this.shadowRootRef.replaceChildren(...[this.styles, this.shadowHost])
+        } catch (error) {
+            console.error(error)
+        }
     }
 }
