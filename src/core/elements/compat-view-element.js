@@ -25,7 +25,9 @@ import { hostStyleSheet } from './templates/root-styles.template'
 export class CompatViewElement extends HTMLElement {
     constructor() {
         super()
-        this.attachShadow({ mode: 'open' })
+
+        /**@type {ShadowRoot} */
+        this.shadowRootRef = this.attachShadow({ mode: 'open' })
 
         this.shadowHost = document.createElement('div')
         this.shadowHost.id = "sk-shadow-host"
@@ -119,7 +121,7 @@ export class CompatViewElement extends HTMLElement {
      * @param {string} remoteV 
      */
     #processVersions(localV, remoteV) {
-        const versionIndicator = this.shadowRoot?.getElementById('sk-version-indicator')
+        const versionIndicator = this.shadowRootRef.getElementById('sk-version-indicator')
         const local = versionToParts(localV)
         const remote = versionToParts(remoteV)
         if (versionIndicator) {
@@ -176,10 +178,9 @@ export class CompatViewElement extends HTMLElement {
         document.adoptedStyleSheets.push(compatViewTransitions)
         this.#injectFontLink()
 
-        if (this.shadowRoot)
-            this.shadowRoot.adoptedStyleSheets = [hostStyleSheet, compatViewStyleSheet]
+        this.shadowRootRef.adoptedStyleSheets = [hostStyleSheet, compatViewStyleSheet]
 
-        this.shadowRoot?.appendChild(this.shadowHost)
+        this.shadowRootRef.appendChild(this.shadowHost)
 
         this.render()
     }
@@ -212,7 +213,7 @@ export class CompatViewElement extends HTMLElement {
      * Renders list items for the 5 most recent results.
      */
     renderRecentResults() {
-        const list = this.shadowRoot?.getElementById('sk-recent-results-list')
+        const list = this.shadowRootRef.getElementById('sk-recent-results-list')
 
         if (!list) return
 
@@ -246,7 +247,7 @@ export class CompatViewElement extends HTMLElement {
      */
     async #handleViewResultTransition(res) {
         const sharedState = this.state?.getState()
-        const mainSection = this.shadowRoot?.getElementById('sk-compat-view-main')
+        const mainSection = this.shadowRootRef.getElementById('sk-compat-view-main')
 
         if (mainSection) {
             const tabs = ["overview", "results", "history"]
@@ -273,7 +274,7 @@ export class CompatViewElement extends HTMLElement {
      * @param {"overview" | "results" | "history"} tab 
      */
     renderTabContent(tab) {
-        const main = this.shadowRoot?.getElementById('sk-compat-view-main')
+        const main = this.shadowRootRef.getElementById('sk-compat-view-main')
 
         switch (tab) {
             case 'overview':
@@ -293,7 +294,7 @@ export class CompatViewElement extends HTMLElement {
     }
 
     renderHistoryResults() {
-        const main = this.shadowRoot?.getElementById('sk-compat-view-main')
+        const main = this.shadowRootRef.getElementById('sk-compat-view-main')
 
         if (!main) {
             return
@@ -304,7 +305,7 @@ export class CompatViewElement extends HTMLElement {
             main.innerHTML = `<div id="sk-history-container" class="sk-history-container"></div>`
         }
 
-        const historyContainer = this.shadowRoot?.getElementById('sk-history-container')
+        const historyContainer = this.shadowRootRef.getElementById('sk-history-container')
 
         const historyResults = this._resultsHistory.map(snapshot => {
             const historyItem = /**@type {ResultsHistoryItem} */(document.createElement('sk-history-item'))
@@ -333,7 +334,7 @@ export class CompatViewElement extends HTMLElement {
      * @param {CompatSnapshot | undefined} snapshot 
      */
     renderCompatResult(snapshot = undefined) {
-        const main = this.shadowRoot?.getElementById('sk-compat-view-main')
+        const main = this.shadowRootRef.getElementById('sk-compat-view-main')
         const data = snapshot || this._resultsHistory[0]
 
         if (!main) {
@@ -356,7 +357,7 @@ export class CompatViewElement extends HTMLElement {
             `
         }
 
-        const compatResultsContainer = this.shadowRoot?.getElementById('sk-compat-results')
+        const compatResultsContainer = this.shadowRootRef.getElementById('sk-compat-results')
 
         const compatResults = (snapshot ? snapshot : this._resultsHistory[0]).lookup_results.map((res, index) => {
             const score = parseInt(res.compat_score, 10)
@@ -442,7 +443,7 @@ export class CompatViewElement extends HTMLElement {
      * @param {"show" | "hide"} display 
      */
     renderDisplayTransition(display) {
-        const compatView = this.shadowRoot?.getElementById('sk-compat-view-container')
+        const compatView = this.shadowRootRef.getElementById('sk-compat-view-container')
 
         if (compatView) {
             if (display === "show") {

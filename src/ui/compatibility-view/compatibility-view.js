@@ -134,7 +134,7 @@ export class CompatView extends UIComponent {
 
                     this.active = !this.active
                 } else {
-                    const container = this.compatViewEl.shadowRoot?.getElementById('sk-compat-view-container')
+                    const container = this.compatViewEl.shadowRootRef.getElementById('sk-compat-view-container')
                     if (container) {
                         container.part.value = "compat-view"
 
@@ -178,10 +178,12 @@ export class CompatView extends UIComponent {
      * @param {"overview" | "results" | "history"} tab 
     */
     async #handleTabChange(tab) {
+        if (!this.compatViewEl) return
+
         if (!document.startViewTransition) {
             this.compatViewEl?.renderTabContent(tab)
         } else {
-            const mainSection = this.compatViewEl?.shadowRoot?.getElementById('sk-compat-view-main')
+            const mainSection = this.compatViewEl.shadowRootRef.getElementById('sk-compat-view-main')
 
             if (mainSection) {
                 const tabs = ["overview", "results", "history"]

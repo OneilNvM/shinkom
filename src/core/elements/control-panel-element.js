@@ -5,7 +5,9 @@ import { hostStyleSheet } from "./templates/root-styles.template"
 export class CompatControlPanelElement extends HTMLElement {
     constructor() {
         super()
-        this.attachShadow({ mode: 'open' })
+
+        /**@type {ShadowRoot} */
+        this.shadowRootRef = this.attachShadow({ mode: 'open' })
 
         this.shadowHost = document.createElement('div')
         this.shadowHost.id = 'sk-shadow-host'
@@ -21,10 +23,9 @@ export class CompatControlPanelElement extends HTMLElement {
 
         document.adoptedStyleSheets.push(controlPanelTransitions)
 
-        if (this.shadowRoot)
-            this.shadowRoot.adoptedStyleSheets = [hostStyleSheet, controlPanelStyleSheet]
+        this.shadowRootRef.adoptedStyleSheets = [hostStyleSheet, controlPanelStyleSheet]
 
-        this.shadowRoot?.appendChild(this.shadowHost)
+        this.shadowRootRef.appendChild(this.shadowHost)
 
         this.render()
     }
@@ -48,7 +49,7 @@ export class CompatControlPanelElement extends HTMLElement {
      * @param {"inspector" | "compatView"} tab 
      */
     renderTabContent(tab) {
-        const main = this.shadowRoot?.getElementById('sk-control-panel-main')
+        const main = this.shadowRootRef.getElementById('sk-control-panel-main')
 
         switch (tab) {
             case "inspector":
@@ -66,7 +67,7 @@ export class CompatControlPanelElement extends HTMLElement {
      * @param {"show" | "hide"} display
      */
     renderDisplayTransition(display) {
-        const panel = this.shadowRoot?.getElementById('sk-control-panel')
+        const panel = this.shadowRootRef.getElementById('sk-control-panel')
         if (panel) {
             if (display === "show") {
                 panel.style.display = "flex"

@@ -2,7 +2,9 @@
 export class CompatInspectorElement extends HTMLElement {
     constructor() {
         super()
-        this.attachShadow({ mode: 'open' })
+
+        /**@type {ShadowRoot} */
+        this.shadowRootRef = this.attachShadow({ mode: 'open' })
 
         this.shadowHost = document.createElement('div')
         this.styles = document.createElement('style')
@@ -28,6 +30,6 @@ export class CompatInspectorElement extends HTMLElement {
             }
         `
 
-        this.shadowRoot?.replaceChildren(...[this.styles, this.shadowHost])
+        this.shadowRootRef.replaceChildren(...[this.styles, this.shadowHost])
     }
 }
