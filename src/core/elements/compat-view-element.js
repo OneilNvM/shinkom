@@ -33,6 +33,7 @@ export class CompatViewElement extends HTMLElement {
         this.shadowHost.id = "sk-shadow-host"
         this.shadowHost.classList.add('sk-shadow-host')
 
+        /**@type {"overview" | "results" | "history"} */
         this.currentTab = "overview"
 
         /**@type {ShinkomState | null} */
@@ -62,15 +63,32 @@ export class CompatViewElement extends HTMLElement {
             checkedAt: new Date().toISOString()
         })
 
-        if (this.currentTab === "overview") {
-            this.renderRecentResults()
-        } else if (this.currentTab === "results") {
-            this.renderCompatResult()
+        try {
+            if (this.currentTab === "overview") {
+                this.renderRecentResults()
+            } else if (this.currentTab === "results") {
+                this.renderCompatResult()
+            }
+        } catch (error) {
+            console.error(`CompatView rendering error: ${error}`)
         }
     }
 
-    get resultHistory() {
+    get resultsHistory() {
         return this._resultsHistory
+    }
+
+    set resultsHistory(val) {
+        if (!val) return
+
+        this._resultsHistory = val
+
+        try {
+            if (this.currentTab === "history")
+                this.renderHistoryResults()
+        } catch (error) {
+            console.error(`CompatView rendering error: ${error}`)
+        }
     }
 
     /**
@@ -79,9 +97,9 @@ export class CompatViewElement extends HTMLElement {
      */
     updateResultsHistory(val) {
         if (this.state) {
-            this._resultsHistory = [val, ...this._resultsHistory].slice(0, this.state.getState().maxResultsHistory)
+            this.resultsHistory = [val, ...this.resultsHistory].slice(0, this.state.getState().maxResultsHistory)
         } else {
-            this._resultsHistory = [val, ...this._resultsHistory].slice(0, 10)
+            this.resultsHistory = [val, ...this.resultsHistory].slice(0, 10)
         }
 
         this.#backupResultsToLocalStorage()
@@ -89,10 +107,20 @@ export class CompatViewElement extends HTMLElement {
 
     #retrieveResultsFromLocalStorage() {
         const resultsHistory = localStorage.getItem("resultsHistory")
-        if (resultsHistory) this._resultsHistory = JSON.parse(resultsHistory)
+        try {
+            if (resultsHistory) this.resultsHistory = JSON.parse(resultsHistory)
+        } catch (error) {
+            console.error(`Failed to parse results history from localStorage: ${error}`)
+        }
     }
 
-    #backupResultsToLocalStorage = () => localStorage.setItem("resultsHistory", JSON.stringify(this._resultsHistory))
+    #backupResultsToLocalStorage() {
+        try {
+            localStorage.setItem("resultsHistory", JSON.stringify(this.resultsHistory))
+        } catch (error) {
+            console.error(`Failed to backup results history to localStorage: ${error}`)
+        }
+    }
 
     #injectFontLink() {
         if (document.getElementById('sk-font-doto')) return
@@ -108,11 +136,15 @@ export class CompatViewElement extends HTMLElement {
 
     async checkVersion() {
         const shinkomVersion = sessionStorage.getItem('shinkom-latest-version')
-        if (shinkomVersion) {
-            this.#processVersions(pkg.version, shinkomVersion)
-        } else {
-            const version = await this.#checkLatestVersion()
-            if (version) sessionStorage.setItem('shinkom-latest-version', version)
+        try {
+            if (shinkomVersion) {
+                this.#processVersions(pkg.version, shinkomVersion)
+            } else {
+                const version = await this.#checkLatestVersion()
+                if (version) sessionStorage.setItem('shinkom-latest-version', version)
+            }
+        } catch (error) {
+            console.error(`Failed to perform Shinkom version check: ${error}`)
         }
     }
 
@@ -142,26 +174,37 @@ export class CompatViewElement extends HTMLElement {
      * @returns {Promise<string | undefined>} latest version
      */
     async #checkLatestVersion() {
-        try {
-            const response = await fetch("https://api.github.com/repos/OneilNvM/shinkom/releases/latest")
-            if (!response.ok) throw new Error("Network response was not ok")
+        const response = await fetch("https://api.github.com/repos/OneilNvM/shinkom/releases/latest")
+        if (!response.ok) throw new Error("Unable to fetch Shinkom latest release. Network response was not ok.")
 
-            const data = await response.json()
+        const data = await response.json()
 
-            this.#processVersions(pkg.version, data.tag_name)
+        this.#processVersions(pkg.version, data.tag_name)
 
-            return data.tag_name
-        } catch (error) {
-            console.error(error)
-        }
+        return data.tag_name
     }
 
     connectedCallback() {
         if (this.bus) {
             this._unsubEvent = this.bus.on('clear:history', () => {
                 localStorage.removeItem('resultsHistory')
-                this._resultsHistory = []
+                this.resultsHistory = []
+                console.log("Cleared results history!")
+
+                try {
+                    if (this.currentTab === "overview") {
+                        this.renderRecentResults()
+                    } else if (this.currentTab === "results") {
+                        this.renderCompatResult()
+                    } else {
+                        this.renderHistoryResults()
+                    }
+                } catch (error) {
+                    console.error(`CompatView rendering error: ${error}`)
+                }
             })
+        } else {
+            console.warn("No event bus was provided to the CompatViewElement. This may cause functional problems when emitting events the CompatViewElement listens for. If this was intentional, then ignore this warning.")
         }
         if (this.state) {
             this._unsubState = this.state.subscribe((prop, val) => {
@@ -187,8 +230,7 @@ export class CompatViewElement extends HTMLElement {
 
     disconnectedCallback() {
         const fontLink = document.getElementById('sk-font-doto')
-        if (fontLink)
-            document.head.removeChild(fontLink)
+        if (fontLink) document.head.removeChild(fontLink)
         if (this._unsubEvent) {
             this._unsubEvent()
         }
@@ -215,14 +257,14 @@ export class CompatViewElement extends HTMLElement {
     renderRecentResults() {
         const list = this.shadowRootRef.getElementById('sk-recent-results-list')
 
-        if (!list) return
-
-        if (this._resultsHistory.length === 0) {
-            if (list) list.innerHTML = `<p>NO PREVIOUS RESULTS</p>`
+        if (!list) {
+            throw new Error("Failed to render recent results. Container with id 'sk-recent-results-list' does not exist.")
+        } else if (this.resultsHistory.length === 0) {
+            list.innerHTML = `<p>NO RECENT RESULTS</p>`
             return
         }
 
-        const recentSnapshots = this._resultsHistory.slice(0, 5).map(snap => {
+        const recentResultsItems = this.resultsHistory.slice(0, 5).map(snap => {
             const item = /**@type {RecentResultItem} */(document.createElement('sk-recent-result-item'))
             item.classList.add("sk-recent-results-item-container")
             item.result = snap
@@ -239,7 +281,7 @@ export class CompatViewElement extends HTMLElement {
             return item
         })
 
-        if (list) list.replaceChildren(...recentSnapshots)
+        list.replaceChildren(...recentResultsItems)
     }
 
     /**
@@ -274,22 +316,26 @@ export class CompatViewElement extends HTMLElement {
      * @param {"overview" | "results" | "history"} tab 
      */
     renderTabContent(tab) {
-        const main = this.shadowRootRef.getElementById('sk-compat-view-main')
+        try {
+            switch (tab) {
+                case 'overview':
+                    const main = this.shadowRootRef.getElementById('sk-compat-view-main')
 
-        switch (tab) {
-            case 'overview':
-                if (main) {
-                    main.innerHTML = compatViewOverviewHTML
-                    this.checkVersion()
-                    this.renderRecentResults()
-                }
-                break;
-            case 'results':
-                this.renderCompatResult()
-                break;
-            case 'history':
-                this.renderHistoryResults()
-                break;
+                    if (main) {
+                        main.innerHTML = compatViewOverviewHTML
+                        this.checkVersion()
+                        this.renderRecentResults()
+                    }
+                    break;
+                case 'results':
+                    this.renderCompatResult()
+                    break;
+                case 'history':
+                    this.renderHistoryResults()
+                    break;
+            }
+        } catch (error) {
+            console.error(`CompatView rendering error: ${error}`)
         }
     }
 
@@ -297,8 +343,8 @@ export class CompatViewElement extends HTMLElement {
         const main = this.shadowRootRef.getElementById('sk-compat-view-main')
 
         if (!main) {
-            return
-        } else if (this._resultsHistory.length === 0) {
+            throw new Error("Failed to render history results. Container with id 'sk-compat-view-main' does not exist")
+        } else if (this.resultsHistory.length === 0) {
             main.innerHTML = `<p>NO PREVIOUS RESULTS</p>`
             return
         } else {
@@ -307,24 +353,26 @@ export class CompatViewElement extends HTMLElement {
 
         const historyContainer = this.shadowRootRef.getElementById('sk-history-container')
 
-        const historyResults = this._resultsHistory.map(snapshot => {
-            const historyItem = /**@type {ResultsHistoryItem} */(document.createElement('sk-history-item'))
-            historyItem.result = snapshot
-            historyItem.viewResult = (res) => !document.startViewTransition ? this.renderCompatResult(res) : this.#handleViewResultTransition(res)
+        const resultsHistoryItems = this.resultsHistory.map(snapshot => {
+            const item = /**@type {ResultsHistoryItem} */(document.createElement('sk-history-item'))
+            item.result = snapshot
+            item.viewResult = (res) => !document.startViewTransition ? this.renderCompatResult(res) : this.#handleViewResultTransition(res)
 
-            historyItem.innerHTML = `
+            item.innerHTML = `
                 <div class="sk-history-item">
                     <p>Score ${snapshot.overall_score}</p>
                     <p>Check performed at: ${snapshot.checkedAt}</p>
                 </div>
             `
 
-            return historyItem
+            return item
         })
 
-        if (historyContainer) {
+        if (!historyContainer) {
+            throw new Error("Could not render results history items. Container with id 'sk-history-container' does not exist")
+        } else {
             const fragment = document.createDocumentFragment()
-            historyResults.forEach(item => fragment.appendChild(item))
+            resultsHistoryItems.forEach(item => fragment.appendChild(item))
             historyContainer.appendChild(fragment)
         }
     }
@@ -335,10 +383,10 @@ export class CompatViewElement extends HTMLElement {
      */
     renderCompatResult(snapshot = undefined) {
         const main = this.shadowRootRef.getElementById('sk-compat-view-main')
-        const data = snapshot || this._resultsHistory[0]
+        const data = snapshot || this.resultsHistory[0]
 
         if (!main) {
-            return
+            throw new Error("Failed to render compat result. Container with id 'sk-compat-view-main' does not exist.")
         } else if (!data) {
             main.innerHTML = `<p>NO RESULTS ARRIVING</p>`
             return
@@ -347,10 +395,10 @@ export class CompatViewElement extends HTMLElement {
                 <div class="sk-compat-result-container doto-regular">
                     <div class="sk-compat-result-header">
                         <div class="sk-compat-header-top">
-                            <p>Score ${snapshot ? snapshot.overall_score : this._resultsHistory[0].overall_score}</p>
+                            <p>Score ${snapshot ? snapshot.overall_score : this.resultsHistory[0].overall_score}</p>
                             <p>Arrived</p>
                         </div>
-                        <p>${snapshot ? snapshot.checkedAt : this._resultsHistory[0].checkedAt}</p>
+                        <p>${snapshot ? snapshot.checkedAt : this.resultsHistory[0].checkedAt}</p>
                     </div>
                     <div id="sk-compat-results" class="sk-compat-results"></div>
                 </div>
@@ -359,7 +407,7 @@ export class CompatViewElement extends HTMLElement {
 
         const compatResultsContainer = this.shadowRootRef.getElementById('sk-compat-results')
 
-        const compatResults = (snapshot ? snapshot : this._resultsHistory[0]).lookup_results.map((res, index) => {
+        const compatResults = (snapshot ? snapshot : this.resultsHistory[0]).lookup_results.map((res, index) => {
             const score = parseInt(res.compat_score, 10)
             const rating = score >= 90 ? "On time" : score >= 60 ? "Delayed" : "Cancelled"
             return `
@@ -387,7 +435,11 @@ export class CompatViewElement extends HTMLElement {
             `
         })
 
-        if (compatResultsContainer) compatResultsContainer.innerHTML = compatResults.join("")
+        if (!compatResultsContainer) {
+            throw new Error("Could not render compat result item. Container with id 'sk-compat-results' does not exist.")
+        } else {
+            compatResultsContainer.innerHTML = compatResults.join("")
+        }
     }
 
     /**
@@ -396,10 +448,7 @@ export class CompatViewElement extends HTMLElement {
      * @returns {string} browser results HTML
      */
     renderBrowserResults(lookupResult) {
-        /**@type {string[]} */
-        let browserResults = []
-
-        browserResults = lookupResult.browsers.map(browser => {
+        const browserResults = lookupResult.browsers.map(browser => {
             const support = Array.isArray(browser.versions) ? browser.versions : browser.versions
             let versionParagraphs = []
 
