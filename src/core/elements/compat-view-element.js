@@ -186,7 +186,7 @@ export class CompatViewElement extends HTMLElement {
 
     disconnectedCallback() {
         const fontLink = document.getElementById('sk-font-doto')
-        if (fontLink) 
+        if (fontLink)
             document.head.removeChild(fontLink)
         if (this._unsubEvent) {
             this._unsubEvent()
@@ -376,6 +376,12 @@ export class CompatViewElement extends HTMLElement {
                             <p>Status Score: ${res.status_score}</p>
                         </div>
                     </div>
+                    <details>
+                        <summary>Show Browser Results</summary>
+                        <div class="sk-browser-results">
+                            ${this.renderBrowserResults(res)}
+                        </div>
+                    </details>
                 </div>
             `
         })
@@ -393,15 +399,37 @@ export class CompatViewElement extends HTMLElement {
         let browserResults = []
 
         browserResults = lookupResult.browsers.map(browser => {
-            const support = Array.isArray(browser.versions) ? browser.versions[0] : browser.versions
+            const support = Array.isArray(browser.versions) ? browser.versions : browser.versions
+            let versionParagraphs = []
+
+            if (support instanceof Array) {
+                support.forEach(statement => {
+                    versionParagraphs.push(`
+                        <p>Added in version: ${statement.version_added}</p>
+                        ${statement.version_removed ? `<p>Removed in version: ${statement.version_removed}</p>` : ""}
+                        ${statement.version_last ? `<p>Last in version: ${statement.version_last}</p>` : ""}
+                        ${statement.partial_implementation ? `<p>Partially implemented in version: ${statement.partial_implementation}</p>` : ""}
+                    `)
+                })
+            } else {
+                versionParagraphs.push(`
+                    <p>Added in version: ${support.version_added}</p>
+                    ${support.version_removed ? `<p>Removed in version: ${support.version_removed}</p>` : ""}
+                    ${support.version_last ? `<p>Last in version: ${support.version_last}</p>` : ""}
+                    ${support.partial_implementation ? `<p>Partially implemented in version: ${support.partial_implementation}</p>` : ""}
+                `)
+            }
+
             return `
                 <div class="sk-browser-result">
                     <div class="sk-browser-result-meta">
-                        <p>${browser.browser_name}</p>
+                        <p style="color: var(--sk-results-blue-foreground)">${browser.browser_name}</p>
                         <p>Safety ${browser.score.raw_score}</p>
                         <p>Market ${browser.score.weighted_score}</p>
                     </div>
-                    <p>Added in version: ${support.version_added}</p>
+                    <div>
+                        ${versionParagraphs.join("")}
+                    </div>
                 </div>
             `
         })
