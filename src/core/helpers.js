@@ -17,7 +17,9 @@ export const getModulePath = async (modulePath) => {
 }
 
 /**
+ * Splits a version string into parts.
  * @param {string} version 
+ * @returns {number[]} version number in parts
  */
 export function versionToParts(version) {
     return version.replace(/^v/, '').split('.').map(Number)

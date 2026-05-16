@@ -46,6 +46,9 @@ export class CompatControlPanel extends UIComponent {
         })
     }
 
+    /**
+     * Registers custom elements to the `CustomElementRegistry` on the `window` object.
+     */
     static register() {
         if (!customElements.get('sk-control-panel')) {
             customElements.define('sk-control-panel', CompatControlPanelElement)
@@ -100,7 +103,7 @@ export class CompatControlPanel extends UIComponent {
     }
 
     /**
-     * Setup event listeners on `shadowRoot` element.
+     * Sets up event listeners within the `ShadowDOM`.
      */
     #setupShadowListeners() {
         if (!this.controlPanelEl) return
@@ -135,8 +138,7 @@ export class CompatControlPanel extends UIComponent {
     }
 
     /**
-     * Reset internal state of the instance and any related state
-     * in the `stateBind`.
+     * Resets any internal state and event listeners.
      */
     #resetInternalState() {
         if (this.#panelController)
@@ -239,7 +241,7 @@ export class CompatControlPanel extends UIComponent {
     }
 
     /**
-     * 
+     * Handles the transition between tab changes.
      * @param {"inspector" | "compatView"} tab 
      */
     async #handleTabChange(tab) {
@@ -310,6 +312,7 @@ export class CompatControlPanel extends UIComponent {
     }
 
     /**
+     * Handles the transition when toggling the display.
      * @param {"show" | "hide"} display 
      */
     async #handleDisplayTransition(display) {
@@ -333,6 +336,7 @@ export class CompatControlPanel extends UIComponent {
     }
 
     /**
+     * Handles the change event for the `maxResultsHistory` input.
      * @param {Event} e 
      */
     #handleMaxHistoryValue = e => {

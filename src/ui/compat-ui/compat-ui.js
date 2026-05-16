@@ -1,5 +1,7 @@
+/**@typedef {import('../../core').UISharedState} UISharedState */
 import { ShinkomBus, ShinkomState, UIComponent } from '../../core' 
 
+/**@type {WeakMap<WeakKey, UISharedState>} */
 const internalState = new WeakMap()
 
 export class CompatUI {
@@ -21,7 +23,7 @@ export class CompatUI {
     #bindState() {
         const state = internalState.get(this)
 
-        this.components.forEach(comp => comp.bindState(state))
+        if (state) this.components.forEach(comp => comp.bindState(state))
     }
 
     /**

@@ -1,7 +1,17 @@
 import { controlPanelCompatViewTab, controlPanelHTML, controlPanelInspectorTab, controlPanelStyleSheet, controlPanelTransitions } from "./templates/control-panel.templates"
 import { hostStyleSheet } from "./templates/root-styles.template"
 
-/**@extends {HTMLElement} */
+/**
+ * A custom element for the `CompatControlPanel` UI component.
+ * 
+ * An autonomous custom element created via the [Web Components API](https://developer.mozilla.org/en-US/docs/Web/API/Web_components).
+ * This component contains methods for rendering components for the `CompatControlPanel` and providing settings for customization of different
+ * UI components.
+ * 
+ * Since this element is defined via the Web Components API, to use this element outside of the `CompatControlPanel`, it must be registered
+ * as a custom element on the `window` object.
+ * @extends {HTMLElement}
+ */
 export class CompatControlPanelElement extends HTMLElement {
     constructor() {
         super()
@@ -35,7 +45,9 @@ export class CompatControlPanelElement extends HTMLElement {
     }
 
     /**
+     * Renders the `ControlPanelElement` on a specific tab.
      * 
+     * Renders the `inspector` tab by default.
      * @param {"inspector" | "compatView" | undefined} tab 
      */
     render(tab = undefined) {
@@ -45,7 +57,7 @@ export class CompatControlPanelElement extends HTMLElement {
     }
 
     /**
-     * 
+     * Renders content for a specific tab.
      * @param {"inspector" | "compatView"} tab 
      */
     renderTabContent(tab) {
@@ -64,6 +76,7 @@ export class CompatControlPanelElement extends HTMLElement {
     }
 
     /**
+     * Renders the display of the `ControlPanelElement`.
      * @param {"show" | "hide"} display
      */
     renderDisplayTransition(display) {

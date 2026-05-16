@@ -42,6 +42,9 @@ export class CompatView extends UIComponent {
         })
     }
 
+    /**
+     * Registers custom elements to the `CustomElementRegistry` on the `window` object.
+     */
     static register() {
         if (!customElements.get('sk-compat-view')) {
             customElements.define('sk-compat-view', CompatViewElement)
@@ -67,6 +70,9 @@ export class CompatView extends UIComponent {
         this.#setupShadowListeners()
     }
 
+    /**
+     * Sets up event listeners within the `ShadowDOM`.
+     */
     #setupShadowListeners() {
         if (!this.compatViewEl) return;
 
@@ -87,6 +93,9 @@ export class CompatView extends UIComponent {
         this.#resetInternalState()
     }
 
+    /**
+     * Resets any internal state and event listeners.
+     */
     #resetInternalState() {
         if (this.#compatViewController)
             this.#compatViewController.abort()
@@ -175,6 +184,7 @@ export class CompatView extends UIComponent {
     }
 
     /**
+     * Handles the transition between tab changes.
      * @param {"overview" | "results" | "history"} tab 
     */
     async #handleTabChange(tab) {

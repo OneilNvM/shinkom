@@ -92,7 +92,7 @@ export class CompatViewElement extends HTMLElement {
     }
 
     /**
-     * Updates the results history and backs up the results to `localStorage`
+     * Updates the results history and backs up the results to `localStorage`.
      * @param {CompatSnapshot} val 
      */
     updateResultsHistory(val) {
@@ -105,6 +105,9 @@ export class CompatViewElement extends HTMLElement {
         this.#backupResultsToLocalStorage()
     }
 
+    /**
+     * Retrieves results history from `localStorage`.
+     */
     #retrieveResultsFromLocalStorage() {
         const resultsHistory = localStorage.getItem("resultsHistory")
         try {
@@ -114,6 +117,9 @@ export class CompatViewElement extends HTMLElement {
         }
     }
 
+    /**
+     * Used to backup results history to `localStorage`.
+     */
     #backupResultsToLocalStorage() {
         try {
             localStorage.setItem("resultsHistory", JSON.stringify(this.resultsHistory))
@@ -122,6 +128,9 @@ export class CompatViewElement extends HTMLElement {
         }
     }
 
+    /**
+     * Injects google font link into `document.head`.
+     */
     #injectFontLink() {
         if (document.getElementById('sk-font-doto')) return
 
@@ -134,6 +143,9 @@ export class CompatViewElement extends HTMLElement {
         document.head.appendChild(link)
     }
 
+    /**
+     * Checks the current release version of `Shinkom`
+     */
     async checkVersion() {
         const shinkomVersion = sessionStorage.getItem('shinkom-latest-version')
         try {
@@ -149,6 +161,7 @@ export class CompatViewElement extends HTMLElement {
     }
 
     /**
+     * Processes and compares two version strings.
      * @param {string} localV 
      * @param {string} remoteV 
      */
@@ -170,8 +183,8 @@ export class CompatViewElement extends HTMLElement {
     }
 
     /**
-     * 
-     * @returns {Promise<string | undefined>} latest version
+     * Sends a fetch request for the latest release of `Shinkom`
+     * @returns {Promise<string | undefined>} tag name of latest version
      */
     async #checkLatestVersion() {
         const response = await fetch("https://api.github.com/repos/OneilNvM/shinkom/releases/latest")
@@ -242,7 +255,9 @@ export class CompatViewElement extends HTMLElement {
     }
 
     /**
-     * Renders the `CompatViewElement` on the overview tab by default.
+     * Renders the `CompatViewElement` on a specific tab.
+     * 
+     * Renders the `overview` tab by default.
      * @param {"overview" | "results" | "history" | undefined} tab 
      */
     render(tab = undefined) {
@@ -253,6 +268,7 @@ export class CompatViewElement extends HTMLElement {
 
     /**
      * Renders list items for the 5 most recent results.
+     * @throws {Error} If the list for the recent results does not exist.
      */
     renderRecentResults() {
         const list = this.shadowRootRef.getElementById('sk-recent-results-list')
@@ -285,6 +301,7 @@ export class CompatViewElement extends HTMLElement {
     }
 
     /**
+     * Handles the transition after clicking an item with a `viewResult` callback.
      * @param {CompatSnapshot} res 
      */
     async #handleViewResultTransition(res) {
@@ -339,6 +356,10 @@ export class CompatViewElement extends HTMLElement {
         }
     }
 
+    /**
+     * Renders the results from the results history.
+     * @throws {Error} If the main container does not exist. 
+     */
     renderHistoryResults() {
         const main = this.shadowRootRef.getElementById('sk-compat-view-main')
 
@@ -380,6 +401,7 @@ export class CompatViewElement extends HTMLElement {
     /**
      * Renders the content of a compatibility result.
      * @param {CompatSnapshot | undefined} snapshot 
+     * @throws {Error} If the main container does not exist.
      */
     renderCompatResult(snapshot = undefined) {
         const main = this.shadowRootRef.getElementById('sk-compat-view-main')
@@ -488,7 +510,7 @@ export class CompatViewElement extends HTMLElement {
     }
 
     /**
-     * Renders the display of the `CompatViewElement`
+     * Renders the display of the `CompatViewElement`.
      * @param {"show" | "hide"} display 
      */
     renderDisplayTransition(display) {
