@@ -21,7 +21,6 @@ export default defineConfig({
                 }
             }
         ],
-        setupFiles: ['./tests/setup_files/webassembly.ts', './tests/setup_files/stylesheets.ts'],
         globals: true
     }
 })
