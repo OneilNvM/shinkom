@@ -14,6 +14,7 @@ export class UIComponent {
         }
 
         this.bus = bus;
+        this.stateService = stateService
 
         stateService.subscribe((prop, val) => {
             this.onStateChange(prop, val)

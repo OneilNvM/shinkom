@@ -2,7 +2,7 @@
 /**@typedef {import('../types/public').CompatResult} CompatResult */
 import init, { CompatEngine } from '../../pkg/shinkore'
 import compatData, { browserData, usageData } from '../../gen/index'
-import { ShinkomBus } from '../core'
+import { ShinkomBus } from '../core/event-bus'
 import { getModulePath } from '../core/helpers'
 
 export class SKEngine {
