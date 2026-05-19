@@ -41,9 +41,7 @@ export class CompatControlPanel extends UIComponent {
         this.currentTab = "inspector"
 
         /**@type {() => void} */
-        this.unsubState = stateService.subscribe((prop, val) => {
-            this.onStateChange(prop, val)
-        })
+        this.unsubState = () => {}
     }
 
     /**
@@ -53,6 +51,16 @@ export class CompatControlPanel extends UIComponent {
         if (!customElements.get('sk-control-panel')) {
             customElements.define('sk-control-panel', CompatControlPanelElement)
         }
+    }
+
+    #setupStateServiceListener() {
+        this.unsubState = this.stateService.subscribe((prop, val) => {
+            this.onStateChange(prop, val)
+        })
+    }
+
+    #cleanupStateServiceListener() {
+        this.unsubState()
     }
 
     /**
@@ -83,6 +91,8 @@ export class CompatControlPanel extends UIComponent {
                 if (this.controlPanelEl) {
                     const toggleInspectorButton = this.controlPanelEl.shadowRootRef.getElementById('sk-toggle-inspector')
 
+                    console.log(prop, val)
+
                     if (toggleInspectorButton)
                         toggleInspectorButton.textContent = val ? "Enabled" : "Disabled"
                 }
@@ -100,6 +110,8 @@ export class CompatControlPanel extends UIComponent {
         document.body.appendChild(this.controlPanelEl)
 
         this.#setupShadowListeners()
+
+        this.#setupStateServiceListener()
     }
 
     /**
@@ -129,9 +141,10 @@ export class CompatControlPanel extends UIComponent {
 
             this.controlPanelEl.remove()
             this.controlPanelEl = null;
-            this.unsubState()
-
+            
             this.#resetInternalState()
+
+            this.#cleanupStateServiceListener()
         } catch (error) {
             console.error(`Control panel destroy error: ${error}`)
         }
@@ -317,7 +330,7 @@ export class CompatControlPanel extends UIComponent {
      */
     async #handleDisplayTransition(display) {
         if (!this.controlPanelEl) return
-        
+
         const controlPanel = this.controlPanelEl.shadowRootRef.getElementById('sk-control-panel')
 
         if (controlPanel) {

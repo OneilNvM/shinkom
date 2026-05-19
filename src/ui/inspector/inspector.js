@@ -37,6 +37,16 @@ export class CompatInspector extends UIComponent {
         this.frozenTarget = null;
 
         /**@type {(() => void)[]} */
+        this.unsubEvents = []
+    }
+
+    static register() {
+        if (!customElements.get('sk-compat-inspector')) {
+            customElements.define('sk-compat-inspector', CompatInspectorElement)
+        }
+    }
+
+    #setupEventBusListeners() {
         this.unsubEvents = [
             this.bus.on('ci:toggle', () => {
                 if (this.#stateBind?.inspectorActive) {
@@ -46,21 +56,20 @@ export class CompatInspector extends UIComponent {
                 }
             }),
             this.bus.on('ci:create', () => {
-                this.mount()
+                this.mountSoft()
             }),
             this.bus.on('ci:reset', () => {
-                this.reset()
+                this.resetSoft()
             }),
             this.bus.on('ci:destroy', () => {
-                this.unmount()
+                this.unmountSoft()
             })
         ]
     }
 
-    static register() {
-        if (!customElements.get('sk-compat-inspector')) {
-            customElements.define('sk-compat-inspector', CompatInspectorElement)
-        }
+    #cleanupEventBusListeners() {
+        this.unsubEvents.forEach(cleanup => cleanup())
+        this.unsubEvents = []
     }
 
     /**
@@ -147,7 +156,6 @@ export class CompatInspector extends UIComponent {
                 }
             })
         }
-
     }
 
     /**
@@ -247,6 +255,30 @@ export class CompatInspector extends UIComponent {
             return;
         }
 
+        console.log("Creating inspector")
+
+        this.inspectorEl = /**@type {CompatInspectorElement}*/(document.createElement('sk-compat-inspector'))
+
+        document.body.appendChild(this.inspectorEl)
+
+        this.#setupGlobalListeners()
+
+        this.#setupEventBusListeners()
+
+        if (this.#stateBind) {
+            this.#stateBind.inspectorActive = this.inspectorEl !== null
+            this.#stateBind.inspectorExists = this.inspectorEl !== null
+        }
+    }
+
+    mountSoft() {
+        if (this.inspectorEl || this.config?.disabled) {
+            console.warn("Inspector is either disabled or already exists")
+            return;
+        }
+
+        console.log("Creating inspector")
+
         this.inspectorEl = /**@type {CompatInspectorElement}*/(document.createElement('sk-compat-inspector'))
 
         document.body.appendChild(this.inspectorEl)
@@ -314,9 +346,21 @@ export class CompatInspector extends UIComponent {
         this.mount()
     }
 
+    resetSoft() {
+        if (!this.inspectorEl) {
+            console.warn("Cannot reset inspector as it does not exist.")
+            return;
+        };
+
+        console.log("Resetting inspector")
+
+        this.unmountSoft()
+        this.mountSoft()
+    }
+
     unmount() {
         try {
-            if (!this.inspectorEl) {
+            if (!this.inspectorEl && this.unsubEvents.length === 0) {
                 console.warn("Cannot destroy inspector as it does not exist.")
                 return;
             }
@@ -324,10 +368,27 @@ export class CompatInspector extends UIComponent {
             console.log("Destroying inspector")
 
             this.#resetInternalState()
-            this.inspectorEl.remove()
+            this.inspectorEl?.remove()
             this.inspectorEl = null
 
-            this.unsubEvents.forEach(cleanup => cleanup())
+            this.#cleanupEventBusListeners()
+        } catch (error) {
+            console.error(`Inspector destroy error: ${error}`)
+        }
+    }
+
+    unmountSoft() {
+        try {
+            if (!this.inspectorEl) {
+                console.warn("Cannot destroy inspector as it does not exist.")
+                return;
+            }
+
+            console.log("Soft destroying inspector")
+
+            this.#resetInternalState()
+            this.inspectorEl.remove()
+            this.inspectorEl = null
         } catch (error) {
             console.error(`Inspector destroy error: ${error}`)
         }
