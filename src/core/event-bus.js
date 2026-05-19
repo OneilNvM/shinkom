@@ -3,9 +3,7 @@
 /**@typedef {import("../types/types").ShinkomEventListener<keyof ShinkomEventMap>} ShinkomEventListener */
 
 export class ShinkomBus {
-    /**@type {ShinkomEventTarget} */
-    //@ts-expect-error
-    #customEventTarget = new EventTarget()
+    #customEventTarget = /**@type {ShinkomEventTarget}*/(new EventTarget())
 
     /**
      * Emits an event to the event bus.

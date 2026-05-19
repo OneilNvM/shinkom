@@ -5,8 +5,6 @@ import { CompatControlPanel, CompatInspector, CompatUI, CompatView } from "./ui"
 
 export class Shinkom {
     #config;
-    /**@type {AbortController | null} */
-    #shinkomController = null
 
     /**
      * @param {ShinkomConfig | undefined} config 
@@ -47,10 +45,5 @@ export class Shinkom {
     destroy() {
         this.skEngine.destroy()
         this.compatUI.destroy()
-
-        if (this.#shinkomController)
-            this.#shinkomController.abort()
-
-        this.#shinkomController = null
     }
 }
