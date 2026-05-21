@@ -1,6 +1,6 @@
 /**
     * Shinkom - pkg
-    * @version 1.0.2
+    * @version 1.0.3
     * @license MIT
     * @copyright 2026 - OneilNvM
 */
