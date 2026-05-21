@@ -35,11 +35,7 @@ export class CompatView extends UIComponent {
         this.active = false
 
         /**@type {() => void} */
-        this.unsubEvent = this.bus.on('results:ready', (/**@type {CompatResult}*/e) => {
-            if (this.compatViewEl) {
-                this.compatViewEl.results = e
-            }
-        })
+        this.unsubEvent = () => { }
     }
 
     /**
@@ -55,6 +51,18 @@ export class CompatView extends UIComponent {
         if (!customElements.get("sk-history-item")) {
             customElements.define("sk-history-item", ResultsHistoryItem)
         }
+    }
+
+    #setupEventBusListeners() {
+        this.unsubEvent = this.bus.on('results:ready', (/**@type {CompatResult}*/e) => {
+            if (this.compatViewEl) {
+                this.compatViewEl.results = e
+            }
+        })
+    }
+
+    #cleanupEventBusListeners() {
+        this.unsubEvent()
     }
 
     mount() {
@@ -81,6 +89,8 @@ export class CompatView extends UIComponent {
         const { signal } = this.#compatViewController
 
         this.compatViewEl.shadowHost.addEventListener('click', this.#handleClickEvents, { signal })
+
+        this.#setupEventBusListeners()
     }
 
     unmount() {
@@ -88,7 +98,7 @@ export class CompatView extends UIComponent {
 
         this.compatViewEl.remove()
         this.compatViewEl = null
-        this.unsubEvent()
+        this.#cleanupEventBusListeners()
 
         this.#resetInternalState()
     }

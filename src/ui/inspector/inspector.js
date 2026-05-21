@@ -95,7 +95,6 @@ export class CompatInspector extends UIComponent {
         }
         if (ctrlDown && e.key === '\\') {
             this.enableSwitching = !this.enableSwitching
-            console.log(`Switching is ${this.enableSwitching ? 'enabled' : 'disabled'}`)
 
             if (this.#stateBind)
                 this.#stateBind.inspectorSwitching = this.enableSwitching
