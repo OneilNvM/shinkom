@@ -47,8 +47,6 @@ const extractUsageData = () => {
 
     output.marketShare = marketShare
 
-    console.log(marketShare)
-
     const outDir = path.resolve("./gen")
 
     if (!existsSync(outDir)) mkdirSync('./gen')

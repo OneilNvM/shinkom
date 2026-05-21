@@ -384,11 +384,10 @@ fn calculate_support(
             VersionValue::Version(_) => {
                 browser_score = 100.0;
             }
-            VersionValue::IsSupported(supported) => {
-                if *supported {
-                    browser_score = 100.0;
-                }
+            VersionValue::IsSupported(supported) if *supported => {
+                browser_score = 100.0;
             }
+
             _ => (),
         },
         _ => (),
