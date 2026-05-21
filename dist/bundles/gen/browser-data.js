@@ -1,25 +1,25 @@
 
 //#region gen/browser-data.json
 var browser_data_default = { browsers: {
-	"chrome": { "147": {
+	"chrome": { "148": {
 		"engine": "Blink",
-		"engine_version": "147",
-		"release_date": "2026-04-07",
-		"release_notes": "https://developer.chrome.com/release-notes/147",
+		"engine_version": "148",
+		"release_date": "2026-05-05",
+		"release_notes": "https://developer.chrome.com/release-notes/148",
 		"status": "current"
 	} },
-	"chrome_android": { "147": {
+	"chrome_android": { "148": {
 		"engine": "Blink",
-		"engine_version": "147",
-		"release_date": "2026-04-07",
-		"release_notes": "https://developer.chrome.com/release-notes/147",
+		"engine_version": "148",
+		"release_date": "2026-05-05",
+		"release_notes": "https://developer.chrome.com/release-notes/148",
 		"status": "current"
 	} },
-	"edge": { "147": {
+	"edge": { "148": {
 		"engine": "Blink",
-		"engine_version": "147",
-		"release_date": "2026-04-10",
-		"release_notes": "https://learn.microsoft.com/en-us/microsoft-edge/web-platform/release-notes/147",
+		"engine_version": "148",
+		"release_date": "2026-05-07",
+		"release_notes": "https://learn.microsoft.com/en-us/microsoft-edge/web-platform/release-notes/148",
 		"status": "current"
 	} },
 	"firefox": { "150": {
@@ -43,32 +43,32 @@ var browser_data_default = { browsers: {
 		"release_notes": "https://developers.meta.com/horizon/downloads/package/browser/42.0/",
 		"status": "current"
 	} },
-	"opera": { "130": {
+	"opera": { "131": {
 		"engine": "Blink",
-		"engine_version": "146",
-		"release_date": "2026-04-08",
-		"release_notes": "https://blogs.opera.com/desktop/2026/04/opera-130-stable/",
+		"engine_version": "147",
+		"release_date": "2026-04-29",
+		"release_notes": "https://blogs.opera.com/desktop/2026/04/opera-131-stable/",
 		"status": "current"
 	} },
-	"opera_android": { "97": {
+	"opera_android": { "98": {
 		"engine": "Blink",
-		"engine_version": "146",
-		"release_date": "2026-04-16",
-		"release_notes": "https://forums.opera.com/topic/88511/opera-for-android-97",
+		"engine_version": "147",
+		"release_date": "2026-05-05",
+		"release_notes": "https://forums.opera.com/topic/88625/opera-for-android-98",
 		"status": "current"
 	} },
-	"safari": { "26.4": {
+	"safari": { "26.5": {
 		"engine": "WebKit",
-		"engine_version": "624.1.16",
-		"release_date": "2026-03-24",
-		"release_notes": "https://developer.apple.com/documentation/safari-release-notes/safari-26_4-release-notes",
+		"engine_version": "624.2.5",
+		"release_date": "2026-05-11",
+		"release_notes": "https://developer.apple.com/documentation/safari-release-notes/safari-26_5-release-notes",
 		"status": "current"
 	} },
-	"safari_ios": { "26.4": {
+	"safari_ios": { "26.5": {
 		"engine": "WebKit",
-		"engine_version": "624.1.16",
-		"release_date": "2026-03-24",
-		"release_notes": "https://developer.apple.com/documentation/safari-release-notes/safari-26_4-release-notes",
+		"engine_version": "624.2.5",
+		"release_date": "2026-05-11",
+		"release_notes": "https://developer.apple.com/documentation/safari-release-notes/safari-26_5-release-notes",
 		"status": "current"
 	} },
 	"samsunginternet_android": { "29.0": {
@@ -77,18 +77,18 @@ var browser_data_default = { browsers: {
 		"release_date": "2025-10-25",
 		"status": "current"
 	} },
-	"webview_android": { "147": {
+	"webview_android": { "148": {
 		"engine": "Blink",
-		"engine_version": "147",
-		"release_date": "2026-04-07",
-		"release_notes": "https://developer.chrome.com/release-notes/147",
+		"engine_version": "148",
+		"release_date": "2026-05-05",
+		"release_notes": "https://developer.chrome.com/release-notes/148",
 		"status": "current"
 	} },
-	"webview_ios": { "26.4": {
+	"webview_ios": { "26.5": {
 		"engine": "WebKit",
-		"engine_version": "624.1.16",
-		"release_date": "2026-03-24",
-		"release_notes": "https://developer.apple.com/documentation/safari-release-notes/safari-26_4-release-notes",
+		"engine_version": "624.2.5",
+		"release_date": "2026-05-11",
+		"release_notes": "https://developer.apple.com/documentation/safari-release-notes/safari-26_5-release-notes",
 		"status": "current"
 	} }
 } };
