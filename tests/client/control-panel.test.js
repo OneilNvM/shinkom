@@ -74,8 +74,6 @@ describe("Control panel 'inspector' options", () => {
         it("should set multiElements to true", () => {
             const toggle = controlPanel.controlPanelEl.shadowRootRef.getElementById('sk-toggle-elements')
 
-            console.log(state.getState().multiElements)
-
             toggle.dispatchEvent(new PointerEvent('click', {
                 bubbles: true,
                 cancelable: true,
@@ -272,3 +270,82 @@ describe("Control panel 'inspector' options", () => {
     })
 })
 
+describe("Control panel tab switching", () => {
+    beforeEach(() => {
+        compatUI.init()
+    })
+
+    afterEach(() => {
+        compatUI.destroy()
+        document.body.innerHTML = ''
+    })
+
+    it("should be on the inspector tab by default", () => {
+        expect(controlPanel.currentTab).toBe("inspector")
+    })
+
+    it("should display the Compatibility View tab", () => {
+        const compatViewTab = controlPanel.controlPanelEl.shadowRootRef.getElementById('sk-compat-view-tab')
+
+        compatViewTab.dispatchEvent(new PointerEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            pointerType: 'mouse'
+        }))
+
+        expect(controlPanel.currentTab).toBe("compatView")
+    })
+
+    it("should display the Inspector tab", () => {
+        const inspectorTab = controlPanel.controlPanelEl.shadowRootRef.getElementById('sk-inspector-tab')
+        const compatViewTab = controlPanel.controlPanelEl.shadowRootRef.getElementById('sk-compat-view-tab')
+
+        compatViewTab.dispatchEvent(new PointerEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            pointerType: 'mouse'
+        }))
+
+        inspectorTab.dispatchEvent(new PointerEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            pointerType: 'mouse'
+        }))
+
+        expect(controlPanel.currentTab).toBe("inspector")
+    })
+})
+
+describe("Control panel 'Compatibility View' options", () => {
+    beforeEach(() => {
+        compatUI.init()
+
+        const compatViewTab = controlPanel.controlPanelEl.shadowRootRef.getElementById('sk-compat-view-tab')
+
+        compatViewTab.click()
+    })
+
+    afterEach(() => {
+        compatUI.destroy()
+        document.body.innerHTML = ''
+    })
+
+    it("should change maximum size of results history to 20", () => {
+        const maxHistoryInput = controlPanel.controlPanelEl.shadowRootRef.getElementById('sk-max-history')
+
+        expect(maxHistoryInput).not.toBeNull()
+
+        maxHistoryInput.value = 20
+
+        maxHistoryInput.dispatchEvent(new Event('input', {
+            bubbles: true,
+            cancelable: true
+        }))
+
+        maxHistoryInput.dispatchEvent(new Event('change', {
+            bubbles: true
+        }))
+
+        expect(state.getState().maxResultsHistory).toBe(20)
+    })
+})
