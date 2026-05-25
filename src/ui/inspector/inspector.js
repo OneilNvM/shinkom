@@ -276,7 +276,7 @@ export class CompatInspector extends UIComponent {
             return;
         }
 
-        console.log("Creating inspector")
+        console.log("Soft creating inspector")
 
         this.inspectorEl = /**@type {CompatInspectorElement}*/(document.createElement('sk-compat-inspector'))
 
@@ -351,7 +351,7 @@ export class CompatInspector extends UIComponent {
             return;
         };
 
-        console.log("Resetting inspector")
+        console.log("Soft resetting inspector")
 
         this.unmountSoft()
         this.mountSoft()

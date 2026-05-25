@@ -284,7 +284,17 @@ export class CompatViewElement extends HTMLElement {
             const item = /**@type {RecentResultItem} */(document.createElement('sk-recent-result-item'))
             item.classList.add("sk-recent-results-item-container")
             item.result = snap
-            item.viewResult = (res) => !document.startViewTransition ? this.renderCompatResult(res) : this.#handleViewResultTransition(res)
+            item.viewResult = (res) => {
+                if (!document.startViewTransition) {
+                    const sharedState = this.state?.getState()
+                    if (sharedState) sharedState.compatViewTab = "results"
+
+                    this.renderCompatResult(res)
+                } else {
+                    this.#handleViewResultTransition(res)
+                }
+            }
+
             item.innerHTML = `
                 <div class="sk-recent-results-item">
                         <p>${snap.checkedAt}</p>
@@ -377,7 +387,16 @@ export class CompatViewElement extends HTMLElement {
         const resultsHistoryItems = this.resultsHistory.map(snapshot => {
             const item = /**@type {ResultsHistoryItem} */(document.createElement('sk-history-item'))
             item.result = snapshot
-            item.viewResult = (res) => !document.startViewTransition ? this.renderCompatResult(res) : this.#handleViewResultTransition(res)
+            item.viewResult = (res) => {
+                if (!document.startViewTransition) {
+                    const sharedState = this.state?.getState()
+                    if (sharedState) sharedState.compatViewTab = "results"
+
+                    this.renderCompatResult(res)
+                } else {
+                    this.#handleViewResultTransition(res)
+                }
+            }
 
             item.innerHTML = `
                 <div class="sk-history-item">

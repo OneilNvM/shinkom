@@ -202,6 +202,9 @@ export class CompatView extends UIComponent {
 
         if (!document.startViewTransition) {
             this.compatViewEl.renderTabContent(tab)
+
+            if (this.#stateBind)
+                this.#stateBind.compatViewTab = tab
         } else {
             const mainSection = this.compatViewEl.shadowRootRef.getElementById('sk-compat-view-main')
 
