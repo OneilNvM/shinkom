@@ -4,7 +4,19 @@
 import { ShinkomBus, ShinkomState, UIComponent } from '../../core';
 import { CompatInspectorElement } from '../../core/elements';
 
-/**@extends {UIComponent} */
+/**
+ * CompatInspector manages the interactive compatibility inspector overlay.
+ *
+ * It mounts the custom element `<sk-compat-inspector>`, synchronizes
+ * the overlay state with the shared UI state, and emits inspection
+ * requests through the Shinkom event bus.
+ *
+ * The inspector supports pointer tracking, element freezing, optional
+ * keyboard shortcuts, and soft mount/unmount flows that preserve or
+ * skip event bus bindings.
+ *
+ * @extends {UIComponent}
+ */
 export class CompatInspector extends UIComponent {
     /**@type {UISharedState | null}  */
     #stateBind = null;
@@ -40,12 +52,18 @@ export class CompatInspector extends UIComponent {
         this.unsubEvents = []
     }
 
+    /**
+     * Register custom elements to the CustomElementRegistry.
+     */
     static register() {
         if (!customElements.get('sk-compat-inspector')) {
             customElements.define('sk-compat-inspector', CompatInspectorElement)
         }
     }
 
+    /**
+     * Registers event bus listeners for the inspector.
+     */
     #setupEventBusListeners() {
         this.unsubEvents = [
             this.bus.on('ci:toggle', () => {
@@ -67,6 +85,9 @@ export class CompatInspector extends UIComponent {
         ]
     }
 
+    /**
+     * Removes event bus listeners for the inspector.
+     */
     #cleanupEventBusListeners() {
         this.unsubEvents.forEach(cleanup => cleanup())
         this.unsubEvents = []
@@ -270,6 +291,14 @@ export class CompatInspector extends UIComponent {
         }
     }
 
+    /**
+     * Mounts the inspector without setting up event bus listeners or state listeners.
+     *
+     * This is useful when the inspector should be rendered and tracked visually,
+     * but the surrounding application already manages bus events separately.
+     *
+     * **Only use this if you do not need to setup listeners.**
+     */
     mountSoft() {
         if (this.inspectorEl || this.config?.disabled) {
             console.warn("Inspector is either disabled or already exists")
@@ -345,6 +374,9 @@ export class CompatInspector extends UIComponent {
         this.mount()
     }
 
+    /**
+     * Resets the inspector using soft operations.
+     */
     resetSoft() {
         if (!this.inspectorEl) {
             console.warn("Cannot reset inspector as it does not exist.")
@@ -376,6 +408,14 @@ export class CompatInspector extends UIComponent {
         }
     }
 
+    /**
+     * Unmounts the inspector without cleaning up event bus listeners or state listeners.
+     *
+     * This preserves any active bus subscriptions when the visual overlay is
+     * temporarily removed.
+     *
+     * **Only use this if you still need the listeners after unmounting.**
+     */
     unmountSoft() {
         try {
             if (!this.inspectorEl) {

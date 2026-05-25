@@ -3,7 +3,20 @@
 import { ShinkomBus, ShinkomState, UIComponent } from '../../core';
 import { CompatControlPanelElement } from '../../core/elements';
 
-/**@extends {UIComponent} */
+/**
+ * CompatControlPanel manages the visibility, tabs, and input controls of
+ * the compatibility control panel overlay.
+ *
+ * It mounts the `<sk-control-panel>` custom element, binds control values
+ * to shared UI state, and dispatches user-driven commands over the Shinkom
+ * event bus.
+ *
+ * The panel supports inspector controls, compatibility view settings,
+ * tab switching, and display transitions with or without view transition
+ * support.
+ *
+ * @extends {UIComponent}
+ */
 export class CompatControlPanel extends UIComponent {
     /**@type {UISharedState | null} */
     #stateBind = null
@@ -45,7 +58,7 @@ export class CompatControlPanel extends UIComponent {
     }
 
     /**
-     * Registers custom elements to the `CustomElementRegistry` on the `window` object.
+     * Register custom elements to the CustomElementRegistry.
      */
     static register() {
         if (!customElements.get('sk-control-panel')) {
@@ -53,12 +66,21 @@ export class CompatControlPanel extends UIComponent {
         }
     }
 
+    /**
+     * Subscribes to shared UI state changes from the Shinkom state service.
+     *
+     * When the state service emits updates, the control panel updates the
+     * relevant button labels and input state accordingly.
+     */
     #setupStateServiceListener() {
         this.unsubState = this.stateService.subscribe((prop, val) => {
             this.onStateChange(prop, val)
         })
     }
 
+    /**
+     * Unsubscribes from the shared UI state service.
+     */
     #cleanupStateServiceListener() {
         this.unsubState()
     }

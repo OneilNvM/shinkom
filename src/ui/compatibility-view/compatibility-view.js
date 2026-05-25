@@ -4,7 +4,16 @@
 import { ShinkomBus, ShinkomState, UIComponent, CompatViewElement } from "../../core";
 import { RecentResultItem, ResultsHistoryItem } from "../../core/elements";
 
-/**@extends {UIComponent} */
+/**
+ * CompatView manages the compatibility results panel that displays
+ * inspection overview, result details, and history.
+ *
+ * It mounts the `<sk-compat-view>` custom element, binds the view to
+ * shared state, listens for result updates from the Shinkom bus, and
+ * handles UI interactions such as tab switching and show/hide transitions.
+ *
+ * @extends {UIComponent}
+ */
 export class CompatView extends UIComponent {
     /**@type {AbortController | null} */
     #compatViewController = null
@@ -39,7 +48,7 @@ export class CompatView extends UIComponent {
     }
 
     /**
-     * Registers custom elements to the `CustomElementRegistry` on the `window` object.
+     * Register custom elements to the CustomElementRegistry.
      */
     static register() {
         if (!customElements.get('sk-compat-view')) {
@@ -53,6 +62,12 @@ export class CompatView extends UIComponent {
         }
     }
 
+    /**
+     * Subscribes to compatibility result events from the Shinkom bus.
+     *
+     * When a new result payload is available, the view element is updated
+     * with the latest compatibility data.
+     */
     #setupEventBusListeners() {
         this.unsubEvent = this.bus.on('results:ready', (/**@type {CompatResult}*/e) => {
             if (this.compatViewEl) {
@@ -61,6 +76,9 @@ export class CompatView extends UIComponent {
         })
     }
 
+    /**
+     * Unsubscribes from compatibility result events.
+     */
     #cleanupEventBusListeners() {
         this.unsubEvent()
     }
@@ -79,7 +97,10 @@ export class CompatView extends UIComponent {
     }
 
     /**
-     * Sets up event listeners within the `ShadowDOM`.
+     * Sets up shadow DOM listeners for the compatibility view.
+     *
+     * The controller allows all panel click listeners to be removed cleanly
+     * when the view is unmounted.
      */
     #setupShadowListeners() {
         if (!this.compatViewEl) return;
@@ -104,7 +125,10 @@ export class CompatView extends UIComponent {
     }
 
     /**
-     * Resets any internal state and event listeners.
+     * Resets internal state and aborts all shadow DOM event listeners.
+     *
+     * This clears the active view state, resets the current tab, and removes
+     * the compatibility view element from the shared ignore state.
      */
     #resetInternalState() {
         if (this.#compatViewController)
@@ -140,7 +164,11 @@ export class CompatView extends UIComponent {
     }
 
     /**
-     * Handles click events within the control panel.
+     * Handles click events inside the compatibility view shadow DOM.
+     *
+     * Supported actions include toggling the panel display, switching tabs,
+     * and requesting a full inspection from the engine.
+     *
      * @param {PointerEvent} e
     */
     #handleClickEvents = async e => {
@@ -194,8 +222,12 @@ export class CompatView extends UIComponent {
     }
 
     /**
-     * Handles the transition between tab changes.
-     * @param {"overview" | "results" | "history"} tab 
+     * Handles navigation between compatibility view tabs.
+     *
+     * This method renders the selected tab content and updates shared state.
+     * When view transitions are available, it performs an animated tab change.
+     *
+     * @param {"overview" | "results" | "history"} tab
     */
     async #handleTabChange(tab) {
         if (!this.compatViewEl) return
