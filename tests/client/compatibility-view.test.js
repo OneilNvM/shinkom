@@ -7,10 +7,8 @@ import { SKEngine } from '../../src/engine'
 const state = new ShinkomState()
 const bus = new ShinkomBus()
 const compatView = new CompatView(bus, state)
-const inspector = new CompatInspector(bus, state)
 const compatUI = new CompatUI(bus, state, [
-    compatView,
-    inspector
+    compatView
 ])
 
 describe("Change the display of the compatibility view", () => {
