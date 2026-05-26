@@ -15,7 +15,6 @@ describe("Change the display of the control panel", () => {
         compatUI.init()
     })
 
-
     afterEach(() => {
         compatUI.destroy()
         document.body.innerHTML = ""

@@ -111,7 +111,7 @@ describe('Compatibility Inspector Keyboard Shortcuts', () => {
     })
 
     test('should reset the inspector to default configuration', async () => {
-        const resetSpy = vi.spyOn(CompatInspector.prototype, 'reset')
+        const resetSpy = vi.spyOn(CompatInspector.prototype, 'resetSoft')
         target?.dispatchEvent(new PointerEvent('click', {
             bubbles: true,
             cancelable: true,

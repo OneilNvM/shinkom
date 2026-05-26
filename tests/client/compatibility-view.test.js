@@ -1,23 +1,21 @@
 /**@typedef {import("../../src/types/public").CompatSnapshot} CompatSnapshot */
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { CompatInspector, CompatUI, CompatView, ShinkomBus, ShinkomState } from "../../src";
+import { CompatInspector, CompatView, ShinkomBus, ShinkomState } from "../../src";
 import { SKEngine } from '../../src/engine'
 
 const state = new ShinkomState()
 const bus = new ShinkomBus()
 const compatView = new CompatView(bus, state)
-const compatUI = new CompatUI(bus, state, [
-    compatView
-])
+compatView.bindState(state.getState())
 
 describe("Change the display of the compatibility view", () => {
     beforeEach(() => {
-        compatUI.init()
+        compatView.mount()
     })
 
     afterEach(() => {
-        compatUI.destroy()
+        compatView.unmount()
 
         document.body.innerHTML = ''
     })
@@ -61,11 +59,11 @@ describe("Change the display of the compatibility view", () => {
 
 describe("Change tabs in the compatibility view", () => {
     beforeEach(() => {
-        compatUI.init()
+        compatView.mount()
     })
 
     afterEach(() => {
-        compatUI.destroy()
+        compatView.unmount()
 
         document.body.innerHTML = ''
     })
@@ -82,6 +80,7 @@ describe("Change tabs in the compatibility view", () => {
             cancelable: true,
             pointerType: 'mouse'
         }))
+
 
         expect(compatView.currentTab).toBe("results")
     })
@@ -133,11 +132,11 @@ describe("Change tabs in the compatibility view", () => {
 
 describe("Full page inspect", () => {
     beforeEach(() => {
-        compatUI.init()
+        compatView.mount()
     })
 
     afterEach(() => {
-        compatUI.destroy()
+        compatView.unmount()
 
         document.body.innerHTML = ''
     })
@@ -171,13 +170,13 @@ describe('Viewing previous results', () => {
     const engine = new SKEngine(bus)
 
     beforeEach(async () => {
-        compatUI.init()
+        compatView.mount()
 
         await engine.initEngine()
     })
 
     afterEach(() => {
-        compatUI.destroy()
+        compatView.unmount()
 
         document.body.innerHTML = ''
 
