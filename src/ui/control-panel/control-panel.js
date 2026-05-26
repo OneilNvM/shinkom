@@ -24,6 +24,13 @@ export class CompatControlPanel extends UIComponent {
     #panelController = null;
 
     /**
+     * Initializes the compatibility control panel.
+     * 
+     * It requires an instance of the `ShinkomBus` and `ShinkomState` to listen
+     * for event bus emits and state service notifications.
+     * 
+     * It also registers the `<sk-control-panel>` custom element.
+     * 
      * @param {ShinkomBus} bus 
      * @param {ShinkomState} stateService 
      */
@@ -187,7 +194,6 @@ export class CompatControlPanel extends UIComponent {
             this.#stateBind.multiElements = false
             this.#stateBind.ignorePanelEl = null
         }
-
     }
 
     /**

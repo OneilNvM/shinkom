@@ -17,6 +17,12 @@ export class SKEngine {
     /**@type {Promise<void> | null} */
     #wasmLoaded = null;
     /**
+     * Initializes the compatibility engine.
+     * 
+     * The engine optionally accepts an event bus to listen for
+     * `engine:inspect` and `engine:full` events from UI
+     * components.
+     * 
      * @param {ShinkomBus | null} bus
      */
     constructor(bus = null) {

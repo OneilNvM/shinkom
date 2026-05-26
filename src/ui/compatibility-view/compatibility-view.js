@@ -24,6 +24,13 @@ export class CompatView extends UIComponent {
     /**@type {ShinkomState | null} */
     #stateService = null
     /**
+     * Initializes the compatibility view.
+     * 
+     * It requires an instance of the `ShinkomBus` and `ShinkomState` to listen
+     * for event bus emits and state service notifications.
+     * 
+     * It also registers the `<sk-compat-view>` custom element.
+     * 
      * @param {ShinkomBus} bus 
      * @param {ShinkomState} state 
      */

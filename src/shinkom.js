@@ -7,6 +7,13 @@ export class Shinkom {
     #config;
 
     /**
+     * Initializes UI and engine components
+     * 
+     * It creates instances for the event bus and state service and shares them
+     * between the components. It also has an optional configuration object
+     * used for configuring the inspector and initializing the engine with a 
+     * URL to the WASM file.
+     * 
      * @param {ShinkomConfig | undefined} config 
      */
     constructor(config = undefined) {

@@ -27,6 +27,23 @@ export class CompatInspector extends UIComponent {
     #inspectorController = null;
 
     /**
+     * Initializes the compatibility inspector.
+     * 
+     * It requires an instance of the `ShinkomBus` and `ShinkomState` to listen
+     * for event bus emits and state service notifications.
+     * 
+     * It also registers the `<sk-compat-inspector>` custom element.
+     * 
+     * It has an optional configuration object for disabling the inspector
+     * and toggling keyboard shortcuts.
+     * 
+     * ### Keyboard Shortcuts
+     * 
+     * - Create inspector: Ctrl + Alt + c
+     * - Reset inspector: Ctrl + Shift + |
+     * - Destroy inspector: Ctrl + Alt + \
+     * - Toggle element switching: Ctrl + \
+     * 
      * @param {ShinkomBus} bus
      * @param {ShinkomState} stateService
      * @param {InspectorConfig | undefined} config 
@@ -103,15 +120,15 @@ export class CompatInspector extends UIComponent {
         const altDown = e.altKey
 
         if (!this.inspectorEl && ctrlDown && altDown && e.key === 'c') {
-            this.mount()
+            this.mountSoft()
             return;
         }
         if (this.inspectorEl && ctrlDown && shiftDown && e.key === '|') {
-            this.reset()
+            this.resetSoft()
             return;
         }
         if (this.inspectorEl && ctrlDown && altDown && e.key === '\\') {
-            this.unmount()
+            this.unmountSoft()
             return;
         }
         if (ctrlDown && e.key === '\\') {
@@ -154,12 +171,19 @@ export class CompatInspector extends UIComponent {
     #freeze(target) {
         if (!this.inspectorEl) return;
 
+        const { width, height, top, left } = target.getBoundingClientRect()
+        const scrollTop = window.scrollY
+        const scrollLeft = window.scrollX
+
         this.#freezeInspector = true
         this.frozenTarget = target
 
         this.#inspect(this.frozenTarget.outerHTML)
 
         Object.assign(this.inspectorEl.shadowHost.style, {
+            width: `${width}px`,
+            height: `${height}px`,
+            transform: `translateX(${left + scrollLeft}px) translateY(${top + scrollTop}px)`,
             backgroundColor: 'rgba(255,0,0,.3)',
             outlineColor: 'rgb(255,0,0)'
         })

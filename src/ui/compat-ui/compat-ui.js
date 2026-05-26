@@ -6,6 +6,14 @@ const internalState = new WeakMap()
 
 export class CompatUI {
     /**
+     * Initializes the provided UI components.
+     * 
+     * It requires an instance of the `ShinkomBus` and `ShinkomState` and the UI
+     * components to be mounted.
+     * 
+     * It sets a `WeakMap` with the Proxy state from the state service for binding
+     * state to the components after being mounted.
+     * 
      * @param {ShinkomBus} _bus
      * @param {ShinkomState} stateService
      * @param {UIComponent[]} components
