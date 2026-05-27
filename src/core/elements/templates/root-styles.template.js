@@ -1,5 +1,4 @@
-export const hostStyleSheet = new CSSStyleSheet()
-hostStyleSheet.replaceSync(`
+export const hostStyles = `
     :host {
         --sk-primary: #050021;
         --sk-secondary: #1E0074;
@@ -29,4 +28,3 @@ hostStyleSheet.replaceSync(`
         --sk-text-3xl: 2rem;
         --sk-text-4xl: 3rem;
     }`
-)

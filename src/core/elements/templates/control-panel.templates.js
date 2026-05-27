@@ -82,8 +82,7 @@ export const controlPanelCompatViewTab = `
 </div>
 `
 
-export const controlPanelStyleSheet = new CSSStyleSheet()
-controlPanelStyleSheet.replaceSync(`
+export const controlPanelStyles = `
     * {
         box-sizing: border-box;
         margin: 0;
@@ -290,10 +289,8 @@ controlPanelStyleSheet.replaceSync(`
     #sk-clear-history {
         justify-self: center;
     }`
-)
 
-export const controlPanelTransitions = new CSSStyleSheet()
-controlPanelTransitions.replaceSync(`
+export const controlPanelTransitions = `
     /* Control panel transition styles injected from Shinkom */
 
     ::part(control-panel) {
@@ -329,4 +326,4 @@ controlPanelTransitions.replaceSync(`
     ::view-transition-new(control-panel) {
         animation: 300ms ease-out both move-fade-in;
     }
-`)
+`

@@ -2,7 +2,7 @@
  * @type {string}
  */
 // @ts-ignore
-const _macroVersion = __PACKAGE_VERSION__
+const _macroVersion = typeof __PACKAGE_VERSION__ !== "undefined" ? __PACKAGE_VERSION__ : 'development'
 
 export const compatViewHTML = `
 <button id="sk-toggle-compat-view" class="sk-toggle-compat-view sk-button-style">
@@ -80,8 +80,7 @@ export const compatViewOverviewHTML = `
 </section>
 `
 
-export const compatViewStyleSheet = new CSSStyleSheet()
-compatViewStyleSheet.replaceSync(`
+export const compatViewStyles = `
     .doto-regular {
       font-family: "Doto", sans-serif;
       font-optical-sizing: auto;
@@ -407,10 +406,8 @@ compatViewStyleSheet.replaceSync(`
     .sk-history-item:hover {
         background-color: var(--sk-primary);
     }`
-)
 
-export const compatViewTransitions = new CSSStyleSheet()
-compatViewTransitions.replaceSync(`
+export const compatViewTransitions = `
     /* CompatView transition styles injected from Shinkom */
 
     ::part(compat-view) {
@@ -457,4 +454,4 @@ compatViewTransitions.replaceSync(`
     [data-transition="backward"]::view-transition-new(compat-view) {
         animation: 300ms ease-out both move-in-left;
     }
-`)
+`

@@ -1,5 +1,13 @@
-import { controlPanelCompatViewTab, controlPanelHTML, controlPanelInspectorTab, controlPanelStyleSheet, controlPanelTransitions } from "./templates/control-panel.templates"
-import { hostStyleSheet } from "./templates/root-styles.template"
+import { getStyleSheet } from "../helpers"
+import { controlPanelCompatViewTab, controlPanelHTML, controlPanelInspectorTab, controlPanelStyles, controlPanelTransitions } from "./templates/control-panel.templates"
+import { hostStyles } from "./templates/root-styles.template"
+
+/**@type {CSSStyleSheet | null} */
+let cachedHostStyleSheet = null
+/**@type {CSSStyleSheet | null} */
+let cachedStyleSheet = null
+/**@type {CSSStyleSheet | null} */
+let cachedTransitions = null
 
 /**
  * A custom element for the `CompatControlPanel` UI component.
@@ -21,6 +29,10 @@ export class CompatControlPanelElement extends HTMLElement {
 
         this.shadowHost = document.createElement('div')
         this.shadowHost.id = 'sk-shadow-host'
+
+        cachedHostStyleSheet = getStyleSheet(cachedHostStyleSheet, hostStyles)
+        cachedStyleSheet = getStyleSheet(cachedStyleSheet, controlPanelStyles)
+        cachedTransitions = getStyleSheet(cachedTransitions, controlPanelTransitions)
     }
 
     connectedCallback() {
@@ -31,9 +43,14 @@ export class CompatControlPanelElement extends HTMLElement {
             zIndex: '992',
         })
 
-        document.adoptedStyleSheets.push(controlPanelTransitions)
+        if (cachedTransitions)
+            document.adoptedStyleSheets.push(cachedTransitions)
 
-        this.shadowRootRef.adoptedStyleSheets = [hostStyleSheet, controlPanelStyleSheet]
+        if (cachedHostStyleSheet)
+            this.shadowRootRef.adoptedStyleSheets = [cachedHostStyleSheet]
+        
+        if (cachedStyleSheet)
+            this.shadowRootRef.adoptedStyleSheets.push(cachedStyleSheet)
 
         this.shadowRootRef.appendChild(this.shadowHost)
 
@@ -41,7 +58,7 @@ export class CompatControlPanelElement extends HTMLElement {
     }
 
     disconnectedCallback() {
-        document.adoptedStyleSheets = document.adoptedStyleSheets.filter(sheet => sheet !== controlPanelTransitions)
+        document.adoptedStyleSheets = document.adoptedStyleSheets.filter(sheet => sheet !== cachedTransitions)
     }
 
     /**

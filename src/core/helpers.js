@@ -24,3 +24,20 @@ export const getModulePath = async (modulePath) => {
 export function versionToParts(version) {
     return version.replace(/^v/, '').split('.').map(Number)
 }
+
+/**
+ * 
+ * @param {CSSStyleSheet | null} cache 
+ * @param {string} styles 
+ * @returns {CSSStyleSheet | null}
+ */
+export function getStyleSheet(cache, styles) {
+    if (typeof window === 'undefined') return null
+
+    if (!cache) {
+        cache = new CSSStyleSheet()
+        cache.replaceSync(styles)
+    }
+
+    return cache
+}

@@ -1,23 +1,27 @@
-/// <reference path="../../types/public.d.ts" />
-
 /**@typedef {import('../../types/public').CompatResult} CompatResult */
 /**@typedef {import('../../types/public').CompatSnapshot} CompatSnapshot */
 /**@typedef {import('../../types/public').LookupResult} LookupResult */
 
-
 import { ShinkomBus } from '../event-bus'
-import { versionToParts } from '../helpers'
+import { getStyleSheet, versionToParts } from '../helpers'
 import { ShinkomState } from '../state-service'
 import { RecentResultItem } from './recent-result-item'
 import { ResultsHistoryItem } from './results-history-item'
-import { compatViewHTML, compatViewOverviewHTML, compatViewStyleSheet, compatViewTransitions } from './templates/compat-view.templates'
-import { hostStyleSheet } from './templates/root-styles.template'
+import { compatViewHTML, compatViewOverviewHTML, compatViewStyles, compatViewTransitions } from './templates/compat-view.templates'
+import { hostStyles } from './templates/root-styles.template'
+
+/**@type {CSSStyleSheet | null} */
+let cachedHostStyleSheet = null
+/**@type {CSSStyleSheet | null} */
+let cachedStyleSheet = null
+/**@type {CSSStyleSheet | null} */
+let cachedTransitions = null
 
 /**
  * @type {string}
  */
 // @ts-ignore
-const _macroVersion = __PACKAGE_VERSION__
+const _macroVersion = typeof __PACKAGE_VERSION__ !== "undefined" ? __PACKAGE_VERSION__ : 'development'
 
 /**
  * A custom element for the `CompatView` UI component.
@@ -55,6 +59,10 @@ export class CompatViewElement extends HTMLElement {
 
         /**@type {CompatSnapshot[]} */
         this._resultsHistory = []
+
+        cachedHostStyleSheet = getStyleSheet(cachedHostStyleSheet, hostStyles)
+        cachedStyleSheet = getStyleSheet(cachedStyleSheet, compatViewStyles)
+        cachedTransitions = getStyleSheet(cachedTransitions, compatViewTransitions)
     }
 
     get results() {
@@ -239,10 +247,16 @@ export class CompatViewElement extends HTMLElement {
 
         this.#retrieveResultsFromLocalStorage()
 
-        document.adoptedStyleSheets.push(compatViewTransitions)
+        if (cachedTransitions)
+            document.adoptedStyleSheets.push(cachedTransitions)
+
         this.#injectFontLink()
 
-        this.shadowRootRef.adoptedStyleSheets = [hostStyleSheet, compatViewStyleSheet]
+        if (cachedHostStyleSheet)
+            this.shadowRootRef.adoptedStyleSheets = [cachedHostStyleSheet]
+
+        if (cachedStyleSheet)
+            this.shadowRootRef.adoptedStyleSheets.push(cachedStyleSheet)
 
         this.shadowRootRef.appendChild(this.shadowHost)
 
@@ -259,7 +273,7 @@ export class CompatViewElement extends HTMLElement {
             this._unsubState()
         }
 
-        document.adoptedStyleSheets = document.adoptedStyleSheets.filter(sheet => sheet !== compatViewTransitions)
+        document.adoptedStyleSheets = document.adoptedStyleSheets.filter(sheet => sheet !== cachedTransitions)
     }
 
     /**
