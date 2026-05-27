@@ -1,8 +1,10 @@
+/// <reference path="../../types/public.d.ts" />
+
 /**@typedef {import('../../types/public').CompatResult} CompatResult */
 /**@typedef {import('../../types/public').CompatSnapshot} CompatSnapshot */
 /**@typedef {import('../../types/public').LookupResult} LookupResult */
 
-import pkg from '../../../package.json'
+
 import { ShinkomBus } from '../event-bus'
 import { versionToParts } from '../helpers'
 import { ShinkomState } from '../state-service'
@@ -10,6 +12,12 @@ import { RecentResultItem } from './recent-result-item'
 import { ResultsHistoryItem } from './results-history-item'
 import { compatViewHTML, compatViewOverviewHTML, compatViewStyleSheet, compatViewTransitions } from './templates/compat-view.templates'
 import { hostStyleSheet } from './templates/root-styles.template'
+
+/**
+ * @type {string}
+ */
+// @ts-ignore
+const _macroVersion = __PACKAGE_VERSION__
 
 /**
  * A custom element for the `CompatView` UI component.
@@ -150,7 +158,7 @@ export class CompatViewElement extends HTMLElement {
         const shinkomVersion = sessionStorage.getItem('shinkom-latest-version')
         try {
             if (shinkomVersion) {
-                this.#processVersions(pkg.version, shinkomVersion)
+                this.#processVersions(_macroVersion, shinkomVersion)
             } else {
                 const version = await this.#checkLatestVersion()
                 if (version) sessionStorage.setItem('shinkom-latest-version', version)
@@ -192,7 +200,7 @@ export class CompatViewElement extends HTMLElement {
 
         const data = await response.json()
 
-        this.#processVersions(pkg.version, data.tag_name)
+        this.#processVersions(_macroVersion, data.tag_name)
 
         return data.tag_name
     }

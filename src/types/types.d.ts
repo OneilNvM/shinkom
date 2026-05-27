@@ -1,5 +1,7 @@
 import { CompatResult } from './public'
 
+declare const __PACKAGE_VERSION__: string;
+
 export type ShinkomEventMap = {
     "ci:toggle": CustomEvent<void>;
     "ci:switch": CustomEvent<void>;
@@ -32,7 +34,7 @@ type VersionValue = string | false;
  * This interface was referenced by `CompatDataFile`'s JSON-Schema
  * via the `definition` "support_statement".
  */
-type SupportStatement = SimpleSupportStatement | [SimpleSupportStatement, SimpleSupportStatement, ...SimpleSupportStatement[]];
+export type SupportStatement = SimpleSupportStatement | [SimpleSupportStatement, SimpleSupportStatement, ...SimpleSupportStatement[]];
 /**
  * This interface was referenced by `CompatDataFile`'s JSON-Schema
  * via the `definition` "simple_support_statement".

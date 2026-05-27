@@ -1,4 +1,8 @@
-import pkg from '../../../../package.json'
+/**
+ * @type {string}
+ */
+// @ts-ignore
+const _macroVersion = __PACKAGE_VERSION__
 
 export const compatViewHTML = `
 <button id="sk-toggle-compat-view" class="sk-toggle-compat-view sk-button-style">
@@ -47,7 +51,7 @@ export const compatViewOverviewHTML = `
     <div class="sk-shinkom-version-container doto-regular">
         <div class="sk-shinkom-version">
             <div id="sk-version-indicator" class="sk-version-indicator"></div>
-            <p class="sk-shinkom-version-text">Railway version ${pkg.version}</p>
+            <p class="sk-shinkom-version-text">Railway version ${_macroVersion}</p>
         </div>
         <div>
             <span>Make sure to give Shinkom a star on <a href="https://github.com/OneilNvM/shinkom" target="_blank">GitHub</a>. Any support for the project is much
