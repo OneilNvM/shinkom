@@ -10,6 +10,12 @@ import { ResultsHistoryItem } from './results-history-item'
 import { compatViewHTML, compatViewOverviewHTML, compatViewStyles, compatViewTransitions } from './templates/compat-view.templates'
 import { hostStyles } from './templates/root-styles.template'
 
+/**
+ * @type {typeof HTMLElement}
+ */
+// @ts-ignore
+const BaseElement = typeof window !== "undefined" ? HTMLElement : class {}
+
 /**@type {CSSStyleSheet | null} */
 let cachedHostStyleSheet = null
 /**@type {CSSStyleSheet | null} */
@@ -32,9 +38,9 @@ const _macroVersion = typeof __PACKAGE_VERSION__ !== "undefined" ? __PACKAGE_VER
  * 
  * Since this element is defined via the Web Components API, to use this element outside of the CompatView, it must be registered
  * as a custom element on the `window` object.
- * @extends {HTMLElement} 
+ * @extends {BaseElement} 
 */
-export class CompatViewElement extends HTMLElement {
+export class CompatViewElement extends BaseElement {
     constructor() {
         super()
 

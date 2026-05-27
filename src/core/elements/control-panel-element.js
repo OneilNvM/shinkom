@@ -2,6 +2,12 @@ import { getStyleSheet } from "../helpers"
 import { controlPanelCompatViewTab, controlPanelHTML, controlPanelInspectorTab, controlPanelStyles, controlPanelTransitions } from "./templates/control-panel.templates"
 import { hostStyles } from "./templates/root-styles.template"
 
+/**
+ * @type {typeof HTMLElement}
+ */
+// @ts-ignore
+const BaseElement = typeof window !== "undefined" ? HTMLElement : class {}
+
 /**@type {CSSStyleSheet | null} */
 let cachedHostStyleSheet = null
 /**@type {CSSStyleSheet | null} */
@@ -18,9 +24,9 @@ let cachedTransitions = null
  * 
  * Since this element is defined via the Web Components API, to use this element outside of the `CompatControlPanel`, it must be registered
  * as a custom element on the `window` object.
- * @extends {HTMLElement}
+ * @extends {BaseElement}
  */
-export class CompatControlPanelElement extends HTMLElement {
+export class CompatControlPanelElement extends BaseElement {
     constructor() {
         super()
 

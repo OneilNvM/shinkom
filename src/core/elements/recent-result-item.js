@@ -1,6 +1,12 @@
 /**@typedef {import('../../types/public').CompatSnapshot} CompatSnapshot */
 
 /**
+ * @type {typeof HTMLElement}
+ */
+// @ts-ignore
+const BaseElement = typeof window !== "undefined" ? HTMLElement : class {}
+
+/**
  * A custom element for rendering a recent compatibility result item.
  * 
  * An autonomous custom element created via the [Web Components API](https://developer.mozilla.org/en-US/docs/Web/API/Web_components).
@@ -8,9 +14,9 @@
  * 
  * Since this element is defined via the Web Components API it must be registered
  * as a custom element on the `window` object.
- * @extends {HTMLElement}
+ * @extends {BaseElement}
  */
-export class RecentResultItem extends HTMLElement {
+export class RecentResultItem extends BaseElement {
     constructor() {
         super()
 
