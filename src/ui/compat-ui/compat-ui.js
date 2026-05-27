@@ -1,4 +1,4 @@
-/**@typedef {import('../../core').UISharedState} UISharedState */
+/**@typedef {import('../../types/public').UISharedState} UISharedState */
 import { ShinkomBus, ShinkomState, UIComponent } from '../../core' 
 
 /**@type {WeakMap<WeakKey, UISharedState>} */
