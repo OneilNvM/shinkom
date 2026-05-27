@@ -1,14 +1,24 @@
 /**
     * Shinkom - compat-ui
-    * @version 1.0.3
+    * @version 1.1.0
     * @license MIT
     * @copyright 2026 - OneilNvM
 */
 
+import "../../core/index.js";
 //#region src/ui/compat-ui/compat-ui.js
+/**@type {WeakMap<WeakKey, UISharedState>} */
 const internalState = /* @__PURE__ */ new WeakMap();
 var CompatUI = class {
 	/**
+	* Initializes the provided UI components.
+	* 
+	* It requires an instance of the `ShinkomBus` and `ShinkomState` and the UI
+	* components to be mounted.
+	* 
+	* It sets a `WeakMap` with the Proxy state from the state service for binding
+	* state to the components after being mounted.
+	* 
 	* @param {ShinkomBus} _bus
 	* @param {ShinkomState} stateService
 	* @param {UIComponent[]} components
@@ -23,7 +33,7 @@ var CompatUI = class {
 	*/
 	#bindState() {
 		const state = internalState.get(this);
-		this.components.forEach((comp) => comp.bindState(state));
+		if (state) this.components.forEach((comp) => comp.bindState(state));
 	}
 	/**
 	* Initializes CompatUI components.

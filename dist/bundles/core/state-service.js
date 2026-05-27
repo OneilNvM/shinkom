@@ -1,6 +1,6 @@
 /**
     * Shinkom - core
-    * @version 1.0.3
+    * @version 1.1.0
     * @license MIT
     * @copyright 2026 - OneilNvM
 */
@@ -9,13 +9,25 @@ import { DEFAULT_STATE } from "./constants.js";
 //#region src/core/state-service.js
 /**@typedef {import('../types/public').UISharedState} UISharedState */
 /**@typedef {import('../types/public').UISharedStateProps} UISharedStateProps */
+/**
+* ShinkomState provides shared UI state management for the application.
+*
+* It wraps a proxied state object and notifies subscribed listeners whenever
+* a state property changes. Components can subscribe to update events and
+* access the reactive state through `getState()`.
+*/
 var ShinkomState = class {
 	/**@type {UISharedState}*/
 	#state;
 	/**@type {function[]} */
 	#listeners = [];
 	/**
-	* @param {UISharedState} initalState 
+	* Initializes the shared state service.
+	*
+	* The returned state object is proxied so that property assignments
+	* automatically notify listeners when values change.
+	*
+	* @param {UISharedState} initalState
 	*/
 	constructor(initalState = DEFAULT_STATE) {
 		const notify = (prop, val) => {
@@ -40,9 +52,13 @@ var ShinkomState = class {
 	* @param {any} val
 	*/
 	/**
-	* Used to subscribe listener to the state service to listen for changes
-	* to the state.
+	* Subscribes a listener to state change notifications.
+	*
+	* When any property on the shared state changes, the callback receives the
+	* changed property and its new value.
+	*
 	* @param {Listener} callback
+	* @returns {() => void} cleanup function
 	*/
 	subscribe(callback) {
 		this.#listeners.push(callback);
@@ -51,7 +67,11 @@ var ShinkomState = class {
 		};
 	}
 	/**
-	* Gets the state.
+	* Returns the proxied shared state object.
+	*
+	* Callers can read and write state properties directly, and writes will
+	* trigger listener notifications when values change.
+	*
 	* @returns {UISharedState}
 	*/
 	getState = () => this.#state;

@@ -1,24 +1,32 @@
 /**
     * Shinkom - shinkom
-    * @version 1.0.3
+    * @version 1.1.0
     * @license MIT
     * @copyright 2026 - OneilNvM
 */
 
 import { ShinkomBus } from "./core/event-bus.js";
 import { ShinkomState } from "./core/state-service.js";
+import "./core/index.js";
 import { CompatInspector } from "./ui/inspector/inspector.js";
 import { CompatControlPanel } from "./ui/control-panel/control-panel.js";
+import { CompatView } from "./ui/compatibility-view/compatibility-view.js";
 import { CompatUI } from "./ui/compat-ui/compat-ui.js";
+import "./ui/index.js";
 import { SKEngine } from "./engine/engine.js";
 import "./engine/index.js";
 //#region src/shinkom.js
 /**@typedef {import("./types/public").ShinkomConfig} ShinkomConfig */
 var Shinkom = class {
 	#config;
-	/**@type {AbortController | null} */
-	#shinkomController = null;
 	/**
+	* Initializes UI and engine components
+	* 
+	* It creates instances for the event bus and state service and shares them
+	* between the components. It also has an optional configuration object
+	* used for configuring the inspector and initializing the engine with a 
+	* URL to the WASM file.
+	* 
 	* @param {ShinkomConfig | undefined} config 
 	*/
 	constructor(config = void 0) {
@@ -28,7 +36,11 @@ var Shinkom = class {
 		/**@type {SKEngine} */
 		this.skEngine = new SKEngine(bus);
 		/**@type {CompatUI} */
-		this.compatUI = new CompatUI(bus, state, [new CompatInspector(bus, state, this.#config?.inspector), new CompatControlPanel(bus, state)]);
+		this.compatUI = new CompatUI(bus, state, [
+			new CompatInspector(bus, state, this.#config?.inspector),
+			new CompatControlPanel(bus, state),
+			new CompatView(bus, state)
+		]);
 	}
 	/**
 	* Initialize Shinkom.
@@ -47,8 +59,6 @@ var Shinkom = class {
 	destroy() {
 		this.skEngine.destroy();
 		this.compatUI.destroy();
-		if (this.#shinkomController) this.#shinkomController.abort();
-		this.#shinkomController = null;
 	}
 };
 //#endregion

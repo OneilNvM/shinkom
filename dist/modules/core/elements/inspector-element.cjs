@@ -1,0 +1,17 @@
+Object.defineProperty(exports,Symbol.toStringTag,{value:`Module`});const e=typeof window<`u`?HTMLElement:class{};var t=class extends e{constructor(){super(),this.shadowRootRef=this.attachShadow({mode:`open`}),this.shadowHost=document.createElement(`div`),this.styles=document.createElement(`style`),this.shadowHost.id=`sk-compat-inspector`}connectedCallback(){this.styles.textContent=`
+            #sk-compat-inspector {
+                position: absolute;
+                top: 0;
+                background-color: rgba(0, 255, 0, .3);
+                outline-width: 1px;
+                outline-style: dashed;
+                outline-color: rgb(0, 255, 0);
+                outline-offset: 4px;
+                z-index: 990;
+                transition-property: width, height, transform;
+                transition-duration: 300ms;
+                transition-timing-function: ease-out;
+                will-change: width, height, transform;
+                pointer-events: none;
+            }
+        `;try{this.shadowRootRef.replaceChildren(this.styles,this.shadowHost)}catch(e){console.error(e)}}};exports.CompatInspectorElement=t;
