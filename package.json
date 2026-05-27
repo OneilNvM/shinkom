@@ -36,9 +36,9 @@
       "require": "./dist/modules/index.cjs"
     },
     "./shinkom": {
-      "types": "./dist/bundles/shinkom/shinkom.d.ts",
-      "import": "./dist/bundles/shinkom/shinkom.js",
-      "require": "./dist/modules/shinkom/shinkom.cjs"
+      "types": "./dist/bundles/shinkom.d.ts",
+      "import": "./dist/bundles/shinkom.js",
+      "require": "./dist/modules/shinkom.cjs"
     },
     "./engine": {
       "types": "./dist/bundles/engine/engine.d.ts",
@@ -59,6 +59,11 @@
       "types": "./dist/bundles/ui/control-panel/control-panel.d.ts",
       "import": "./dist/bundles/ui/control-panel/control-panel.js",
       "require": "./dist/modules/ui/control-panel/control-panel.cjs"
+    },
+    "./ui/compatibility-view": {
+      "types": "./dist/bundles/ui/compatibility-view/compatibility-view.d.ts",
+      "import": "./dist/bundles/ui/compatibility-view/compatibility-view.js",
+      "require": "./dist/modules/ui/compatibility-view/compatibility-view.cjs"
     },
     "./ui/compat-ui": {
       "types": "./dist/bundles/ui/compat-ui/compat-ui.d.ts",

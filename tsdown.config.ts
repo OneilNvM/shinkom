@@ -30,11 +30,16 @@ export default defineConfig([
             'core/event-bus': './src/core/event-bus.js',
             'core/state-service': './src/core/state-service.js',
             'core/ui-component': './src/core/ui-component.js',
+            'core/elements/index': './src/core/elements/index.js',
+            'core/elements/inspector-element': './src/core/elements/inspector-element.js',
+            'core/elements/control-panel-element': './src/core/elements/control-panel-element.js',
+            'core/elements/compat-view-element': './src/core/elements/compat-view-element.js',
             'core/constants': './src/core/constants.js',
             'engine/engine': './src/engine/engine.js',
             'ui/index': './src/ui/index.js',
             'ui/inspector/inspector': './src/ui/inspector/inspector.js',
             'ui/control-panel/control-panel': './src/ui/control-panel/control-panel.js',
+            'ui/compatibility-view/compatibility-view': './src/ui/compatibility-view/compatibility-view.js',
             'ui/compat-ui/compat-ui': './src/ui/compat-ui/compat-ui.js',
         },
         platform: 'browser',
@@ -51,6 +56,9 @@ export default defineConfig([
             chunkFileNames: '[name][format]',
             postBanner: banner
         },
+        define: {
+            __PACKAGE_VERSION__: JSON.stringify(pkg.version)
+        },
         report: {
             gzip: false
         },
@@ -64,11 +72,16 @@ export default defineConfig([
             'core/event-bus': './src/core/event-bus.js',
             'core/state-service': './src/core/state-service.js',
             'core/ui-component': './src/core/ui-component.js',
+            'core/elements/index': './src/core/elements/index.js',
+            'core/elements/inspector-element': './src/core/elements/inspector-element.js',
+            'core/elements/control-panel-element': './src/core/elements/control-panel-element.js',
+            'core/elements/compat-view-element': './src/core/elements/compat-view-element.js',
             'core/constants': './src/core/constants.js',
             'engine/engine': './src/engine/engine.js',
             'ui/index': './src/ui/index.js',
             'ui/inspector/inspector': './src/ui/inspector/inspector.js',
             'ui/control-panel/control-panel': './src/ui/control-panel/control-panel.js',
+            'ui/compatibility-view/compatibility-view': './src/ui/compatibility-view/compatibility-view.js',
             'ui/compat-ui/compat-ui': './src/ui/compat-ui/compat-ui.js',
         },
         platform: 'node',
@@ -88,6 +101,7 @@ export default defineConfig([
             gzip: false
         },
         define: {
+            __PACKAGE_VERSION__: JSON.stringify(pkg.version),
             'import.meta': '{}'
         },
         plugins: [copyWasmPlugin("modules")],
