@@ -58,15 +58,18 @@ export class CompatView extends UIComponent {
      * Register custom elements to the CustomElementRegistry.
      */
     static register() {
-        if (!customElements.get('sk-compat-view')) {
-            customElements.define('sk-compat-view', CompatViewElement)
+        if (typeof window !== 'undefined' && 'customElements' in globalThis) {
+            if (!globalThis.customElements.get('sk-compat-view')) {
+                globalThis.customElements.define('sk-compat-view', CompatViewElement)
+            }
+            if (!globalThis.customElements.get("sk-recent-result-item")) {
+                globalThis.customElements.define("sk-recent-result-item", RecentResultItem)
+            }
+            if (!globalThis.customElements.get("sk-history-item")) {
+                globalThis.customElements.define("sk-history-item", ResultsHistoryItem)
+            }
         }
-        if (!customElements.get("sk-recent-result-item")) {
-            customElements.define("sk-recent-result-item", RecentResultItem)
-        }
-        if (!customElements.get("sk-history-item")) {
-            customElements.define("sk-history-item", ResultsHistoryItem)
-        }
+
     }
 
     /**

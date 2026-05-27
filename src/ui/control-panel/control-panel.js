@@ -68,8 +68,8 @@ export class CompatControlPanel extends UIComponent {
      * Register custom elements to the CustomElementRegistry.
      */
     static register() {
-        if (!customElements.get('sk-control-panel')) {
-            customElements.define('sk-control-panel', CompatControlPanelElement)
+        if (typeof window !== 'undefined' && 'customElements' in globalThis && !globalThis.customElements.get('sk-control-panel')) {
+            globalThis.customElements.define('sk-control-panel', CompatControlPanelElement)
         }
     }
 

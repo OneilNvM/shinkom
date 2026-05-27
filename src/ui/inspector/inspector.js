@@ -73,8 +73,8 @@ export class CompatInspector extends UIComponent {
      * Register custom elements to the CustomElementRegistry.
      */
     static register() {
-        if (!customElements.get('sk-compat-inspector')) {
-            customElements.define('sk-compat-inspector', CompatInspectorElement)
+        if (typeof window !== undefined && 'customElements' in globalThis && !globalThis.customElements.get('sk-compat-inspector')) {
+            globalThis.customElements.define('sk-compat-inspector', CompatInspectorElement)
         }
     }
 
