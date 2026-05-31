@@ -1,1 +1,13 @@
-Object.defineProperty(exports,Symbol.toStringTag,{value:`Module`});const e=require(`./inspector/inspector.cjs`);require(`./inspector/index.cjs`);const t=require(`./control-panel/control-panel.cjs`);require(`./control-panel/index.cjs`);const n=require(`./compatibility-view/compatibility-view.cjs`);require(`./compatibility-view/index.cjs`);const r=require(`./compat-ui/compat-ui.cjs`);require(`./compat-ui/index.cjs`),exports.CompatControlPanel=t.CompatControlPanel,exports.CompatInspector=e.CompatInspector,exports.CompatUI=r.CompatUI,exports.CompatView=n.CompatView;
+Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
+const require_ui_inspector_inspector = require("./inspector/inspector.cjs");
+require("./inspector/index.cjs");
+const require_ui_control_panel_control_panel = require("./control-panel/control-panel.cjs");
+require("./control-panel/index.cjs");
+const require_ui_compatibility_view_compatibility_view = require("./compatibility-view/compatibility-view.cjs");
+require("./compatibility-view/index.cjs");
+const require_ui_compat_ui_compat_ui = require("./compat-ui/compat-ui.cjs");
+require("./compat-ui/index.cjs");
+exports.CompatControlPanel = require_ui_control_panel_control_panel.CompatControlPanel;
+exports.CompatInspector = require_ui_inspector_inspector.CompatInspector;
+exports.CompatUI = require_ui_compat_ui_compat_ui.CompatUI;
+exports.CompatView = require_ui_compatibility_view_compatibility_view.CompatView;

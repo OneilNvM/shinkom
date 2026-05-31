@@ -1,1 +1,1 @@
-require(`./compatibility-view.cjs`);
+require("./compatibility-view.cjs");

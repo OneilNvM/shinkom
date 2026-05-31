@@ -26,10 +26,10 @@ export function versionToParts(version) {
 }
 
 /**
- * 
+ * Creates a CSSStyleSheet and applies styles to it.
  * @param {CSSStyleSheet | null} cache 
  * @param {string} styles 
- * @returns {CSSStyleSheet | null}
+ * @returns {CSSStyleSheet | null} A CSS stylesheet
  */
 export function getStyleSheet(cache, styles) {
     if (typeof window === 'undefined') return null

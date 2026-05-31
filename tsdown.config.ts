@@ -88,7 +88,6 @@ export default defineConfig([
         outDir: './dist/modules',
         format: 'cjs',
         target: 'esnext',
-        minify: true,
         dts: false,
         outputOptions: {
             preserveModules: true,

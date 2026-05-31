@@ -1,1 +1,1 @@
-require(`./compat-ui.cjs`);
+require("./compat-ui.cjs");

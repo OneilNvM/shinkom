@@ -1,1 +1,1 @@
-require(`./control-panel.cjs`);
+require("./control-panel.cjs");

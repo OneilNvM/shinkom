@@ -1,1 +1,1 @@
-require(`./inspector.cjs`);
+require("./inspector.cjs");

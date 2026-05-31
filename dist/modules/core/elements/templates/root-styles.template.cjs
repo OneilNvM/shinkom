@@ -1,4 +1,5 @@
-exports.hostStyles=`
+//#region src/core/elements/templates/root-styles.template.js
+const hostStyles = `
     :host {
         --sk-primary: #050021;
         --sk-secondary: #1E0074;
@@ -28,3 +29,5 @@ exports.hostStyles=`
         --sk-text-3xl: 2rem;
         --sk-text-4xl: 3rem;
     }`;
+//#endregion
+exports.hostStyles = hostStyles;

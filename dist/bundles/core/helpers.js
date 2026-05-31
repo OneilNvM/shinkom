@@ -30,10 +30,10 @@ function versionToParts(version) {
 	return version.replace(/^v/, "").split(".").map(Number);
 }
 /**
-* 
+* Creates a CSSStyleSheet and applies styles to it.
 * @param {CSSStyleSheet | null} cache 
 * @param {string} styles 
-* @returns {CSSStyleSheet | null}
+* @returns {CSSStyleSheet | null} A CSS stylesheet
 */
 function getStyleSheet(cache, styles) {
 	if (typeof window === "undefined") return null;

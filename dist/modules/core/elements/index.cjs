@@ -1,1 +1,11 @@
-Object.defineProperty(exports,Symbol.toStringTag,{value:`Module`});const e=require(`./recent-result-item.cjs`),t=require(`./results-history-item.cjs`),n=require(`./compat-view-element.cjs`),r=require(`./control-panel-element.cjs`),i=require(`./inspector-element.cjs`);exports.CompatControlPanelElement=r.CompatControlPanelElement,exports.CompatInspectorElement=i.CompatInspectorElement,exports.CompatViewElement=n.CompatViewElement,exports.RecentResultItem=e.RecentResultItem,exports.ResultsHistoryItem=t.ResultsHistoryItem;
+Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
+const require_recent_result_item = require("./recent-result-item.cjs");
+const require_results_history_item = require("./results-history-item.cjs");
+const require_core_elements_compat_view_element = require("./compat-view-element.cjs");
+const require_core_elements_control_panel_element = require("./control-panel-element.cjs");
+const require_core_elements_inspector_element = require("./inspector-element.cjs");
+exports.CompatControlPanelElement = require_core_elements_control_panel_element.CompatControlPanelElement;
+exports.CompatInspectorElement = require_core_elements_inspector_element.CompatInspectorElement;
+exports.CompatViewElement = require_core_elements_compat_view_element.CompatViewElement;
+exports.RecentResultItem = require_recent_result_item.RecentResultItem;
+exports.ResultsHistoryItem = require_results_history_item.ResultsHistoryItem;

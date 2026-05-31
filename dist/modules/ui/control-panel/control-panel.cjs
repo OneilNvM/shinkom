@@ -1,1 +1,314 @@
-Object.defineProperty(exports,Symbol.toStringTag,{value:`Module`});const e=require(`../../core/ui-component.cjs`),t=require(`../../core/elements/control-panel-element.cjs`);require(`../../core/elements/index.cjs`),require(`../../core/index.cjs`);var n=class n extends e.UIComponent{#e=null;#t=null;constructor(e,t){super(e,t),n.register(),this.controlPanelEl=null,this.depthLevelInput=null,this.maxResultsHistoryInput=null,this.maxResultsHistory=10,this.depthLevel=0,this.multiElements=!1,this.currentTab=`inspector`,this.unsubState=()=>{}}static register(){typeof window<`u`&&`customElements`in globalThis&&!globalThis.customElements.get(`sk-control-panel`)&&globalThis.customElements.define(`sk-control-panel`,t.CompatControlPanelElement)}#n(){this.unsubState=this.stateService.subscribe((e,t)=>{this.onStateChange(e,t)})}#r(){this.unsubState()}bindState(e){this.#e||=e,this.#e.ignorePanelEl=this.controlPanelEl}onStateChange(e,t){switch(e){case`inspectorSwitching`:if(this.controlPanelEl){let e=this.controlPanelEl.shadowRootRef.getElementById(`sk-toggle-switching`);e&&(e.textContent=t?`Enabled`:`Disabled`)}break;case`inspectorActive`:if(this.controlPanelEl){let e=this.controlPanelEl.shadowRootRef.getElementById(`sk-toggle-inspector`);e&&(e.textContent=t?`Enabled`:`Disabled`)}break;default:break}}mount(){this.controlPanelEl||(this.controlPanelEl=document.createElement(`sk-control-panel`),document.body.appendChild(this.controlPanelEl),this.#i(),this.#n())}#i(){if(!this.controlPanelEl)return;this.#t=new AbortController;let{signal:e}=this.#t,t=this.controlPanelEl.shadowRootRef.getElementById(`sk-depth-level`);this.controlPanelEl.shadowHost.addEventListener(`click`,this.#o,{signal:e}),t?.addEventListener(`change`,this.#f,{signal:e}),t&&(this.depthLevelInput=t,this.depthLevelInput.disabled=!this.#e?.multiElements)}unmount(){try{if(!this.controlPanelEl)return;this.controlPanelEl.remove(),this.controlPanelEl=null,this.#a(),this.#r()}catch(e){console.error(`Control panel destroy error: ${e}`)}}#a(){this.#t&&this.#t.abort(),this.#t=null,this.depthLevelInput=null,this.depthLevel=0,this.multiElements=!1,this.#e&&(this.#e.depthLevel=0,this.#e.multiElements=!1,this.#e.ignorePanelEl=null)}#o=e=>{switch(e.target.id){case`sk-show-panel`:if(!this.controlPanelEl)return;document.startViewTransition?this.#u(`show`):this.controlPanelEl.renderDisplayTransition(`show`);break;case`sk-close-panel`:if(!this.controlPanelEl)return;document.startViewTransition?this.#u(`hide`):this.controlPanelEl.renderDisplayTransition(`hide`);break;case`sk-inspector-tab`:if(!this.controlPanelEl||this.currentTab===`inspector`)return;document.startViewTransition?this.#s(`inspector`):(this.controlPanelEl.renderTabContent(`inspector`),this.#c(),this.currentTab=`inspector`);break;case`sk-compat-view-tab`:if(!this.controlPanelEl||this.currentTab===`compatView`)return;document.startViewTransition?this.#s(`compatView`):(this.controlPanelEl.renderTabContent(`compatView`),this.#l(),this.currentTab=`compatView`);break;case`sk-toggle-inspector`:this.bus.emit(`ci:toggle`);break;case`sk-toggle-elements`:this.multiElements=!this.multiElements,this.depthLevelInput&&(this.multiElements?this.depthLevelInput.disabled=!1:this.depthLevelInput.disabled=!0),this.#e&&(this.#e.multiElements=this.multiElements);break;case`sk-toggle-switching`:this.#e&&(this.#e.inspectorSwitching=!this.#e.inspectorSwitching);break;case`sk-create-inspector`:this.bus.emit(`ci:create`);break;case`sk-reset-inspector`:this.bus.emit(`ci:reset`);break;case`sk-destroy-inspector`:this.bus.emit(`ci:destroy`);break;case`sk-clear-history`:this.bus.emit(`clear:history`);break;default:break}};async#s(e){if(this.controlPanelEl&&this.controlPanelEl.shadowRootRef.getElementById(`sk-control-panel-main`)){let t=document.startViewTransition(()=>{this.controlPanelEl?.renderTabContent(e)});this.currentTab=e,await t.finished,this.currentTab===`inspector`?this.#c():this.currentTab===`compatView`&&this.#l()}}#c(){if(!this.controlPanelEl)return;let e=this.controlPanelEl.shadowRootRef.getElementById(`sk-depth-level`);if(e&&(this.depthLevelInput=e,this.depthLevelInput.addEventListener(`change`,this.#f,{signal:this.#t?.signal}),this.#e)){if(this.#e.multiElements){let e=this.controlPanelEl.shadowRootRef.getElementById(`sk-toggle-elements`);e.checked=!0}else this.depthLevelInput.disabled=!0;this.#e.depthLevel>0&&(this.depthLevelInput.value=`${this.#e.depthLevel}`)}if(this.#e){let e=this.controlPanelEl.shadowRootRef.getElementById(`sk-toggle-switching`),t=this.controlPanelEl.shadowRootRef.getElementById(`sk-toggle-inspector`);t&&(this.#e.inspectorActive?t.textContent=`Enabled`:t.textContent=`Disabled`),e&&(this.#e.inspectorSwitching?e.textContent=`Enabled`:e.textContent=`Disabled`)}}#l(){if(!this.controlPanelEl)return;let e=this.controlPanelEl.shadowRootRef.getElementById(`sk-max-history`);e&&e instanceof HTMLInputElement&&(this.maxResultsHistoryInput=e,this.maxResultsHistoryInput.addEventListener(`change`,this.#d,{signal:this.#t?.signal}),this.#e&&this.#e.maxResultsHistory>=0&&this.#e.maxResultsHistory!=10&&(this.maxResultsHistoryInput.value=`${this.#e.maxResultsHistory}`))}async#u(e){if(!this.controlPanelEl)return;let t=this.controlPanelEl.shadowRootRef.getElementById(`sk-control-panel`);if(t){t.part.value=`control-panel`;let n=document.startViewTransition(()=>{this.controlPanelEl?.renderDisplayTransition(e)});try{await n.finished}finally{t.removeAttribute(`part`)}}}#d=e=>{let t=parseInt(e.target.value,10);this.maxResultsHistory=t,this.#e&&(this.#e.maxResultsHistory=t)};#f=e=>{let t=parseInt(e.target.value,10);this.depthLevel=t,this.#e&&(this.#e.depthLevel=t)}};exports.CompatControlPanel=n;
+Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
+const require_core_ui_component = require("../../core/ui-component.cjs");
+const require_core_elements_control_panel_element = require("../../core/elements/control-panel-element.cjs");
+require("../../core/elements/index.cjs");
+require("../../core/index.cjs");
+//#region src/ui/control-panel/control-panel.js
+/**@typedef {import('../../types/public').UISharedState} UISharedState */
+/**@typedef {import('../../types/public').UISharedStateProps} UISharedStateProps */
+/**
+* CompatControlPanel manages the visibility, tabs, and input controls of
+* the compatibility control panel overlay.
+*
+* It mounts the `<sk-control-panel>` custom element, binds control values
+* to shared UI state, and dispatches user-driven commands over the Shinkom
+* event bus.
+*
+* The panel supports inspector controls, compatibility view settings,
+* tab switching, and display transitions with or without view transition
+* support.
+*
+* @extends {UIComponent}
+*/
+var CompatControlPanel = class CompatControlPanel extends require_core_ui_component.UIComponent {
+	/**@type {UISharedState | null} */
+	#stateBind = null;
+	/**@type {AbortController | null} */
+	#panelController = null;
+	/**
+	* Initializes the compatibility control panel.
+	* 
+	* It requires an instance of the `ShinkomBus` and `ShinkomState` to listen
+	* for event bus emits and state service notifications.
+	* 
+	* It also registers the `<sk-control-panel>` custom element.
+	* 
+	* @param {ShinkomBus} bus 
+	* @param {ShinkomState} stateService 
+	*/
+	constructor(bus, stateService) {
+		super(bus, stateService);
+		CompatControlPanel.register();
+		/**@type {CompatControlPanelElement | null} */
+		this.controlPanelEl = null;
+		/**@type {HTMLInputElement | null} */
+		this.depthLevelInput = null;
+		/**@type {HTMLInputElement | null} */
+		this.maxResultsHistoryInput = null;
+		/**@type {number} */
+		this.maxResultsHistory = 10;
+		/**@type {number} */
+		this.depthLevel = 0;
+		/**@type {boolean} */
+		this.multiElements = false;
+		/**@type {"inspector" | "compatView"} */
+		this.currentTab = "inspector";
+		/**@type {() => void} */
+		this.unsubState = () => {};
+	}
+	/**
+	* Register custom elements to the CustomElementRegistry.
+	*/
+	static register() {
+		if (typeof window !== "undefined" && "customElements" in globalThis && !globalThis.customElements.get("sk-control-panel")) globalThis.customElements.define("sk-control-panel", require_core_elements_control_panel_element.CompatControlPanelElement);
+	}
+	/**
+	* Subscribes to shared UI state changes from the Shinkom state service.
+	*
+	* When the state service emits updates, the control panel updates the
+	* relevant button labels and input state accordingly.
+	*/
+	#setupStateServiceListener() {
+		this.unsubState = this.stateService.subscribe((prop, val) => {
+			this.onStateChange(prop, val);
+		});
+	}
+	/**
+	* Unsubscribes from the shared UI state service.
+	*/
+	#cleanupStateServiceListener() {
+		this.unsubState();
+	}
+	/**
+	* @param {UISharedState} state 
+	*/
+	bindState(state) {
+		if (!this.#stateBind) this.#stateBind = state;
+		this.#stateBind.ignorePanelEl = this.controlPanelEl;
+	}
+	/**
+	* @param {UISharedStateProps} prop 
+	* @param {any} val 
+	*/
+	onStateChange(prop, val) {
+		switch (prop) {
+			case "inspectorSwitching":
+				if (this.controlPanelEl) {
+					const toggleSwitchingButton = this.controlPanelEl.shadowRootRef.getElementById("sk-toggle-switching");
+					if (toggleSwitchingButton) toggleSwitchingButton.textContent = val ? "Enabled" : "Disabled";
+				}
+				break;
+			case "inspectorActive":
+				if (this.controlPanelEl) {
+					const toggleInspectorButton = this.controlPanelEl.shadowRootRef.getElementById("sk-toggle-inspector");
+					if (toggleInspectorButton) toggleInspectorButton.textContent = val ? "Enabled" : "Disabled";
+				}
+				break;
+			default: break;
+		}
+	}
+	mount() {
+		if (this.controlPanelEl) return;
+		this.controlPanelEl = document.createElement("sk-control-panel");
+		document.body.appendChild(this.controlPanelEl);
+		this.#setupShadowListeners();
+		this.#setupStateServiceListener();
+	}
+	/**
+	* Sets up event listeners within the `ShadowDOM`.
+	*/
+	#setupShadowListeners() {
+		if (!this.controlPanelEl) return;
+		this.#panelController = new AbortController();
+		const { signal } = this.#panelController;
+		const depthLevelInput = this.controlPanelEl.shadowRootRef.getElementById("sk-depth-level");
+		this.controlPanelEl.shadowHost.addEventListener("click", this.#handleToggleClick, { signal });
+		depthLevelInput?.addEventListener("change", this.#handleDepthLevelValue, { signal });
+		if (depthLevelInput) {
+			this.depthLevelInput = depthLevelInput;
+			this.depthLevelInput.disabled = !this.#stateBind?.multiElements;
+		}
+	}
+	unmount() {
+		try {
+			if (!this.controlPanelEl) return;
+			this.controlPanelEl.remove();
+			this.controlPanelEl = null;
+			this.#resetInternalState();
+			this.#cleanupStateServiceListener();
+		} catch (error) {
+			console.error(`Control panel destroy error: ${error}`);
+		}
+	}
+	/**
+	* Resets any internal state and event listeners.
+	*/
+	#resetInternalState() {
+		if (this.#panelController) this.#panelController.abort();
+		this.#panelController = null;
+		this.depthLevelInput = null;
+		this.depthLevel = 0;
+		this.multiElements = false;
+		if (this.#stateBind) {
+			this.#stateBind.depthLevel = 0;
+			this.#stateBind.multiElements = false;
+			this.#stateBind.ignorePanelEl = null;
+		}
+	}
+	/**
+	* Handles click events within the control panel.
+	* @param {PointerEvent} e
+	*/
+	#handleToggleClick = (e) => {
+		switch (e.target.id) {
+			case "sk-show-panel":
+				if (!this.controlPanelEl) return;
+				if (!document.startViewTransition) this.controlPanelEl.renderDisplayTransition("show");
+				else this.#handleDisplayTransition("show");
+				break;
+			case "sk-close-panel":
+				if (!this.controlPanelEl) return;
+				if (!document.startViewTransition) this.controlPanelEl.renderDisplayTransition("hide");
+				else this.#handleDisplayTransition("hide");
+				break;
+			case "sk-inspector-tab":
+				if (!this.controlPanelEl || this.currentTab === "inspector") return;
+				if (!document.startViewTransition) {
+					this.controlPanelEl.renderTabContent("inspector");
+					this.#handleInspectorTabState();
+					this.currentTab = "inspector";
+				} else this.#handleTabChange("inspector");
+				break;
+			case "sk-compat-view-tab":
+				if (!this.controlPanelEl || this.currentTab === "compatView") return;
+				if (!document.startViewTransition) {
+					this.controlPanelEl.renderTabContent("compatView");
+					this.#handleCompatViewTabState();
+					this.currentTab = "compatView";
+				} else this.#handleTabChange("compatView");
+				break;
+			case "sk-toggle-inspector":
+				this.bus.emit("ci:toggle");
+				break;
+			case "sk-toggle-elements":
+				this.multiElements = !this.multiElements;
+				if (this.depthLevelInput) if (this.multiElements) this.depthLevelInput.disabled = false;
+				else this.depthLevelInput.disabled = true;
+				if (this.#stateBind) this.#stateBind.multiElements = this.multiElements;
+				break;
+			case "sk-toggle-switching":
+				if (this.#stateBind) this.#stateBind.inspectorSwitching = !this.#stateBind.inspectorSwitching;
+				break;
+			case "sk-create-inspector":
+				this.bus.emit("ci:create");
+				break;
+			case "sk-reset-inspector":
+				this.bus.emit("ci:reset");
+				break;
+			case "sk-destroy-inspector":
+				this.bus.emit("ci:destroy");
+				break;
+			case "sk-clear-history":
+				this.bus.emit("clear:history");
+				break;
+			default: break;
+		}
+	};
+	/**
+	* Handles the transition between tab changes.
+	* @param {"inspector" | "compatView"} tab 
+	*/
+	async #handleTabChange(tab) {
+		if (!this.controlPanelEl) return;
+		if (this.controlPanelEl.shadowRootRef.getElementById("sk-control-panel-main")) {
+			const transition = document.startViewTransition(() => {
+				this.controlPanelEl?.renderTabContent(tab);
+			});
+			this.currentTab = tab;
+			await transition.finished;
+			if (this.currentTab === "inspector") this.#handleInspectorTabState();
+			else if (this.currentTab === "compatView") this.#handleCompatViewTabState();
+		}
+	}
+	#handleInspectorTabState() {
+		if (!this.controlPanelEl) return;
+		const depthLevel = this.controlPanelEl.shadowRootRef.getElementById("sk-depth-level");
+		if (depthLevel) {
+			this.depthLevelInput = depthLevel;
+			this.depthLevelInput.addEventListener("change", this.#handleDepthLevelValue, { signal: this.#panelController?.signal });
+			if (this.#stateBind) {
+				if (this.#stateBind.multiElements) {
+					const checkbox = this.controlPanelEl.shadowRootRef.getElementById("sk-toggle-elements");
+					checkbox.checked = true;
+				} else this.depthLevelInput.disabled = true;
+				if (this.#stateBind.depthLevel > 0) this.depthLevelInput.value = `${this.#stateBind.depthLevel}`;
+			}
+		}
+		if (this.#stateBind) {
+			const switchingToggle = this.controlPanelEl.shadowRootRef.getElementById("sk-toggle-switching");
+			const inspectorToggle = this.controlPanelEl.shadowRootRef.getElementById("sk-toggle-inspector");
+			if (inspectorToggle) if (this.#stateBind.inspectorActive) inspectorToggle.textContent = "Enabled";
+			else inspectorToggle.textContent = "Disabled";
+			if (switchingToggle) if (this.#stateBind.inspectorSwitching) switchingToggle.textContent = "Enabled";
+			else switchingToggle.textContent = "Disabled";
+		}
+	}
+	#handleCompatViewTabState() {
+		if (!this.controlPanelEl) return;
+		const maxHistory = this.controlPanelEl.shadowRootRef.getElementById("sk-max-history");
+		if (maxHistory && maxHistory instanceof HTMLInputElement) {
+			this.maxResultsHistoryInput = maxHistory;
+			this.maxResultsHistoryInput.addEventListener("change", this.#handleMaxHistoryValue, { signal: this.#panelController?.signal });
+			if (this.#stateBind) {
+				if (this.#stateBind.maxResultsHistory >= 0 && this.#stateBind.maxResultsHistory != 10) this.maxResultsHistoryInput.value = `${this.#stateBind.maxResultsHistory}`;
+			}
+		}
+	}
+	/**
+	* Handles the transition when toggling the display.
+	* @param {"show" | "hide"} display 
+	*/
+	async #handleDisplayTransition(display) {
+		if (!this.controlPanelEl) return;
+		const controlPanel = this.controlPanelEl.shadowRootRef.getElementById("sk-control-panel");
+		if (controlPanel) {
+			controlPanel.part.value = "control-panel";
+			const transition = document.startViewTransition(() => {
+				this.controlPanelEl?.renderDisplayTransition(display);
+			});
+			try {
+				await transition.finished;
+			} finally {
+				controlPanel.removeAttribute("part");
+			}
+		}
+	}
+	/**
+	* Handles the change event for the `maxResultsHistory` input.
+	* @param {Event} e 
+	*/
+	#handleMaxHistoryValue = (e) => {
+		const value = parseInt(
+			/**@type {HTMLInputElement} */
+			e.target.value,
+			10
+		);
+		this.maxResultsHistory = value;
+		if (this.#stateBind) this.#stateBind.maxResultsHistory = value;
+	};
+	/**
+	* Handles the change event for the `depth_level` input.
+	* @param {Event} e 
+	*/
+	#handleDepthLevelValue = (e) => {
+		const level = parseInt(
+			/**@type {HTMLInputElement}*/
+			e.target.value,
+			10
+		);
+		this.depthLevel = level;
+		if (this.#stateBind) this.#stateBind.depthLevel = level;
+	};
+};
+//#endregion
+exports.CompatControlPanel = CompatControlPanel;

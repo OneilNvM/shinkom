@@ -1,14 +1,5 @@
-exports.controlPanelCompatViewTab=`
-<div class="sk-max-history-container sk-section-grid">
-    <p>Change maximum number of results stored in history</p>
-    <input id="sk-max-history" class="sk-text-input" type="text" placeholder="default is 10">
-</div>
-<hr class="sk-hr-line">
-<div class="sk-clear-history-container sk-section-grid">
-    <p>Clear results history in localStorage</p>
-    <button id="sk-clear-history" class="sk-button-style">Clear</button>
-</div>
-`,exports.controlPanelHTML=`
+//#region src/core/elements/templates/control-panel.templates.js
+const controlPanelHTML = `
 <div style="position: relative">
     <button id="sk-show-panel" class="sk-button-style sk-show-panel">
         <svg style="display: block; pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -36,7 +27,8 @@ exports.controlPanelCompatViewTab=`
         </div>
     </div>
 </div>
-`,exports.controlPanelInspectorTab=`
+`;
+const controlPanelInspectorTab = `
 <div class="sk-multi-elements">
     <p>Activate multi-element checking</p>
     <label class="sk-multi-elements-checkbox-container">
@@ -76,7 +68,19 @@ exports.controlPanelCompatViewTab=`
     <p>Destroy inspector</p>
     <button id="sk-destroy-inspector" class="sk-button-style">Destroy</button>
 </div>
-`,exports.controlPanelStyles=`
+`;
+const controlPanelCompatViewTab = `
+<div class="sk-max-history-container sk-section-grid">
+    <p>Change maximum number of results stored in history</p>
+    <input id="sk-max-history" class="sk-text-input" type="text" placeholder="default is 10">
+</div>
+<hr class="sk-hr-line">
+<div class="sk-clear-history-container sk-section-grid">
+    <p>Clear results history in localStorage</p>
+    <button id="sk-clear-history" class="sk-button-style">Clear</button>
+</div>
+`;
+const controlPanelStyles = `
     * {
         box-sizing: border-box;
         margin: 0;
@@ -282,7 +286,8 @@ exports.controlPanelCompatViewTab=`
     }
     #sk-clear-history {
         justify-self: center;
-    }`,exports.controlPanelTransitions=`
+    }`;
+const controlPanelTransitions = `
     /* Control panel transition styles injected from Shinkom */
 
     ::part(control-panel) {
@@ -319,3 +324,9 @@ exports.controlPanelCompatViewTab=`
         animation: 300ms ease-out both move-fade-in;
     }
 `;
+//#endregion
+exports.controlPanelCompatViewTab = controlPanelCompatViewTab;
+exports.controlPanelHTML = controlPanelHTML;
+exports.controlPanelInspectorTab = controlPanelInspectorTab;
+exports.controlPanelStyles = controlPanelStyles;
+exports.controlPanelTransitions = controlPanelTransitions;

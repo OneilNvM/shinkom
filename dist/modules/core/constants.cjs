@@ -1,1 +1,17 @@
-Object.defineProperty(exports,Symbol.toStringTag,{value:`Module`});const e={inspectorExists:!1,inspectorActive:!1,inspectorSwitching:!1,ignorePanelEl:null,ignoreCompatViewEl:null,multiElements:!1,depthLevel:0,compatViewTab:`overview`,maxResultsHistory:10};exports.DEFAULT_STATE=e;
+Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
+//#region src/core/constants.js
+/**@typedef {import('../types/public').UISharedState} UISharedState */
+/**@type {UISharedState} */
+const DEFAULT_STATE = {
+	inspectorExists: false,
+	inspectorActive: false,
+	inspectorSwitching: false,
+	ignorePanelEl: null,
+	ignoreCompatViewEl: null,
+	multiElements: false,
+	depthLevel: 0,
+	compatViewTab: "overview",
+	maxResultsHistory: 10
+};
+//#endregion
+exports.DEFAULT_STATE = DEFAULT_STATE;

@@ -1,4 +1,9 @@
-exports.compatViewHTML=`
+//#region src/core/elements/templates/compat-view.templates.js
+/**
+* @type {string}
+*/
+const _macroVersion = "1.1.0";
+const compatViewHTML = `
 <button id="sk-toggle-compat-view" class="sk-toggle-compat-view sk-button-style">
     <svg style="pointer-events: none;" version="1.0" xmlns="http://www.w3.org/2000/svg" width="57" height="26"
         viewBox="0 0 251.000000 114.000000" preserveAspectRatio="xMidYMid meet">
@@ -34,7 +39,8 @@ exports.compatViewHTML=`
         <main part="compat-view-main" id="sk-compat-view-main" class="sk-compat-view-main"></main>
     </div>
 </div>
-`,exports.compatViewOverviewHTML=`
+`;
+const compatViewOverviewHTML = `
 <header class="sk-compat-view-header">
     <div class="sk-full-inspect-container">
         <p>Perform a full page inspect</p>
@@ -43,7 +49,7 @@ exports.compatViewHTML=`
     <div class="sk-shinkom-version-container doto-regular">
         <div class="sk-shinkom-version">
             <div id="sk-version-indicator" class="sk-version-indicator"></div>
-            <p class="sk-shinkom-version-text">Railway version 1.1.0</p>
+            <p class="sk-shinkom-version-text">Railway version ${_macroVersion}</p>
         </div>
         <div>
             <span>Make sure to give Shinkom a star on <a href="https://github.com/OneilNvM/shinkom" target="_blank">GitHub</a>. Any support for the project is much
@@ -70,7 +76,8 @@ exports.compatViewHTML=`
         <ul id="sk-recent-results-list" class="sk-recent-results-list"></ul>
     </div>
 </section>
-`,exports.compatViewStyles=`
+`;
+const compatViewStyles = `
     .doto-regular {
       font-family: "Doto", sans-serif;
       font-optical-sizing: auto;
@@ -395,7 +402,8 @@ exports.compatViewHTML=`
     }
     .sk-history-item:hover {
         background-color: var(--sk-primary);
-    }`,exports.compatViewTransitions=`
+    }`;
+const compatViewTransitions = `
     /* CompatView transition styles injected from Shinkom */
 
     ::part(compat-view) {
@@ -443,3 +451,8 @@ exports.compatViewHTML=`
         animation: 300ms ease-out both move-in-left;
     }
 `;
+//#endregion
+exports.compatViewHTML = compatViewHTML;
+exports.compatViewOverviewHTML = compatViewOverviewHTML;
+exports.compatViewStyles = compatViewStyles;
+exports.compatViewTransitions = compatViewTransitions;
