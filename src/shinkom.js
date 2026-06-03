@@ -3,6 +3,9 @@ import { ShinkomBus, ShinkomState } from "./core"
 import { SKEngine } from "./engine"
 import { CompatControlPanel, CompatInspector, CompatUI, CompatView } from "./ui"
 
+/**@type {Shinkom | null} */
+let instance = null
+
 export class Shinkom {
     #config;
 
@@ -17,6 +20,12 @@ export class Shinkom {
      * @param {ShinkomConfig | undefined} config 
      */
     constructor(config = undefined) {
+        if (instance) {
+            return instance
+        }
+
+        this.initialized = false
+
         this.#config = config
 
         const bus = new ShinkomBus()
@@ -31,6 +40,8 @@ export class Shinkom {
             new CompatControlPanel(bus, state),
             new CompatView(bus, state)
         ])
+
+        instance = this
     }
 
     /**
@@ -38,9 +49,14 @@ export class Shinkom {
      */
     async init() {
         try {
+            if (this.initialized) {
+                console.warn("Shinkom is already initialized.")
+                return
+            }
             await this.skEngine.initEngine(this.#config?.engine?.wasmURL)
             this.compatUI.init()
 
+            this.initialized = true
         } catch (error) {
             console.error(`Shinkom initialization error: ${error}`)
         }
@@ -50,7 +66,13 @@ export class Shinkom {
      * Destroy UI components and engine instance.
      */
     destroy() {
+        if (!this.initialized) {
+            console.warn("Shinkom has not been initialized.")
+            return;
+        }
         this.skEngine.destroy()
         this.compatUI.destroy()
+        
+        this.initialized = false
     }
 }

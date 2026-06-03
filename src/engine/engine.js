@@ -5,6 +5,9 @@ import compatData, { browserData, usageData } from '../../gen/index'
 import { ShinkomBus } from '../core/event-bus'
 import { getModulePath } from '../core/helpers'
 
+/**@type {SKEngine | null} */
+let instance = null
+
 /**
  * SKEngine wraps the Shinkom compatibility analysis engine.
  *
@@ -26,6 +29,11 @@ export class SKEngine {
      * @param {ShinkomBus | null} bus
      */
     constructor(bus = null) {
+        if (instance) {
+            return instance
+        }
+
+        this.initialized = false
         /**@type {CompatEngine | null} */
         this.compatEngine = null
 
@@ -34,6 +42,19 @@ export class SKEngine {
 
         /**@type {(() => void)[]} */
         this.unsubEvents = []
+
+        instance = this
+    }
+
+    getInstance() {
+        if (!instance) {
+            instance = this
+        }
+        return instance
+    }
+
+    static clearInstance() {
+        instance = null
     }
 
     /**
@@ -139,12 +160,18 @@ export class SKEngine {
      * @param {string | undefined} wasmURL
      */
     async initEngine(wasmURL = undefined) {
-        this.#setupEventBusListeners()
+        if (this.initialized) {
+            console.warn("SKEngine is already initialized.")
+            return
+        }
+
+        if (this.unsubEvents.length === 0) {
+            this.#setupEventBusListeners()
+        }
 
         try {
             if (!this.compatEngine) {
                 if (!this.#wasmLoaded) {
-                    console.log("loading WASM through initializer")
                     if (wasmURL) {
                         await this.loadWasm(wasmURL)
                     }
@@ -155,10 +182,15 @@ export class SKEngine {
 
                 this.compatEngine = new CompatEngine(compatData.html, compatData.svg, browserData, usageData)
 
+                this.initialized = true
+
+                this.getInstance()
+
                 console.log("initialized engine")
             }
         } catch (error) {
             console.error(`Engine initialization error: ${error}`)
+            SKEngine.clearInstance()
         }
     }
 
@@ -257,8 +289,8 @@ export class SKEngine {
      * further compatibility checks can be performed.
      */
     destroy() {
-        if (!this.compatEngine) {
-            console.warn("Shinkom Engine cannot be destroyed as it is not initialized.")
+        if (!this.initialized) {
+            console.warn("SKEngine has not been initialized.")
             return;
         }
         this.compatEngine?.free()
@@ -266,5 +298,9 @@ export class SKEngine {
 
         this.#wasmLoaded = null
         this.compatEngine = null
+
+        this.initialized = false
+
+        SKEngine.clearInstance()
     }
 }
