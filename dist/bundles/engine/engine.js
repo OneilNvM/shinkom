@@ -46,10 +46,17 @@ var SKEngine = class SKEngine {
 		this.unsubEvents = [];
 		instance = this;
 	}
+	/**
+	* Gets the instance of the engine.
+	* @returns {SKEngine} the instance
+	*/
 	getInstance() {
 		if (!instance) instance = this;
 		return instance;
 	}
+	/**
+	* Clears the instance from memory.
+	*/
 	static clearInstance() {
 		instance = null;
 	}
