@@ -94,7 +94,7 @@ export class CompatView extends UIComponent {
     }
 
     mount() {
-        if (this.compatViewEl) return
+        if (this.compatViewEl || document.querySelector('sk-compat-view')) return
 
         this.compatViewEl = /**@type {CompatViewElement}*/(document.createElement('sk-compat-view'))
 

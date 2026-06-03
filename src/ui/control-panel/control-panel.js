@@ -130,7 +130,7 @@ export class CompatControlPanel extends UIComponent {
     }
 
     mount() {
-        if (this.controlPanelEl) return
+        if (this.controlPanelEl || document.querySelector('sk-control-panel')) return
 
         this.controlPanelEl = /**@type {CompatControlPanelElement}*/(document.createElement('sk-control-panel'))
 
