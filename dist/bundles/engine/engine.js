@@ -13,6 +13,8 @@ import gen_default from "../gen/index.js";
 //#region src/engine/engine.js
 /**@typedef {import('../types/types').CustomEventEngineDetail} CustomEventEngineDetail */
 /**@typedef {import('../types/public').CompatResult} CompatResult */
+/**@type {SKEngine | null} */
+let instance = null;
 /**
 * SKEngine wraps the Shinkom compatibility analysis engine.
 *
@@ -21,7 +23,7 @@ import gen_default from "../gen/index.js";
 * instance is provided, SKEngine also emits result events and responds to
 * engine commands from the UI.
 */
-var SKEngine = class {
+var SKEngine = class SKEngine {
 	/**@type {Promise<void> | null} */
 	#wasmLoaded = null;
 	/**
@@ -34,12 +36,22 @@ var SKEngine = class {
 	* @param {ShinkomBus | null} bus
 	*/
 	constructor(bus = null) {
+		if (instance) return instance;
+		this.initialized = false;
 		/**@type {CompatEngine | null} */
 		this.compatEngine = null;
 		/**@type {ShinkomBus | null} */
 		this.bus = bus;
 		/**@type {(() => void)[]} */
 		this.unsubEvents = [];
+		instance = this;
+	}
+	getInstance() {
+		if (!instance) instance = this;
+		return instance;
+	}
+	static clearInstance() {
+		instance = null;
 	}
 	/**
 	* Subscribes the engine to UI-driven bus commands.
@@ -116,19 +128,23 @@ var SKEngine = class {
 	* @param {string | undefined} wasmURL
 	*/
 	async initEngine(wasmURL = void 0) {
-		this.#setupEventBusListeners();
+		if (this.initialized) {
+			console.warn("SKEngine is already initialized.");
+			return;
+		}
+		if (this.unsubEvents.length === 0) this.#setupEventBusListeners();
 		try {
 			if (!this.compatEngine) {
-				if (!this.#wasmLoaded) {
-					console.log("loading WASM through initializer");
-					if (wasmURL) await this.loadWasm(wasmURL);
-					else await this.loadWasm();
-				}
+				if (!this.#wasmLoaded) if (wasmURL) await this.loadWasm(wasmURL);
+				else await this.loadWasm();
 				this.compatEngine = new CompatEngine(gen_default.html, gen_default.svg, browser_data_default, browser_usage_data_default);
+				this.initialized = true;
+				this.getInstance();
 				console.log("initialized engine");
 			}
 		} catch (error) {
 			console.error(`Engine initialization error: ${error}`);
+			SKEngine.clearInstance();
 		}
 	}
 	/**
@@ -199,14 +215,16 @@ var SKEngine = class {
 	* further compatibility checks can be performed.
 	*/
 	destroy() {
-		if (!this.compatEngine) {
-			console.warn("Shinkom Engine cannot be destroyed as it is not initialized.");
+		if (!this.initialized) {
+			console.warn("SKEngine has not been initialized.");
 			return;
 		}
 		this.compatEngine?.free();
 		this.#cleanupEventBusListeners();
 		this.#wasmLoaded = null;
 		this.compatEngine = null;
+		this.initialized = false;
+		SKEngine.clearInstance();
 	}
 };
 //#endregion

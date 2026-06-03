@@ -241,7 +241,7 @@ var CompatInspector = class CompatInspector extends require_core_ui_component.UI
 		}
 	}
 	mount() {
-		if (this.inspectorEl || this.config?.disabled) {
+		if (this.inspectorEl || this.config?.disabled || document.querySelector("sk-compat-inspector")) {
 			console.warn("Inspector is either disabled or already exists");
 			return;
 		}
@@ -264,7 +264,7 @@ var CompatInspector = class CompatInspector extends require_core_ui_component.UI
 	* **Only use this if you do not need to setup listeners.**
 	*/
 	mountSoft() {
-		if (this.inspectorEl || this.config?.disabled) {
+		if (this.inspectorEl || this.config?.disabled || document.querySelector("sk-compat-inspector")) {
 			console.warn("Inspector is either disabled or already exists");
 			return;
 		}
@@ -311,7 +311,7 @@ var CompatInspector = class CompatInspector extends require_core_ui_component.UI
 	* Resets the inspector.
 	*/
 	reset() {
-		if (!this.inspectorEl) {
+		if (!this.inspectorEl || document.querySelector("sk-compat-inspector")) {
 			console.warn("Cannot reset inspector as it does not exist.");
 			return;
 		}

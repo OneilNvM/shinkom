@@ -114,7 +114,7 @@ var CompatControlPanel = class CompatControlPanel extends UIComponent {
 		}
 	}
 	mount() {
-		if (this.controlPanelEl) return;
+		if (this.controlPanelEl || document.querySelector("sk-control-panel")) return;
 		this.controlPanelEl = document.createElement("sk-control-panel");
 		document.body.appendChild(this.controlPanelEl);
 		this.#setupShadowListeners();

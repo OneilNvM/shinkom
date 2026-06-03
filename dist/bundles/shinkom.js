@@ -17,6 +17,8 @@ import { SKEngine } from "./engine/engine.js";
 import "./engine/index.js";
 //#region src/shinkom.js
 /**@typedef {import("./types/public").ShinkomConfig} ShinkomConfig */
+/**@type {Shinkom | null} */
+let instance = null;
 var Shinkom = class {
 	#config;
 	/**
@@ -30,6 +32,8 @@ var Shinkom = class {
 	* @param {ShinkomConfig | undefined} config 
 	*/
 	constructor(config = void 0) {
+		if (instance) return instance;
+		this.initialized = false;
 		this.#config = config;
 		const bus = new ShinkomBus();
 		const state = new ShinkomState();
@@ -41,14 +45,20 @@ var Shinkom = class {
 			new CompatControlPanel(bus, state),
 			new CompatView(bus, state)
 		]);
+		instance = this;
 	}
 	/**
 	* Initialize Shinkom.
 	*/
 	async init() {
 		try {
+			if (this.initialized) {
+				console.warn("Shinkom is already initialized.");
+				return;
+			}
 			await this.skEngine.initEngine(this.#config?.engine?.wasmURL);
 			this.compatUI.init();
+			this.initialized = true;
 		} catch (error) {
 			console.error(`Shinkom initialization error: ${error}`);
 		}
@@ -57,8 +67,13 @@ var Shinkom = class {
 	* Destroy UI components and engine instance.
 	*/
 	destroy() {
+		if (!this.initialized) {
+			console.warn("Shinkom has not been initialized.");
+			return;
+		}
 		this.skEngine.destroy();
 		this.compatUI.destroy();
+		this.initialized = false;
 	}
 };
 //#endregion

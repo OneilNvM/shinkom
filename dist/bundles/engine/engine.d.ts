@@ -20,6 +20,7 @@ import { CompatEngine } from "../pkg/shinkore.js";
  * engine commands from the UI.
  */
 declare class SKEngine {
+  static clearInstance(): void;
   /**
    * Initializes the compatibility engine.
    *
@@ -30,12 +31,14 @@ declare class SKEngine {
    * @param {ShinkomBus | null} bus
    */
   constructor(bus?: ShinkomBus | null);
+  initialized: boolean | undefined;
   /**@type {CompatEngine | null} */
   compatEngine: CompatEngine | null;
   /**@type {ShinkomBus | null} */
   bus: ShinkomBus | null;
   /**@type {(() => void)[]} */
   unsubEvents: (() => void)[];
+  getInstance(): SKEngine;
   /**
    * Loads the WASM runtime and initializes the native Shinkom engine.
    *

@@ -84,7 +84,7 @@ var CompatView = class CompatView extends UIComponent {
 		this.unsubEvent();
 	}
 	mount() {
-		if (this.compatViewEl) return;
+		if (this.compatViewEl || document.querySelector("sk-compat-view")) return;
 		this.compatViewEl = document.createElement("sk-compat-view");
 		this.compatViewEl.state = this.#stateService;
 		this.compatViewEl.bus = this.bus;

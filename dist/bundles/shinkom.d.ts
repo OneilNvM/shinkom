@@ -22,6 +22,7 @@ declare class Shinkom {
    * @param {ShinkomConfig | undefined} config
    */
   constructor(config?: ShinkomConfig | undefined);
+  initialized: boolean | undefined;
   /**@type {SKEngine} */
   skEngine: SKEngine;
   /**@type {CompatUI} */
