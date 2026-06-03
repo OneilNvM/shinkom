@@ -46,6 +46,10 @@ export class SKEngine {
         instance = this
     }
 
+    /**
+     * Gets the instance of the engine.
+     * @returns {SKEngine} the instance
+     */
     getInstance() {
         if (!instance) {
             instance = this
@@ -53,6 +57,9 @@ export class SKEngine {
         return instance
     }
 
+    /**
+     * Clears the instance from memory.
+     */
     static clearInstance() {
         instance = null
     }
