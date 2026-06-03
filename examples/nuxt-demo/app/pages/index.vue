@@ -20,5 +20,6 @@ onUnmounted(() => {
   <div>
     <NuxtRouteAnnouncer />
     <NuxtWelcome />
+    <NuxtLink href="/test">Test</NuxtLink>
   </div>
 </template>
