@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import { afterEach, beforeEach, describe, expect, it, test, vi } from "vitest";
-import { SKEngine } from "../../src";
+import { SKEngine } from "../../src/engine";
 
 const skEngine = new SKEngine()
 

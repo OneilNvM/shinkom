@@ -18,25 +18,34 @@ describe("Power the Shinkore WASM engine", () => {
 })
 
 describe("Analyze compatibility of HTML elements and attributes", () => {
-    const shinkomBus = new ShinkomBus()
-    const state = new ShinkomState()
-    const inspector = new CompatInspector(shinkomBus, state)
-    const controlPanel = new CompatControlPanel(shinkomBus, state)
-    const skEngine = new SKEngine(shinkomBus)
-    const compatUI = new CompatUI(shinkomBus, state, [
-        inspector,
-        controlPanel
-    ])
+    let bus;
+    let state;
+    let inspector;
+    let controlPanel;
+    let engine;
+    let compatUI;
 
     beforeEach(async () => {
-        await skEngine.initEngine()
+        bus = new ShinkomBus()
+        state = new ShinkomState()
+        inspector = new CompatInspector(bus, state)
+        controlPanel = new CompatControlPanel(bus, state)
+        engine = new SKEngine(bus)
+        compatUI = new CompatUI(bus, state, [
+            inspector,
+            controlPanel
+        ])
+
+        await engine.initEngine()
         compatUI.init()
     })
 
     afterEach(() => {
-        skEngine.destroy()
+        engine.destroy()
         compatUI.destroy()
         document.body.innerHTML = ""
+
+        vi.restoreAllMocks()
     })
 
     it("should console.dir <video> tag with a score of 100", () => {
@@ -48,7 +57,7 @@ describe("Analyze compatibility of HTML elements and attributes", () => {
             </div>
         `
 
-        const videoTag = document.getElementsByTagName('video')[0]
+        const videoTag = document.querySelector('video')
 
         videoTag.dispatchEvent(new PointerEvent('click', {
             bubbles: true,
@@ -92,7 +101,7 @@ describe("Analyze compatibility of HTML elements and attributes", () => {
                     <span class="inner-span">Inner span element</span>
                 </div>
                 <button id="get-started">Get Started</button>
-            </div>
+            </main>
         `
 
         const main = document.getElementById('main-container')
@@ -119,7 +128,7 @@ describe("Analyze compatibility of HTML elements and attributes", () => {
                     <span class="inner-span">Inner span element</span>
                 </div>
                 <button id="get-started">Get Started</button>
-            </div>
+            </main>
         `
 
         const main = document.getElementById('main-container')

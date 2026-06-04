@@ -6,6 +6,9 @@ export const DEFAULT_STATE = {
     inspectorActive: false,
     inspectorSwitching: false,
     ignorePanelEl: null,
+    ignoreCompatViewEl: null,
     multiElements: false,
-    depthLevel: 0
+    depthLevel: 0,
+    compatViewTab: "overview",
+    maxResultsHistory: 10
 }

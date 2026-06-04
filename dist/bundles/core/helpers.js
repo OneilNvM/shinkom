@@ -1,6 +1,6 @@
 /**
     * Shinkom - core\helpers
-    * @version 1.0.3
+    * @version 1.1.0
     * @license MIT
     * @copyright 2026 - OneilNvM
 */
@@ -21,5 +21,27 @@ const getModulePath = async (modulePath) => {
 		return path.pathToFileURL(__require.resolve(modulePath));
 	}
 };
+/**
+* Splits a version string into parts.
+* @param {string} version 
+* @returns {number[]} version number in parts
+*/
+function versionToParts(version) {
+	return version.replace(/^v/, "").split(".").map(Number);
+}
+/**
+* Creates a CSSStyleSheet and applies styles to it.
+* @param {CSSStyleSheet | null} cache 
+* @param {string} styles 
+* @returns {CSSStyleSheet | null} A CSS stylesheet
+*/
+function getStyleSheet(cache, styles) {
+	if (typeof window === "undefined") return null;
+	if (!cache) {
+		cache = new CSSStyleSheet();
+		cache.replaceSync(styles);
+	}
+	return cache;
+}
 //#endregion
-export { getModulePath };
+export { getModulePath, getStyleSheet, versionToParts };

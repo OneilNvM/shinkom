@@ -1,28 +1,5 @@
-import { SupportStatement } from '@mdn/browser-compat-data/types'
-
-export type ShinkomEventMap = {
-    "ci:toggle": CustomEvent<void>;
-    "engine:inspect": CustomEvent<CustomEventEngineDetail>;
-    "ci:switch": CustomEvent<void>;
-    "ci:create": CustomEvent<void>;
-    "ci:reset": CustomEvent<void>;
-    "ci:destroy": CustomEvent<void>;
-    "engine:full": CustomEvent<CustomEventEngineDetail>;
-}
-
-export type CustomEventEngineDetail = {
-    elem: string;
-    depthLevel: number;
-    multiElements: boolean;
-}
-
-export interface ShinkomEventTarget extends EventTarget {
-    addEventListener: <K extends keyof ShinkomEventMap>(type: K | string, listener: ShinkomEventListener<K> | EventListenerOrEventListenerObject | null, options?: EventListenerOptions | boolean) => void;
-    removeEventListener: <K extends keyof ShinkomEventMap>(type: K | string, callback: ShinkomEventListener<K> | EventListenerOrEventListenerObject | null) => void;
-    dispatchEvent: <K extends keyof ShinkomEventMap>(event: ShinkomEventMap[K]) => boolean;
-}
-
-export type ShinkomEventListener<K extends keyof ShinkomEventMap> = (this: ShinkomEventTarget, ev: ShinkomEventMap[K]) => void
+import { CompatControlPanelElement, CompatViewElement } from '../core/elements';
+import { SupportStatement } from './types';
 
 export type ShinkomConfig = {
     inspector?: InspectorConfig
@@ -44,12 +21,21 @@ export type UISharedState = {
     inspectorSwitching: boolean;
     multiElements: boolean;
     depthLevel: number;
-    ignorePanelEl: HTMLDivElement | null;
+    ignorePanelEl: CompatControlPanelElement | null;
+    ignoreCompatViewEl: CompatViewElement | null;
+    compatViewTab: "overview" | "results" | "history";
+    maxResultsHistory: number;
 }
+
+export type UISharedStateProps = keyof UISharedState
 
 export type CompatResult = {
     overall_score: number;
     lookup_results: LookupResult[];
+}
+
+export type CompatSnapshot = CompatResult & {
+    checkedAt: string
 }
 
 export type LookupResult = {
@@ -69,5 +55,3 @@ export type BrowserResult = {
     };
     versions: SupportStatement
 }
-
-export type UISharedStateProps = keyof UISharedState

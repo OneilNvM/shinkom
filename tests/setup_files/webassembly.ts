@@ -1,6 +1,8 @@
 import { vi } from "vitest";
 import fs from 'node:fs'
 
+const originalFetch = globalThis.fetch
+
 vi.stubGlobal('fetch', async (input: string | URL | Request) => {
     const wasmURL = typeof input === 'string'
         ? input
@@ -13,5 +15,5 @@ vi.stubGlobal('fetch', async (input: string | URL | Request) => {
         return wasmModule
     }
 
-    return fetch(input)
+    return originalFetch(input)
 })

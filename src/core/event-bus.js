@@ -1,16 +1,22 @@
-/**@typedef {import("../types/public").ShinkomEventTarget} ShinkomEventTarget */
-/**@typedef {import("../types/public").ShinkomEventMap} ShinkomEventMap */
-/**@typedef {import("../types/public").ShinkomEventListener<keyof ShinkomEventMap>} ShinkomEventListener */
+/**@typedef {import("../types/types").ShinkomEventTarget} ShinkomEventTarget */
+/**@typedef {import("../types/types").ShinkomEventMap} ShinkomEventMap */
+/**@typedef {import("../types/types").ShinkomEventListener<keyof ShinkomEventMap>} ShinkomEventListener */
 
+/**
+ * ShinkomBus is the application event bus used to coordinate cross-cutting
+ * actions across Shinkom UI components and the engine.
+ *
+ * It wraps a standard `EventTarget` and exposes a small typed API for
+ * emitting custom events and subscribing to them with cleanup support.
+ */
 export class ShinkomBus {
-    /**@type {ShinkomEventTarget} */
-    //@ts-expect-error
-    #customEventTarget = new EventTarget()
+    #customEventTarget = /**@type {ShinkomEventTarget}*/(new EventTarget())
 
     /**
      * Emits an event to the event bus.
-     * @param {string} event 
-     * @param {object | undefined} detail 
+     *
+     * @param {string} event
+     * @param {object | undefined} detail
      */
     emit(event, detail = undefined) {
         this.#customEventTarget.dispatchEvent(new CustomEvent(event, detail))
@@ -18,8 +24,14 @@ export class ShinkomBus {
 
     /**
      * Registers a listener on the event bus.
-     * @param {keyof ShinkomEventMap} eventName 
+     *
+     * The returned cleanup function removes the listener so callers can stop
+     * receiving events and avoid leaking handlers when the listener is no
+     * longer needed.
+     *
+     * @param {keyof ShinkomEventMap} eventName
      * @param {Function} cb
+     * @returns {() => void} cleanup function
      */
     on(eventName, cb) {
         /**@type {ShinkomEventListener} */
