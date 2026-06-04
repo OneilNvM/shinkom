@@ -396,7 +396,7 @@ Make sure to check out both of these great projects!
 - [x] Configurable cross-browser compatibility DOM inspection
 - [x] Full page cross-browser compatibility scan
 - [x] HTML parsing and compatibility checks via Rust and WASM engine module
-- [ ] Interactive side panel for viewing results of compatibility checks
+- [x] Interactive panel for viewing results of compatibility checks
 - [ ] Hints for improving cross-browser compatibility based on checks
 - [ ] Optional accessibility evaluation and hints based on WCAG guidelines
 - [ ] CSS and Javascript file parsing and cross-browser compatibility checks
