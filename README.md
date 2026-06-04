@@ -148,7 +148,8 @@ then consider contributing by creating a **pull request** on the **dev** branch 
 
 ### Basic
 
-<https://github.com/user-attachments/assets/fc0dda8d-1f1b-44cf-bcbe-db7a5f4c76c9>
+https://github.com/user-attachments/assets/fc0dda8d-1f1b-44cf-bcbe-db7a5f4c76c9
+
 The simplest and **recommended** way to utilize Shinkom is through the main entry-point.
 
 ```javascript
@@ -395,7 +396,7 @@ Make sure to check out both of these great projects!
 - [x] Configurable cross-browser compatibility DOM inspection
 - [x] Full page cross-browser compatibility scan
 - [x] HTML parsing and compatibility checks via Rust and WASM engine module
-- [ ] Interactive side panel for viewing results of compatibility checks
+- [x] Interactive panel for viewing results of compatibility checks
 - [ ] Hints for improving cross-browser compatibility based on checks
 - [ ] Optional accessibility evaluation and hints based on WCAG guidelines
 - [ ] CSS and Javascript file parsing and cross-browser compatibility checks
