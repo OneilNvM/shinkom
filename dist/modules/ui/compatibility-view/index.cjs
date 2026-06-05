@@ -1,1 +1,0 @@
-require("./compatibility-view.cjs");
