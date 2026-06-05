@@ -1,6 +1,6 @@
 /**
     * Shinkom - elements
-    * @version 1.1.0
+    * @version 1.1.1
     * @license MIT
     * @copyright 2026 - OneilNvM
 */
@@ -22,7 +22,7 @@ let cachedTransitions = null;
 /**
 * @type {string}
 */
-const _macroVersion = "1.1.0";
+const _macroVersion = "1.1.1";
 /**
 * A custom element for the `CompatView` UI component.
 * 

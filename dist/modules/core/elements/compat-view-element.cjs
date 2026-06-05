@@ -16,7 +16,7 @@ let cachedTransitions = null;
 /**
 * @type {string}
 */
-const _macroVersion = "1.1.0";
+const _macroVersion = "1.1.1";
 /**
 * A custom element for the `CompatView` UI component.
 * 

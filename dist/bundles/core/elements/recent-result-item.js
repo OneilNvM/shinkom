@@ -1,6 +1,6 @@
 /**
     * Shinkom - core\elements\recent-result-item
-    * @version 1.1.0
+    * @version 1.1.1
     * @license MIT
     * @copyright 2026 - OneilNvM
 */

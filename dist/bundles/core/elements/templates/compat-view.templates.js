@@ -1,6 +1,6 @@
 /**
     * Shinkom - core\elements\templates\compat-view
-    * @version 1.1.0
+    * @version 1.1.1
     * @license MIT
     * @copyright 2026 - OneilNvM
 */
@@ -9,7 +9,7 @@
 /**
 * @type {string}
 */
-const _macroVersion = "1.1.0";
+const _macroVersion = "1.1.1";
 const compatViewHTML = `
 <button id="sk-toggle-compat-view" class="sk-toggle-compat-view sk-button-style">
     <svg style="pointer-events: none;" version="1.0" xmlns="http://www.w3.org/2000/svg" width="57" height="26"
