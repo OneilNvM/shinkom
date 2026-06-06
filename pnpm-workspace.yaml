@@ -1,0 +1,10 @@
+packages:
+  - 'packages/*'
+  - 'playgrounds/*'
+allowBuilds:
+  '@parcel/watcher': true
+  esbuild: true
+  node: true
+  sharp: true
+  unrs-resolver: true
+
