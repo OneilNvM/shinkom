@@ -11,9 +11,9 @@ fn should_create_engine() -> Result<(), Box<dyn Error>> {
     use std::fs::File;
     use std::io::Read;
 
-    let mut compat_data_file = File::open("../gen/compat-data.json").unwrap();
-    let mut browser_data_file = File::open("../gen/browser-data.json").unwrap();
-    let mut browser_usage_data_file = File::open("../gen/browser-usage-data.json").unwrap();
+    let mut compat_data_file = File::open("../../packages/shinkom/gen/compat-data.json").unwrap();
+    let mut browser_data_file = File::open("../../packages/shinkom/gen/browser-data.json").unwrap();
+    let mut browser_usage_data_file = File::open("../../packages/shinkom/gen/browser-usage-data.json").unwrap();
     let mut compat_data = String::new();
     let mut browser_data = String::new();
     let mut browser_usage_data = String::new();
