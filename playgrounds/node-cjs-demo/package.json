@@ -1,16 +1,16 @@
 {
-  "name": "cjs-demo",
+  "name": "cjs-playground",
   "version": "1.0.0",
   "description": "",
   "main": "index.cjs",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "node index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "shinkom": "^1.0.0"
+    "shinkom": "workspace:*"
   }
 }
