@@ -346,20 +346,16 @@ run()
 
 When cloning or forking this library, refer to this table in regards to the NPM scripts:
 
-| Scripts     |                                             Actions                                            |
-|-------------|:----------------------------------------------------------------------------------------------:|
-| dev:nobuild |                        Runs Vite dev server without running `build:wasm`                       |
-| dev         |             Runs Vite dev server and builds a new WASM files through `build:wasm`.             |
-| build       | Builds the WASM and JS through `build:wasm` and `build:js` and outputs files to `dist` folder. |
-| build:js    |               Builds the ESM bundles and CJS modules for the Javascript library.               |
-| build:wasm  |        Builds the WASM files through `wasm-pack` and outputs files to a `pkg` directory.       |
-| test        |                                   Runs tests through Vitest.                                   |
-| dev:next    |                         Runs the dev server in the Next.js playground.                         |
-| dev:nuxt    |                           Runs the dev server in the Nuxt playground.                          |
-| dev:remix   |                    Runs the dev server in the Remix/ React Router playground.                  |
-| dev:vite    |                           Runs the dev server in the Vite playground.                          |
-| dev:nodeesm |                                  Runs the Node ESM playground.                                 |
-| dev:nodecjs |                                  Runs the Node CJS playground.                                 |
+| Scripts     |                                             Actions                                                 |
+|-------------|:---------------------------------------------------------------------------------------------------:|
+| dev:nobuild | Runs Vite dev server without running `build:wasm`                                                   |
+| dev         | Runs Vite dev server and builds a new WASM files through `build:wasm`.                              |
+| build       | Builds the WASM and JS through `build:wasm` and `build:js` and outputs files to `dist` folder.      |
+| build:js    | Builds the ESM bundles and CJS modules for the Javascript library.                                  |
+| build:wasm  | Builds the WASM files through `wasm-pack` and outputs files to a `pkg` directory.                   |
+| test        | Runs tests through Vitest.                                                                          |
+| type:check  | Runs `tsc` to check types in the `src` directory.                                                   |
+| gen:data    | Generates JSON files for compatibility data and usage data and outputs them to the `gen` directory. |
 
 ---
 
