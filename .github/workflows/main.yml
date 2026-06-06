@@ -38,7 +38,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: shinkore-wasm
-          path: pkg
+          path: packages/shinkom/pkg
           retention-days: 1
 
   buildShinkom:
@@ -54,7 +54,7 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: shinkore-wasm
-          path: pkg
+          path: packages/shinkom/pkg
       - name: Install pnpm
         uses: pnpm/action-setup@v6
         with:
