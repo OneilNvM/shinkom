@@ -11,6 +11,7 @@
     "dev:next": "pnpm --filter nextjs-playground dev",
     "dev:nuxt": "pnpm --filter nuxt-playground dev",
     "dev:remix": "pnpm --filter remix-playground dev",
+    "dev:tanstack": "pnpm --filter tanstack-playground dev",
     "dev:vite": "pnpm --filter vite-playground dev",
     "dev:nodeesm": "pnpm --filter esm-playground dev",
     "dev:nodecjs": "pnpm --filter cjs-playground dev"
