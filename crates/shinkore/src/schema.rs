@@ -93,8 +93,7 @@ pub struct Compat {
     #[serde(default)]
     pub tags: Option<Vec<String>>,
 
-    #[serde(default)]
-    pub source_file: Option<String>,
+    pub source_file: String,
 
     pub support: HashMap<String, SupportData>,
 
