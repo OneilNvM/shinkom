@@ -1,7 +1,10 @@
 //! Module contains functions for calculating the compatibility scores for web features.
 use std::collections::HashMap;
 
-use version_compare::{Cmp, compare};
+#[cfg(feature = "hints")]
+use shinkore_hints::HintEngine;
+
+use shinkore_types::{Status, SupportData, VersionValue};
 
 use crate::{
     BrowserData, BrowserDataParamType, BrowserResult, LookupResults, Scores,
@@ -11,7 +14,7 @@ use crate::{
     prelude::{
         BrowserSupportContext, BrowserUsageContext, SupportDetailContext, WebFeatureContext,
     },
-    schema::{Status, SupportData, VersionValue},
+    version::{Version, VersionRequirement},
 };
 
 /// Calculates the compatibility score for a web feature.
@@ -30,6 +33,7 @@ pub fn calculate_compat_score(
     match ctx.compat_type {
         CompatType::Element(el) => {
             let mut browser_score = calculate_browser_score(
+                ctx.name.clone(),
                 CompatType::Element(el),
                 &mut browser_results,
                 browser_data_params,
@@ -38,10 +42,10 @@ pub fn calculate_compat_score(
             // LookupType is used for returning the appropriate error message
             let status_score = match ctx.lookup_type {
                 LookupType::Element(name) => {
-                    calculate_status_score(&el.compat.status, LookupType::Element(name))?
+                    calculate_status_score(ctx.name.clone(), &el.compat.status, LookupType::Element(name))?
                 }
                 LookupType::Attribute(name) => {
-                    calculate_status_score(&el.compat.status, LookupType::Attribute(name))?
+                    calculate_status_score(ctx.name.clone(), &el.compat.status, LookupType::Attribute(name))?
                 }
             };
 
@@ -70,11 +74,13 @@ pub fn calculate_compat_score(
         }
         CompatType::GlobalAttributes(g_attrib) => {
             let mut browser_score = calculate_browser_score(
+                ctx.name.clone(),
                 CompatType::GlobalAttributes(g_attrib),
                 &mut browser_results,
                 browser_data_params,
             )?;
             let status_score = calculate_status_score(
+                ctx.name.clone(),
                 &g_attrib.compat.status,
                 LookupType::Attribute(ctx.name.clone()),
             )?;
@@ -112,6 +118,7 @@ pub fn calculate_compat_score(
 /// ## Errors
 /// A [`CheckError`] is returned if the status is not available for the feature.
 pub fn calculate_status_score(
+    feature_name: String,
     compat_status: &Option<Status>,
     lookup_type: LookupType,
 ) -> Result<f32, CheckError> {
@@ -129,6 +136,24 @@ pub fn calculate_status_score(
             status_score = 10.0
         } else if status.deprecated {
             status_score = 0.0;
+        }
+
+        #[cfg(feature = "hints")]
+        {
+            use shinkore_types::StatusIssue;
+
+            if status_score < 100.0 {
+                let mut hint_engine = HintEngine::new(false);
+
+                hint_engine.compile_status_hints(StatusIssue {
+                    feature_name,
+                    status
+                });
+
+                hint_engine.log_hints();
+
+                hint_engine.clear_hints();
+            }
         }
     } else {
         match lookup_type {
@@ -153,16 +178,20 @@ pub fn calculate_status_score(
 /// ## Errors
 /// A [`CheckError`] is returned if an error occurs in the calculations for support scores.
 pub fn calculate_browser_score(
+    feature_name: String,
     compat_type: CompatType,
     browser_results: &mut Vec<BrowserResult>,
     browser_data_params: &Vec<BrowserDataParamType>,
 ) -> Result<f32, CheckError> {
     let mut browser_score_total: f32 = 0.0;
+
     match compat_type {
         CompatType::Element(el) => {
             for (browser_name, support) in &el.compat.support {
                 browser_score_total += calculate_support(
                     BrowserSupportContext {
+                        feature_name: &feature_name,
+                        compat: &el.compat,
                         browser_name,
                         support,
                     },
@@ -175,6 +204,8 @@ pub fn calculate_browser_score(
             for (browser_name, support) in &g_attrib.compat.support {
                 browser_score_total += calculate_support(
                     BrowserSupportContext {
+                        feature_name: &feature_name,
+                        compat: &g_attrib.compat,
                         browser_name,
                         support,
                     },
@@ -232,6 +263,8 @@ fn calculate_support(
         ));
     }
 
+    let mut raw_score_val: f32 = 0.0;
+
     match ctx.support {
         SupportData::Single(detail) => {
             // Calculate browser_score for version_added
@@ -244,23 +277,13 @@ fn calculate_support(
                 browser_data.unwrap(),
             );
 
-            if detail.partial_implementation.is_some() {
+            if detail.partial_implementation {
                 browser_score = 80.0;
-            }
-            if detail.version_removed.is_some()
-                && let VersionValue::Version(added) = &detail.version_added
-                && let VersionValue::Version(removed) = detail.version_removed.as_ref().unwrap()
-            {
-                // Make sure to check which is greater between version_added and version_removed
-                match compare(removed, added) {
-                    Ok(Cmp::Lt) | Ok(Cmp::Eq) => browser_score = 100.0,
-                    Ok(Cmp::Gt) => browser_score = 0.0,
-                    _ => (),
-                }
             }
 
             // Get the raw score before the weighting calculation
             let raw_score = format!("{:.2}", browser_score);
+            raw_score_val = browser_score;
 
             if browser_data
                 .unwrap()
@@ -318,20 +341,9 @@ fn calculate_support(
                     browser_data.unwrap(),
                 );
 
-                if detail.partial_implementation.is_some() {
-                    support_score = 80.0;
-                }
-                if detail.version_removed.is_some()
-                    && let VersionValue::Version(added) = &detail.version_added
-                    && let VersionValue::Version(removed) = detail.version_removed.as_ref().unwrap()
-                {
-                    // Make sure to check which is greater between version_added and version_removed
-                    match compare(removed, added) {
-                        Ok(Cmp::Lt) | Ok(Cmp::Eq) => support_score = 100.0,
-                        Ok(Cmp::Gt) => support_score = 0.0,
-                        _ => (),
-                    }
-                }
+                // if detail.partial_implementation {
+                //     support_score = 80.0;
+                // }
 
                 sum_of_raw_scores += support_score;
 
@@ -371,6 +383,8 @@ fn calculate_support(
             sum_of_raw_scores /= details.len() as f32;
             browser_score = sum_of_weighted_scores / details.len() as f32;
 
+            raw_score_val = sum_of_raw_scores;
+
             browser_results.push(BrowserResult {
                 browser_name: ctx.browser_name.to_owned(),
                 score: Scores {
@@ -383,14 +397,35 @@ fn calculate_support(
         SupportData::Simple(version) => match version {
             VersionValue::Version(_) => {
                 browser_score = 100.0;
+                raw_score_val = browser_score;
             }
             VersionValue::IsSupported(supported) if *supported => {
                 browser_score = 100.0;
+                raw_score_val = browser_score;
             }
-
             _ => (),
         },
         _ => (),
+    }
+
+    #[cfg(feature = "hints")]
+    {
+        use shinkore_types::BrowserIssue;
+
+        if ctx.browser_name != "ie" && raw_score_val < 100.0 {
+            let mut hint_engine = HintEngine::new(false);
+
+            hint_engine.compile_browser_hints(BrowserIssue {
+                feature_name: ctx.feature_name.clone(),
+                browser_target: ctx.browser_name.to_owned(),
+                compat: &ctx.compat,
+                support: ctx.support,
+            });
+
+            hint_engine.log_hints();
+
+            hint_engine.clear_hints();
+        }
     }
 
     Ok(browser_score)
@@ -424,14 +459,13 @@ fn match_version_added(
     browser_data: &BrowserData,
 ) {
     match &ctx.detail.version_added {
-        VersionValue::Version(ver) => {
+        VersionValue::Version(added_version) => {
             if let Some(browser) = browser_data.browsers.get(ctx.browser_name)
-                && let Some(cur_ver) = &browser.values().next().unwrap().engine_version
+                && let Some(current_version) = &browser.values().next().unwrap().engine_version
             {
-                match compare(ver, cur_ver) {
-                    Ok(Cmp::Lt) | Ok(Cmp::Eq) => *browser_score = 100.0,
-                    _ => (),
-                }
+                let target: Version = current_version.parse().unwrap();
+                let requirement: VersionRequirement = added_version.parse().unwrap();
+                *browser_score = decay_score(target, requirement, 10) as f32;
             }
         }
         VersionValue::IsSupported(supported) => {
@@ -443,4 +477,22 @@ fn match_version_added(
         }
         _ => (),
     }
+}
+
+fn decay_score(target: Version, added: VersionRequirement, decay_window: u32) -> u8 {
+    if !added.is_satisfied_by(&target) {
+        return 0;
+    }
+
+    let version_added = match added {
+        VersionRequirement::GreaterThanOrEqualTo(version) => version,
+        VersionRequirement::LessThanOrEqualTo(version) => version,
+        VersionRequirement::Range(min_version, _max_version) => min_version,
+    };
+
+    let version_safety = target.major_versions_ahead(&version_added);
+
+    let raw_score = (version_safety as f32 / decay_window as f32) * 100.0;
+
+    raw_score.clamp(0.0, 100.0) as u8
 }

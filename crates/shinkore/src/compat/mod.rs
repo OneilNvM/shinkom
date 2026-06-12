@@ -5,7 +5,7 @@
 //! [`calculate`] contains functions performing the scoring logic and calculating the compatibility score for a web feature
 //! across multiple browsers.
 
-use crate::schema::{CompatElement, CompatGlobalAttribs};
+use shinkore_types::{CompatElement, CompatGlobalAttribs};
 pub mod calculate;
 pub mod lookup;
 

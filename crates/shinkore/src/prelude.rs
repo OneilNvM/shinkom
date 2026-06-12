@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use lol_html::html_content::Attribute;
 
 use crate::compat::{CompatType, LookupType};
-pub use crate::schema::*;
+pub use shinkore_types::*;
 
 pub struct ElementContext<'a> {
     pub tag_name: &'a str,
@@ -35,6 +35,8 @@ pub struct WebFeatureContext<'a> {
 }
 
 pub struct BrowserSupportContext<'a> {
+    pub feature_name: &'a String,
+    pub compat: &'a Compat,
     pub browser_name: &'a String,
     pub support: &'a SupportData,
 }

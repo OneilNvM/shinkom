@@ -28,7 +28,7 @@ pub mod engine;
 pub mod errors;
 pub mod prelude;
 pub mod preprocess;
-pub mod schema;
+pub mod version;
 use std::collections::HashSet;
 use std::{cell::RefCell, rc::Rc};
 

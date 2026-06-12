@@ -212,7 +212,7 @@ pub fn multi_lookup_attribs(
                     results,
                     browser_data_params,
                 )?;
-                
+
                 attrib_cache.insert("data-attributes".to_string());
             }
 

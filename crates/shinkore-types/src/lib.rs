@@ -1,4 +1,4 @@
-//! This module contains types which map the schema for the compatiblity data from the [@mdn/browser-compat-data](https://github.com/mdn/browser-compat-data) package.
+//! This library contains types which map the schema for the compatiblity data from the [@mdn/browser-compat-data](https://github.com/mdn/browser-compat-data) package.
 //! You can find the data for the schema [here](https://github.com/mdn/browser-compat-data/blob/main/schemas/compat-data.schema.json).
 pub use std::collections::HashMap;
 
@@ -59,7 +59,7 @@ pub struct SupportDetails {
     pub impl_url: Option<ImplementURLValue>,
 
     #[serde(default)]
-    pub partial_implementation: Option<VersionValue>,
+    pub partial_implementation: bool,
 
     #[serde(default)]
     pub notes: Option<NotesValue>,
@@ -150,4 +150,16 @@ pub enum BrowserStatus {
     Esr,
     #[serde(rename = "planned")]
     Planned,
+}
+
+pub struct BrowserIssue<'a> {
+    pub feature_name: String,
+    pub browser_target: String,
+    pub compat: &'a Compat,
+    pub support: &'a SupportData,
+}
+
+pub struct StatusIssue<'a> {
+    pub feature_name: String,
+    pub status: &'a Status
 }
