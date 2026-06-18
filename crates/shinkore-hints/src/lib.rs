@@ -1,3 +1,4 @@
+pub mod overrides;
 use std::collections::HashMap;
 
 use shinkore_types::{
@@ -5,19 +6,21 @@ use shinkore_types::{
 };
 use wasm_bindgen::JsValue;
 
+use crate::overrides::get_html_overrides;
+
 pub struct HintEngine {
     hints: Vec<String>,
-    _overrides: HashMap<String, String>,
+    overrides: HashMap<String, String>,
     rust_engine: bool,
 }
 
 impl HintEngine {
     pub fn new(rust_engine: bool) -> Self {
-        let remedies_map = HashMap::from([("web-features:dialog".to_string(), "".to_string())]);
+        let remedies_map = get_html_overrides();
 
         Self {
             hints: vec![],
-            _overrides: remedies_map,
+            overrides: remedies_map,
             rust_engine,
         }
     }
@@ -37,6 +40,18 @@ impl HintEngine {
         }
         if issue.status.experimental {
             self.hints.push(format!("[shinkore] 💡 Warning: {} is experimental, meaning it is only implemented for a select few browsers.", issue.feature_name))
+        }
+    }
+
+    pub fn tier_3_hints(&mut self, tags: &Vec<String>) {
+        for tag in tags {
+            if self.overrides.contains_key(tag) {
+                let html_override = self.overrides.get(tag);
+                if let Some(message) = html_override {
+                    self.hints.push(format!("[shinkore] 💡 {message}"));
+                    break;
+                }
+            }
         }
     }
 

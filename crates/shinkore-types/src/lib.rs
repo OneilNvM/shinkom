@@ -161,5 +161,5 @@ pub struct BrowserIssue<'a> {
 
 pub struct StatusIssue<'a> {
     pub feature_name: String,
-    pub status: &'a Status
+    pub status: &'a Status,
 }
