@@ -4,17 +4,5 @@
 //!
 //! [`calculate`] contains functions performing the scoring logic and calculating the compatibility score for a web feature
 //! across multiple browsers.
-
-use shinkore_types::{CompatElement, CompatGlobalAttribs};
 pub mod calculate;
 pub mod lookup;
-
-pub enum LookupType {
-    Element(String),
-    Attribute(String),
-}
-
-pub enum CompatType<'a> {
-    Element(&'a CompatElement),
-    GlobalAttributes(&'a CompatGlobalAttribs),
-}

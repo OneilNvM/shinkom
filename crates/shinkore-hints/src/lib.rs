@@ -1,7 +1,7 @@
 pub mod overrides;
 use std::collections::HashMap;
 
-use shinkore_types::{
+use shinkore_types::schema::{
     BrowserIssue, ImplementURLValue, NotesValue, StatusIssue, SupportData, VersionValue,
 };
 use wasm_bindgen::JsValue;

@@ -4,17 +4,19 @@ use std::collections::HashMap;
 #[cfg(feature = "hints")]
 use shinkore_hints::HintEngine;
 
-use shinkore_types::{Status, SupportData, VersionValue};
-
 use crate::{
-    BrowserData, BrowserDataParamType, BrowserResult, LookupResults, Scores,
-    compat::{CompatType, LookupType},
     constants::{MAX_COMPAT_SCORE, MAX_STATUS_COMPAT_SCORE, MAX_SUM_BROWSER_SUPPORT_COMPAT_SCORES},
     errors::CheckError,
-    prelude::{
-        BrowserSupportContext, BrowserUsageContext, SupportDetailContext, WebFeatureContext,
-    },
     version::{Version, VersionRequirement},
+};
+
+use shinkore_types::{
+    prelude::{
+        BrowserData, BrowserDataParamType, BrowserResult, BrowserSupportContext,
+        BrowserUsageContext, CompatType, LookupResults, LookupType, Scores, SupportDetailContext,
+        WebFeatureContext,
+    },
+    schema::{Status, SupportData, VersionValue},
 };
 
 /// Calculates the compatibility score for a web feature.
@@ -170,7 +172,7 @@ pub fn calculate_status_score(
 
         #[cfg(feature = "hints")]
         {
-            use shinkore_types::StatusIssue;
+            use shinkore_types::schema::StatusIssue;
 
             if status_score < 100.0 {
                 let mut hint_engine = HintEngine::new(false);
@@ -444,7 +446,7 @@ fn calculate_support(
 
     #[cfg(feature = "hints")]
     {
-        use shinkore_types::BrowserIssue;
+        use shinkore_types::schema::BrowserIssue;
 
         if ctx.browser_name != "ie" && raw_score_val < 100.0 {
             let mut hint_engine = HintEngine::new(false);

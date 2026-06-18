@@ -473,6 +473,7 @@ dependencies = [
 name = "shinkore-types"
 version = "0.1.0"
 dependencies = [
+ "lol_html",
  "serde",
  "serde_json",
 ]

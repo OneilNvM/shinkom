@@ -5,10 +5,12 @@ use std::collections::HashSet;
 use wasm_bindgen::JsValue;
 
 use crate::{
-    BrowserDataParamType, LookupResults,
-    compat::{CompatType, LookupType, calculate::calculate_compat_score},
+    BrowserDataParamType, LookupResults, compat::calculate::calculate_compat_score,
     errors::CheckError,
-    prelude::{LookupAttribsContext, LookupElementsContext, WebFeatureContext},
+};
+
+use shinkore_types::prelude::{
+    CompatType, LookupAttribsContext, LookupElementsContext, LookupType, WebFeatureContext,
 };
 
 /// Perform a compatibility lookup for a single element.

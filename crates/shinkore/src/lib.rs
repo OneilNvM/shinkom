@@ -26,16 +26,16 @@ pub mod compat;
 mod constants;
 pub mod engine;
 pub mod errors;
-pub mod prelude;
 pub mod preprocess;
 pub mod version;
 use std::collections::HashSet;
 use std::{cell::RefCell, rc::Rc};
 
 use lol_html::{RewriteStrSettings, element, rewrite_str};
-use prelude::*;
+use shinkore_types::prelude::*;
 use preprocess::{format_html, pre_process_html};
 use wasm_bindgen::prelude::*;
+use shinkore_types::schema::{Serialize, Deserialize, HashMap};
 
 use crate::compat::lookup::{
     lookup_attribs, lookup_element, multi_lookup_attribs, multi_lookup_element,

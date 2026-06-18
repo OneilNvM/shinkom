@@ -15,12 +15,13 @@ use crate::{
     compat::lookup::{lookup_attribs, lookup_element, multi_lookup_attribs, multi_lookup_element},
     constants::{IGNORE_TAGS, SKIP_TAGS},
     errors::{CheckError, PreProcessError},
-    prelude::{
+    preprocess::{format_html, pre_process_html},
+};
+
+use shinkore_types::prelude::{
         BrowserData, BrowserDataParamType, BrowserUsageData, CompatResult, ElementContext,
         HTMLData, LookupAttribsContext, LookupCaches, LookupElementsContext, LookupResults,
         SVGData,
-    },
-    preprocess::{format_html, pre_process_html},
 };
 
 #[derive(Serialize, Deserialize, Default, Debug)]

@@ -1,10 +1,10 @@
 //! This module exports all structs and enums in shinkore.
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use lol_html::html_content::Attribute;
+use serde::{Deserialize, Serialize};
 
-use crate::compat::{CompatType, LookupType};
-pub use shinkore_types::*;
+use crate::schema::{Compat, CompatElement, CompatGlobalAttribs, ReleaseStatement, SupportData, SupportDetails};
 
 pub struct ElementContext<'a> {
     pub tag_name: &'a str,
@@ -112,4 +112,14 @@ pub struct LookupResults {
     pub browser_score: String,
     pub status_score: String,
     pub browsers: Option<Vec<BrowserResult>>,
+}
+
+pub enum LookupType {
+    Element(String),
+    Attribute(String),
+}
+
+pub enum CompatType<'a> {
+    Element(&'a CompatElement),
+    GlobalAttributes(&'a CompatGlobalAttribs),
 }

@@ -1,9 +1,8 @@
 use std::error::Error;
 
-use shinkore::{
-    engine::RustCompatEngine,
-    prelude::{BrowserData, BrowserUsageData, HTMLData, SVGData},
-};
+use shinkore::engine::RustCompatEngine;
+
+use shinkore_types::prelude::{BrowserData, BrowserUsageData, HTMLData, SVGData};
 
 #[test]
 fn should_create_engine() -> Result<(), Box<dyn Error>> {
