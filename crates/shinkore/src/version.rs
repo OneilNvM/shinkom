@@ -1,7 +1,6 @@
 use std::str::FromStr;
 
-#[derive(Debug, PartialEq, Eq)]
-pub struct ParseVersionError;
+use crate::errors::ParseVersionError;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Version {
@@ -49,11 +48,14 @@ impl FromStr for Version {
                 components,
                 raw: s.to_string(),
             }),
-            _ => Err(ParseVersionError),
+            _ => Err(ParseVersionError {
+                message: format!("failed to parse string '{s}' to a version"),
+            }),
         }
     }
 }
 
+#[derive(Debug)]
 pub enum VersionRequirement {
     GreaterThanOrEqualTo(Version),
     LessThanOrEqualTo(Version),
@@ -63,15 +65,9 @@ pub enum VersionRequirement {
 impl VersionRequirement {
     pub fn is_satisfied_by(&self, target: &Version) -> bool {
         match self {
-            VersionRequirement::GreaterThanOrEqualTo(version) => {
-                target >= version
-            }
-            VersionRequirement::LessThanOrEqualTo(max_version) => {
-                target >= max_version
-            }
-            VersionRequirement::Range(min_version, _max) => {
-                target >= min_version
-            }
+            VersionRequirement::GreaterThanOrEqualTo(version) => target >= version,
+            VersionRequirement::LessThanOrEqualTo(max_version) => target >= max_version,
+            VersionRequirement::Range(min_version, _max) => target >= min_version,
         }
     }
 }

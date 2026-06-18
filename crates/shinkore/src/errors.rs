@@ -1,4 +1,4 @@
-use std::{fmt::Display, num::ParseFloatError};
+use std::{error::Error, fmt::Display, num::ParseFloatError};
 
 use thiserror::Error;
 
@@ -16,6 +16,8 @@ pub enum CheckError {
     RewriteError(String),
     #[error("{0}")]
     ParseFloatError(#[from] ParseFloatError),
+    #[error("{0}")]
+    ParseVersionError(#[from] ParseVersionError),
 }
 
 impl From<lol_html::errors::RewritingError> for CheckError {
@@ -70,5 +72,18 @@ impl From<regex::Error> for PreProcessError {
 impl Display for PreProcessError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "preprocess error: {}", self.message)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParseVersionError {
+    pub message: String,
+}
+
+impl Error for ParseVersionError {}
+
+impl Display for ParseVersionError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "parse version error: {}", self.message)
     }
 }
