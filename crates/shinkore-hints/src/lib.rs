@@ -4,24 +4,24 @@ use std::collections::HashMap;
 use shinkore_types::schema::{
     BrowserIssue, ImplementURLValue, NotesValue, StatusIssue, SupportData, VersionValue,
 };
+#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsValue;
 
 use crate::overrides::get_html_overrides;
 
+#[derive(Default)]
 pub struct HintEngine {
     hints: Vec<String>,
     overrides: HashMap<String, String>,
-    rust_engine: bool,
 }
 
 impl HintEngine {
-    pub fn new(rust_engine: bool) -> Self {
+    pub fn new() -> Self {
         let remedies_map = get_html_overrides();
 
         Self {
             hints: vec![],
             overrides: remedies_map,
-            rust_engine,
         }
     }
 
@@ -161,13 +161,16 @@ impl HintEngine {
     }
 
     pub fn log_hints(&self) {
-        if self.rust_engine {
-            for hint in &self.hints {
-                println!("{hint}");
-            }
-        } else {
+        #[cfg(target_arch = "wasm32")]
+        {
             for hint in &self.hints {
                 web_sys::console::log_1(&JsValue::from_str(hint));
+            }
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            for hint in &self.hints {
+                println!("{hint}");
             }
         }
     }

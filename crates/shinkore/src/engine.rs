@@ -19,9 +19,8 @@ use crate::{
 };
 
 use shinkore_types::prelude::{
-        BrowserData, BrowserDataParamType, BrowserUsageData, CompatResult, ElementContext,
-        HTMLData, LookupAttribsContext, LookupCaches, LookupElementsContext, LookupResults,
-        SVGData,
+    BrowserData, BrowserDataParamType, BrowserUsageData, CompatResult, ElementContext, HTMLData,
+    LookupAttribsContext, LookupCaches, LookupElementsContext, LookupResults, SVGData,
 };
 
 #[derive(Serialize, Deserialize, Default, Debug)]
@@ -70,7 +69,7 @@ impl RustCompatEngine {
                         attributes,
                     };
 
-                    let compat_results = self.compat_check(ctx, true);
+                    let compat_results = self.compat_check(ctx);
 
                     match compat_results {
                         Ok(res) => results.borrow_mut().extend(res),
@@ -137,7 +136,7 @@ impl RustCompatEngine {
                         attributes,
                     };
 
-                    let compat_results = self.multi_compat_check(ctx, &mut caches, true);
+                    let compat_results = self.multi_compat_check(ctx, &mut caches);
 
                     match compat_results {
                         Ok(res) => results.borrow_mut().extend(res),
@@ -197,7 +196,7 @@ impl RustCompatEngine {
                         attributes,
                     };
 
-                    let compat_results = self.multi_compat_check(ctx, &mut caches, true);
+                    let compat_results = self.multi_compat_check(ctx, &mut caches);
 
                     match compat_results {
                         Ok(res) => results.borrow_mut().extend(res),
@@ -237,11 +236,7 @@ impl RustCompatEngine {
     ///
     /// ## Errors
     /// A [`CheckError`] is returned if there are any errors in lookups.
-    fn compat_check(
-        &self,
-        ctx: ElementContext,
-        rust_engine: bool,
-    ) -> Result<Vec<LookupResults>, CheckError> {
+    fn compat_check(&self, ctx: ElementContext) -> Result<Vec<LookupResults>, CheckError> {
         let mut overall_results: Vec<LookupResults> = vec![];
         let mut attribs: HashMap<String, String> = HashMap::new();
 
@@ -269,7 +264,6 @@ impl RustCompatEngine {
                     BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
                     BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
                 ],
-                rust_engine,
             )?;
             lookup_attribs(
                 lookup_attribs_ctx,
@@ -278,7 +272,6 @@ impl RustCompatEngine {
                     BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
                     BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
                 ],
-                rust_engine,
             )?;
         } else {
             let lookup_el_ctx = LookupElementsContext {
@@ -299,7 +292,6 @@ impl RustCompatEngine {
                     BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
                     BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
                 ],
-                rust_engine,
             )?;
             lookup_attribs(
                 lookup_attribs_ctx,
@@ -308,7 +300,6 @@ impl RustCompatEngine {
                     BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
                     BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
                 ],
-                rust_engine,
             )?;
         }
 
@@ -325,7 +316,6 @@ impl RustCompatEngine {
         &self,
         ctx: ElementContext,
         caches: &mut LookupCaches,
-        rust_engine: bool,
     ) -> Result<Vec<LookupResults>, CheckError> {
         let mut overall_results: Vec<LookupResults> = vec![];
         let mut attribs: HashMap<String, String> = HashMap::new();
@@ -347,7 +337,6 @@ impl RustCompatEngine {
                     BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
                     BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
                 ],
-                rust_engine,
             )?;
             multi_lookup_attribs(
                 LookupAttribsContext {
@@ -362,7 +351,6 @@ impl RustCompatEngine {
                     BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
                     BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
                 ],
-                rust_engine,
             )?;
         } else {
             multi_lookup_element(
@@ -376,7 +364,6 @@ impl RustCompatEngine {
                     BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
                     BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
                 ],
-                rust_engine,
             )?;
             multi_lookup_attribs(
                 LookupAttribsContext {
@@ -391,7 +378,6 @@ impl RustCompatEngine {
                     BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
                     BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
                 ],
-                rust_engine,
             )?;
         }
 

@@ -2,6 +2,7 @@
 //! compatibility score.
 use std::collections::HashSet;
 
+#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsValue;
 
 use crate::{
@@ -21,7 +22,6 @@ pub fn lookup_element(
     ctx: LookupElementsContext,
     results: &mut Vec<LookupResults>,
     browser_data_params: &Vec<BrowserDataParamType>,
-    rust_engine: bool,
 ) -> Result<(), CheckError> {
     if let Some(el) = ctx.el_data.get(ctx.tag) {
         calculate_compat_score(
@@ -33,13 +33,18 @@ pub fn lookup_element(
             results,
             browser_data_params,
         )?;
-    } else if rust_engine {
-        eprintln!("<{}> is not an element", ctx.tag)
     } else {
-        web_sys::console::warn_1(&JsValue::from_str(&format!(
-            "<{}> is not an element",
-            ctx.tag
-        )));
+        #[cfg(target_arch = "wasm32")]
+        {
+            web_sys::console::warn_1(&JsValue::from_str(&format!(
+                "<{}> is not an element",
+                ctx.tag
+            )));
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            eprintln!("<{}> is not an element", ctx.tag)
+        }
     }
 
     Ok(())
@@ -54,7 +59,6 @@ pub fn multi_lookup_element(
     results: &mut Vec<LookupResults>,
     element_cache: &mut HashSet<String>,
     browser_data_params: &Vec<BrowserDataParamType>,
-    rust_engine: bool,
 ) -> Result<(), CheckError> {
     if let Some(el) = ctx.el_data.get(ctx.tag) {
         // Store tag name in element cache to prevent duplicate element lookups
@@ -72,13 +76,16 @@ pub fn multi_lookup_element(
             element_cache.insert(ctx.tag.to_string());
         }
     } else if !element_cache.contains(ctx.tag) {
-        if rust_engine {
-            eprintln!("<{}> is not an element or has no compat data", ctx.tag)
-        } else {
+        #[cfg(target_arch = "wasm32")]
+        {
             web_sys::console::warn_1(&JsValue::from_str(&format!(
                 "<{}> is not an element or has no compat data",
                 ctx.tag
             )));
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            eprintln!("<{}> is not an element or has no compat data", ctx.tag)
         }
         element_cache.insert(ctx.tag.to_string());
     }
@@ -94,7 +101,6 @@ pub fn lookup_attribs(
     ctx: LookupAttribsContext,
     results: &mut Vec<LookupResults>,
     browser_data_params: &Vec<BrowserDataParamType>,
-    rust_engine: bool,
 ) -> Result<(), CheckError> {
     for (name, value) in ctx.attribs {
         if let Some(g_attrib) = ctx.g_attrib_data.get(&name) {
@@ -154,19 +160,27 @@ pub fn lookup_attribs(
                 )?;
                 continue;
             }
-        } else if rust_engine {
-            eprintln!("<{}> is not an element", ctx.tag)
         } else {
-            web_sys::console::warn_1(&JsValue::from_str(&format!(
-                "<{}> is not an element",
-                ctx.tag
-            )));
+            #[cfg(target_arch = "wasm32")]
+            {
+                web_sys::console::warn_1(&JsValue::from_str(&format!(
+                    "<{}> is not an element",
+                    ctx.tag
+                )));
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                eprintln!("<{}> is not an element", ctx.tag)
+            }
         }
 
-        if rust_engine {
-            eprintln!("{name} is not an attribute")
-        } else {
+        #[cfg(target_arch = "wasm32")]
+        {
             web_sys::console::warn_1(&JsValue::from_str(&format!("{name} is not an attribute")));
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            eprintln!("{name} is not an attribute")
         }
     }
 
@@ -182,7 +196,6 @@ pub fn multi_lookup_attribs(
     results: &mut Vec<LookupResults>,
     attrib_cache: &mut HashSet<String>,
     browser_data_params: &Vec<BrowserDataParamType>,
-    rust_engine: bool,
 ) -> Result<(), CheckError> {
     for (name, value) in ctx.attribs {
         if let Some(g_attrib) = ctx.g_attrib_data.get(&name) {
@@ -255,23 +268,31 @@ pub fn multi_lookup_attribs(
                 }
                 continue;
             }
-        } else if rust_engine {
-            eprintln!("<{}> is not an element or has no compat data", ctx.tag);
         } else {
-            web_sys::console::warn_1(&JsValue::from_str(&format!(
-                "<{}> is not an element or has no compat data",
-                ctx.tag
-            )));
+            #[cfg(target_arch = "wasm32")]
+            {
+                web_sys::console::warn_1(&JsValue::from_str(&format!(
+                    "<{}> is not an element or has no compat data",
+                    ctx.tag
+                )));
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                eprintln!("<{}> is not an element or has no compat data", ctx.tag);
+            }
         }
 
         // Insert name into attribute cache to prevent duplicate error messages
         if !attrib_cache.contains(&name) {
-            if rust_engine {
-                eprintln!("{name} is not an attribute or has no compat data")
-            } else {
+            #[cfg(target_arch = "wasm32")]
+            {
                 web_sys::console::warn_1(&JsValue::from_str(&format!(
                     "{name} is not an attribute or has no compat data"
                 )));
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                eprintln!("{name} is not an attribute or has no compat data")
             }
 
             attrib_cache.insert(name);

@@ -58,7 +58,7 @@ pub fn calculate_compat_score(
             #[cfg(feature = "hints")]
             {
                 if let Some(tags) = &el.compat.tags {
-                    let mut hint_engine = HintEngine::new(false);
+                    let mut hint_engine = HintEngine::new();
 
                     hint_engine.tier_3_hints(tags);
 
@@ -107,7 +107,7 @@ pub fn calculate_compat_score(
             #[cfg(feature = "hints")]
             {
                 if let Some(tags) = &g_attrib.compat.tags {
-                    let mut hint_engine = HintEngine::new(false);
+                    let mut hint_engine = HintEngine::new();
 
                     hint_engine.tier_3_hints(tags);
 
@@ -175,7 +175,7 @@ pub fn calculate_status_score(
             use shinkore_types::schema::StatusIssue;
 
             if status_score < 100.0 {
-                let mut hint_engine = HintEngine::new(false);
+                let mut hint_engine = HintEngine::new();
 
                 hint_engine.compile_status_hints(StatusIssue {
                     feature_name,
@@ -449,7 +449,7 @@ fn calculate_support(
         use shinkore_types::schema::BrowserIssue;
 
         if ctx.browser_name != "ie" && raw_score_val < 100.0 {
-            let mut hint_engine = HintEngine::new(false);
+            let mut hint_engine = HintEngine::new();
 
             hint_engine.compile_browser_hints(BrowserIssue {
                 feature_name: ctx.feature_name.clone(),

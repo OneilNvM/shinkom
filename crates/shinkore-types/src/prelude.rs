@@ -4,7 +4,9 @@ use std::collections::{HashMap, HashSet};
 use lol_html::html_content::Attribute;
 use serde::{Deserialize, Serialize};
 
-use crate::schema::{Compat, CompatElement, CompatGlobalAttribs, ReleaseStatement, SupportData, SupportDetails};
+use crate::schema::{
+    Compat, CompatElement, CompatGlobalAttribs, ReleaseStatement, SupportData, SupportDetails,
+};
 
 pub struct ElementContext<'a> {
     pub tag_name: &'a str,
