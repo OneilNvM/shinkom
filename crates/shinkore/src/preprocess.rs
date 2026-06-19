@@ -208,8 +208,9 @@ pub fn write_close_tag(line: &str) -> Option<String> {
     // Return the equivalent end tag if the line has an open tag
     let _ = rewrite_str(
         line,
-        RewriteStrSettings {
-            element_content_handlers: vec![element!("*", |el: &mut Element| {
+        RewriteStrSettings::new().append_element_content_handler(element!(
+            "*",
+            |el: &mut Element| {
                 let open_tags_inner = Rc::clone(&open_tags);
                 let end_tag_inner = Rc::clone(&end_tag);
 
@@ -238,9 +239,8 @@ pub fn write_close_tag(line: &str) -> Option<String> {
                 }
 
                 Ok(())
-            })],
-            ..Default::default()
-        },
+            }
+        )),
     );
 
     end_tag.borrow_mut().take()

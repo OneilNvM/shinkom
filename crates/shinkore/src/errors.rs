@@ -32,6 +32,7 @@ impl From<lol_html::errors::RewritingError> for CheckError {
             lol_html::errors::RewritingError::ParsingAmbiguity(e) => {
                 CheckError::RewriteError(e.to_string())
             }
+            _ => CheckError::RewriteError(format!("error during string rewrite call")),
         }
     }
 }

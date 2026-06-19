@@ -9,7 +9,7 @@ use std::{
 };
 
 use lol_html::{RewriteStrSettings, element, rewrite_str};
-use serde::{Deserialize, Serialize};
+use shinkore_types::{Serialize, Deserialize};
 
 use crate::{
     compat::lookup::{lookup_attribs, lookup_element, multi_lookup_attribs, multi_lookup_element},
@@ -59,27 +59,24 @@ impl RustCompatEngine {
         // Use rewrite_str to find tag for compatibility check
         let rewrite = rewrite_str(
             first_line,
-            RewriteStrSettings {
-                element_content_handlers: vec![element!("*", |el| {
-                    let tag_name = el.tag_name();
-                    let attributes = el.attributes();
+            RewriteStrSettings::new().append_element_content_handler(element!("*", |el| {
+                let tag_name = el.tag_name();
+                let attributes = el.attributes();
 
-                    let ctx = ElementContext {
-                        tag_name: &tag_name,
-                        attributes,
-                    };
+                let ctx = ElementContext {
+                    tag_name: &tag_name,
+                    attributes,
+                };
 
-                    let compat_results = self.compat_check(ctx);
+                let compat_results = self.compat_check(ctx);
 
-                    match compat_results {
-                        Ok(res) => results.borrow_mut().extend(res),
-                        Err(e) => return Err(e.into()),
-                    }
+                match compat_results {
+                    Ok(res) => results.borrow_mut().extend(res),
+                    Err(e) => return Err(e.into()),
+                }
 
-                    Ok(())
-                })],
-                ..Default::default()
-            },
+                Ok(())
+            })),
         );
 
         if let Err(e) = rewrite {
@@ -126,27 +123,24 @@ impl RustCompatEngine {
         // Use rewrite_str to find tags for compatibility checks
         let rewrite = rewrite_str(
             &elements,
-            RewriteStrSettings {
-                element_content_handlers: vec![element!("*", |el| {
-                    let tag_name = el.tag_name();
-                    let attributes = el.attributes();
+            RewriteStrSettings::new().append_element_content_handler(element!("*", |el| {
+                let tag_name = el.tag_name();
+                let attributes = el.attributes();
 
-                    let ctx = ElementContext {
-                        tag_name: &tag_name,
-                        attributes,
-                    };
+                let ctx = ElementContext {
+                    tag_name: &tag_name,
+                    attributes,
+                };
 
-                    let compat_results = self.multi_compat_check(ctx, &mut caches);
+                let compat_results = self.multi_compat_check(ctx, &mut caches);
 
-                    match compat_results {
-                        Ok(res) => results.borrow_mut().extend(res),
-                        Err(e) => return Err(e.into()),
-                    }
+                match compat_results {
+                    Ok(res) => results.borrow_mut().extend(res),
+                    Err(e) => return Err(e.into()),
+                }
 
-                    Ok(())
-                })],
-                ..Default::default()
-            },
+                Ok(())
+            })),
         );
 
         if let Err(e) = rewrite {
@@ -186,27 +180,24 @@ impl RustCompatEngine {
         // Use rewrite_str to find tags for compatibility checks
         let rewrite = rewrite_str(
             &formatted,
-            RewriteStrSettings {
-                element_content_handlers: vec![element!("*", |el| {
-                    let tag_name = el.tag_name();
-                    let attributes = el.attributes();
+            RewriteStrSettings::new().append_element_content_handler(element!("*", |el| {
+                let tag_name = el.tag_name();
+                let attributes = el.attributes();
 
-                    let ctx = ElementContext {
-                        tag_name: &tag_name,
-                        attributes,
-                    };
+                let ctx = ElementContext {
+                    tag_name: &tag_name,
+                    attributes,
+                };
 
-                    let compat_results = self.multi_compat_check(ctx, &mut caches);
+                let compat_results = self.multi_compat_check(ctx, &mut caches);
 
-                    match compat_results {
-                        Ok(res) => results.borrow_mut().extend(res),
-                        Err(e) => return Err(e.into()),
-                    }
+                match compat_results {
+                    Ok(res) => results.borrow_mut().extend(res),
+                    Err(e) => return Err(e.into()),
+                }
 
-                    Ok(())
-                })],
-                ..Default::default()
-            },
+                Ok(())
+            })),
         );
 
         if let Err(e) = rewrite {

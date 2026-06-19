@@ -13,28 +13,29 @@
 //!
 //! The library consists of modules containing functions used for performing cross-browser compatibility checks of web features on modern browsers.
 //! The engine requires compatibility data in JSON format, therefore usage of crates such as [`serde`] and [`serde_json`] or [`serde_wasm_bindgen`]
-//! for JSON parsing will be necessary. The JSON structure to follow for the compatibility data can be interpreted in the [`schema`] module, but most
+//! for JSON parsing will be necessary. The JSON structure to follow for the compatibility data can be interpreted in the [`shinkore_types`] crate, but most
 //! of the structure in the schema module is based on the [compat-data-schema](https://github.com/mdn/browser-compat-data/blob/main/schemas/compat-data-schema.md)
 //! in the [browser-compat-data](https://github.com/mdn/browser-compat-data) project by MDN, as well as the
-//! [browser-data](https://github.com/mdn/browser-compat-data/blob/main/schemas/browsers-schema.md) format in [`prelude`].
+//! [browser-data](https://github.com/mdn/browser-compat-data/blob/main/schemas/browsers-schema.md) format in [`shinkore_types::prelude`].
 //!
 //! The [`BrowserUsageData`] is based on the [caniuse-db](https://github.com/Fyrd/caniuse) format which only includes the usage data for each browser.
 //!
-//! If your not planning on using your own custom data, then you can download each JSON file from the [gen directory](https://github.com/OneilNvM/shinkom/tree/master/gen)
+//! If your not planning on using your own custom data, then you can download each JSON file from the [gen directory](https://github.com/OneilNvM/shinkom/tree/master/packages/shinkom/gen)
 //! on the Shinkom GitHub repository.
 pub mod compat;
 mod constants;
 pub mod engine;
 pub mod errors;
 pub mod preprocess;
-pub mod version;
-use std::collections::HashSet;
+mod version;
+use std::collections::{HashMap, HashSet};
 use std::{cell::RefCell, rc::Rc};
 
-use lol_html::{RewriteStrSettings, element, rewrite_str};
+pub use lol_html::{RewriteStrSettings, element, rewrite_str};
 use preprocess::{format_html, pre_process_html};
-use shinkore_types::prelude::*;
-use shinkore_types::schema::{Deserialize, HashMap, Serialize};
+pub use shinkore_types::prelude::*;
+pub use shinkore_types::{Deserialize, Serialize};
+pub use version::{Version, VersionRequirement};
 use wasm_bindgen::prelude::*;
 
 use crate::compat::lookup::{
@@ -122,27 +123,24 @@ impl CompatEngine {
         // Use rewrite_str to find tag for compatibility check
         let rewrite = rewrite_str(
             first_line,
-            RewriteStrSettings {
-                element_content_handlers: vec![element!("*", |el| {
-                    let tag_name = el.tag_name();
-                    let attributes = el.attributes();
+            RewriteStrSettings::new().append_element_content_handler(element!("*", |el| {
+                let tag_name = el.tag_name();
+                let attributes = el.attributes();
 
-                    let ctx = ElementContext {
-                        tag_name: &tag_name,
-                        attributes,
-                    };
+                let ctx = ElementContext {
+                    tag_name: &tag_name,
+                    attributes,
+                };
 
-                    let compat_results = self.compat_check(ctx);
+                let compat_results = self.compat_check(ctx);
 
-                    match compat_results {
-                        Ok(res) => results.borrow_mut().extend(res),
-                        Err(e) => return Err(format!("{e:?}").into()),
-                    }
+                match compat_results {
+                    Ok(res) => results.borrow_mut().extend(res),
+                    Err(e) => return Err(format!("{e:?}").into()),
+                }
 
-                    Ok(())
-                })],
-                ..Default::default()
-            },
+                Ok(())
+            })),
         );
 
         if let Err(e) = rewrite {
@@ -193,27 +191,24 @@ impl CompatEngine {
         // Use rewrite_str to find tags for compatibility checks
         let rewrite = rewrite_str(
             &elements,
-            RewriteStrSettings {
-                element_content_handlers: vec![element!("*", |el| {
-                    let tag_name = el.tag_name();
-                    let attributes = el.attributes();
+            RewriteStrSettings::new().append_element_content_handler(element!("*", |el| {
+                let tag_name = el.tag_name();
+                let attributes = el.attributes();
 
-                    let ctx = ElementContext {
-                        tag_name: &tag_name,
-                        attributes,
-                    };
+                let ctx = ElementContext {
+                    tag_name: &tag_name,
+                    attributes,
+                };
 
-                    let compat_results = self.multi_compat_check(ctx, &mut caches);
+                let compat_results = self.multi_compat_check(ctx, &mut caches);
 
-                    match compat_results {
-                        Ok(res) => results.borrow_mut().extend(res),
-                        Err(e) => return Err(format!("{e:?}").into()),
-                    }
+                match compat_results {
+                    Ok(res) => results.borrow_mut().extend(res),
+                    Err(e) => return Err(format!("{e:?}").into()),
+                }
 
-                    Ok(())
-                })],
-                ..Default::default()
-            },
+                Ok(())
+            })),
         );
 
         if let Err(e) = rewrite {
@@ -259,27 +254,24 @@ impl CompatEngine {
         // Use rewrite_str to find tags for compatibility checks
         let rewrite = rewrite_str(
             &formatted,
-            RewriteStrSettings {
-                element_content_handlers: vec![element!("*", |el| {
-                    let tag_name = el.tag_name();
-                    let attributes = el.attributes();
+            RewriteStrSettings::new().append_element_content_handler(element!("*", |el| {
+                let tag_name = el.tag_name();
+                let attributes = el.attributes();
 
-                    let ctx = ElementContext {
-                        tag_name: &tag_name,
-                        attributes,
-                    };
+                let ctx = ElementContext {
+                    tag_name: &tag_name,
+                    attributes,
+                };
 
-                    let compat_results = self.multi_compat_check(ctx, &mut caches);
+                let compat_results = self.multi_compat_check(ctx, &mut caches);
 
-                    match compat_results {
-                        Ok(res) => results.borrow_mut().extend(res),
-                        Err(e) => return Err(e.into()),
-                    }
+                match compat_results {
+                    Ok(res) => results.borrow_mut().extend(res),
+                    Err(e) => return Err(e.into()),
+                }
 
-                    Ok(())
-                })],
-                ..Default::default()
-            },
+                Ok(())
+            })),
         );
 
         if let Err(e) = rewrite {

@@ -1,8 +1,8 @@
 //! This module exports all structs and enums in shinkore.
 use std::collections::{HashMap, HashSet};
 
-use lol_html::html_content::Attribute;
-use serde::{Deserialize, Serialize};
+use crate::{Deserialize, Serialize};
+pub use lol_html::html_content::Attribute;
 
 use crate::schema::{
     Compat, CompatElement, CompatGlobalAttribs, ReleaseStatement, SupportData, SupportDetails,
