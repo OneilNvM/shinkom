@@ -310,7 +310,7 @@ fn calculate_support(
             )?;
 
             if detail.partial_implementation {
-                browser_score = 80.0;
+                browser_score *= 0.2;
             }
 
             // Get the raw score before the weighting calculation

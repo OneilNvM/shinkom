@@ -29,6 +29,10 @@ divan = "0.1.21"
 name = "preprocess_bench"
 harness = false
 
+[[bench]]
+name = "engine_bench"
+harness = false
+
 [dependencies.web-sys]
 version = "0.3"
 features = ["console"]

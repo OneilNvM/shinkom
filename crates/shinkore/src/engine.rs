@@ -4,12 +4,16 @@
 use std::{
     cell::RefCell,
     collections::{HashMap, HashSet},
+    error::Error,
+    fs::File,
+    io::BufReader,
     num::ParseFloatError,
+    path::PathBuf,
     rc::Rc,
 };
 
 use lol_html::{RewriteStrSettings, element, rewrite_str};
-use shinkore_types::{Serialize, Deserialize};
+use shinkore_types::{Deserialize, Serialize};
 
 use crate::{
     compat::lookup::{lookup_attribs, lookup_element, multi_lookup_attribs, multi_lookup_element},
@@ -22,6 +26,68 @@ use shinkore_types::prelude::{
     BrowserData, BrowserDataParamType, BrowserUsageData, CompatResult, ElementContext, HTMLData,
     LookupAttribsContext, LookupCaches, LookupElementsContext, LookupResults, SVGData,
 };
+
+#[derive(Deserialize)]
+pub struct CompatDataPayload {
+    html: HTMLData,
+    svg: SVGData,
+}
+
+pub struct RustCompatEngineBuilder {
+    data_dir: Option<PathBuf>,
+}
+
+impl RustCompatEngineBuilder {
+    pub fn new() -> Self {
+        Self { data_dir: None }
+    }
+
+    pub fn with_data_dir(mut self, dir: PathBuf) -> Self {
+        self.data_dir = Some(dir);
+        self
+    }
+
+    pub fn build(&self) -> Result<RustCompatEngine, Box<dyn Error>> {
+        let base_path = self
+            .data_dir
+            .clone()
+            .unwrap_or_else(|| PathBuf::from("./shinkore-data"));
+
+        let read_json = |filename: &str| -> Result<serde_json::Value, Box<dyn Error>> {
+            let path = base_path.join(filename);
+            let file = File::open(path)?;
+            let value = serde_json::from_reader(BufReader::new(file))?;
+            Ok(value)
+        };
+
+        let mut compat_root = read_json("compat-data.json")?;
+        let browsers_root = read_json("browser-data.json")?;
+        let usage_root = read_json("browser-usage-data.json")?;
+
+        let compat_obj = compat_root
+            .as_object_mut()
+            .ok_or("Could not convert to object")?;
+
+        let html_data_value = compat_obj
+            .remove("html")
+            .ok_or("Could not find html field in object")?;
+        let svg_data_value = compat_obj
+            .remove("svg")
+            .ok_or("Could not find svg field in object")?;
+
+        let html_data = serde_json::from_value(html_data_value)?;
+        let svg_data = serde_json::from_value(svg_data_value)?;
+        let browser_data: BrowserData = serde_json::from_value(browsers_root)?;
+        let usage_data: BrowserUsageData = serde_json::from_value(usage_root)?;
+
+        Ok(RustCompatEngine::new(
+            html_data,
+            svg_data,
+            browser_data,
+            usage_data,
+        ))
+    }
+}
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct RustCompatEngine {
@@ -44,6 +110,28 @@ impl RustCompatEngine {
             browser_data: bcd_browser_data,
             browser_usage_data: ciu_usage_data,
         }
+    }
+
+    pub fn from_compiled_data() -> Result<Self, Box<dyn Error>> {
+        let compat_payload: CompatDataPayload = serde_json::from_str(include_str!(
+            "../../../packages/shinkom/gen/compat-data.json"
+        ))?;
+        let browsers_root: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../packages/shinkom/gen/compat-data.json"
+        ))?;
+        let usage_root: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../packages/shinkom/gen/compat-data.json"
+        ))?;
+
+        let browser_data: BrowserData = serde_json::from_value(browsers_root)?;
+        let usage_data: BrowserUsageData = serde_json::from_value(usage_root)?;
+
+        Ok(Self::new(
+            compat_payload.html,
+            compat_payload.svg,
+            browser_data,
+            usage_data,
+        ))
     }
 
     /// Used for checking the compatibility of a single element and its attributes.
