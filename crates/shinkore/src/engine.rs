@@ -13,7 +13,7 @@ use std::{
 };
 
 use lol_html::{RewriteStrSettings, element, rewrite_str};
-use shinkore_types::{Deserialize, Serialize};
+use shinkore_types::prelude::CompatDataPayload;
 
 use crate::{
     compat::lookup::{lookup_attribs, lookup_element, multi_lookup_attribs, multi_lookup_element},
@@ -27,12 +27,7 @@ use shinkore_types::prelude::{
     LookupAttribsContext, LookupCaches, LookupElementsContext, LookupResults, SVGData,
 };
 
-#[derive(Deserialize)]
-pub struct CompatDataPayload {
-    html: HTMLData,
-    svg: SVGData,
-}
-
+#[derive(Debug, Default)]
 pub struct RustCompatEngineBuilder {
     data_dir: Option<PathBuf>,
 }
@@ -89,7 +84,7 @@ impl RustCompatEngineBuilder {
     }
 }
 
-#[derive(Serialize, Deserialize, Default, Debug)]
+#[derive(Default, Debug)]
 pub struct RustCompatEngine {
     html: HTMLData,
     svg: SVGData,
@@ -340,16 +335,16 @@ impl RustCompatEngine {
                 lookup_el_ctx,
                 &mut overall_results,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
             )?;
             lookup_attribs(
                 lookup_attribs_ctx,
                 &mut overall_results,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
             )?;
         } else {
@@ -368,16 +363,16 @@ impl RustCompatEngine {
                 lookup_el_ctx,
                 &mut overall_results,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
             )?;
             lookup_attribs(
                 lookup_attribs_ctx,
                 &mut overall_results,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
             )?;
         }
@@ -413,8 +408,8 @@ impl RustCompatEngine {
                 &mut overall_results,
                 &mut caches.element_cache,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
             )?;
             multi_lookup_attribs(
@@ -427,8 +422,8 @@ impl RustCompatEngine {
                 &mut overall_results,
                 &mut caches.attrib_cache,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
             )?;
         } else {
@@ -440,8 +435,8 @@ impl RustCompatEngine {
                 &mut overall_results,
                 &mut caches.element_cache,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
             )?;
             multi_lookup_attribs(
@@ -454,8 +449,8 @@ impl RustCompatEngine {
                 &mut overall_results,
                 &mut caches.attrib_cache,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
             )?;
         }

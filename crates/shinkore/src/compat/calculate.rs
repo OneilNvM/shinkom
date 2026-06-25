@@ -101,7 +101,7 @@ pub fn calculate_compat_score(
             let status_score = calculate_status_score(
                 ctx.name.clone(),
                 &g_attrib.compat.status,
-                LookupType::Attribute(ctx.name.clone()),
+                LookupType::Attribute(&ctx.name),
             )?;
 
             #[cfg(feature = "hints")]

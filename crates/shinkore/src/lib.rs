@@ -331,16 +331,16 @@ impl CompatEngine {
                 lookup_el_ctx,
                 &mut overall_results,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
             )?;
             lookup_attribs(
                 lookup_attribs_ctx,
                 &mut overall_results,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
             )?;
         } else {
@@ -359,16 +359,16 @@ impl CompatEngine {
                 lookup_el_ctx,
                 &mut overall_results,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
             )?;
             lookup_attribs(
                 lookup_attribs_ctx,
                 &mut overall_results,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
             )?;
         }
@@ -404,8 +404,8 @@ impl CompatEngine {
                 &mut overall_results,
                 &mut caches.element_cache,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
             )?;
             multi_lookup_attribs(
@@ -418,8 +418,8 @@ impl CompatEngine {
                 &mut overall_results,
                 &mut caches.attrib_cache,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
             )?;
         } else {
@@ -431,8 +431,8 @@ impl CompatEngine {
                 &mut overall_results,
                 &mut caches.element_cache,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
             )?;
             multi_lookup_attribs(
@@ -445,8 +445,8 @@ impl CompatEngine {
                 &mut overall_results,
                 &mut caches.attrib_cache,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
             )?;
         }

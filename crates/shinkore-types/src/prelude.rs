@@ -33,7 +33,7 @@ pub struct LookupCaches {
 pub struct WebFeatureContext<'a> {
     pub name: String,
     pub compat_type: CompatType<'a>,
-    pub lookup_type: LookupType,
+    pub lookup_type: LookupType<'a>,
 }
 
 pub struct BrowserSupportContext<'a> {
@@ -51,6 +51,12 @@ pub struct SupportDetailContext<'a> {
 pub struct BrowserUsageContext<'a> {
     pub browser_name: &'a String,
     pub usage_data: &'a BrowserUsageData,
+}
+
+#[derive(Deserialize)]
+pub struct CompatDataPayload {
+    pub html: HTMLData,
+    pub svg: SVGData,
 }
 
 #[derive(Serialize, Deserialize, Default, Debug)]
@@ -81,10 +87,10 @@ pub struct BrowserUsageData {
     pub market_share: f32,
 }
 
-#[derive(Serialize, Deserialize)]
-pub enum BrowserDataParamType {
-    BrowserData(BrowserData),
-    UsageData(BrowserUsageData),
+
+pub enum BrowserDataParamType<'a> {
+    BrowserData(&'a BrowserData),
+    UsageData(&'a BrowserUsageData),
 }
 
 #[derive(Default, Serialize, Deserialize, Debug)]
@@ -116,9 +122,9 @@ pub struct LookupResults {
     pub browsers: Option<Vec<BrowserResult>>,
 }
 
-pub enum LookupType {
-    Element(String),
-    Attribute(String),
+pub enum LookupType<'a> {
+    Element(&'a str),
+    Attribute(&'a str),
 }
 
 pub enum CompatType<'a> {
