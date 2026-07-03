@@ -87,7 +87,6 @@ pub struct BrowserUsageData {
     pub market_share: f32,
 }
 
-
 pub enum BrowserDataParamType<'a> {
     BrowserData(&'a BrowserData),
     UsageData(&'a BrowserUsageData),

@@ -244,21 +244,21 @@ pub fn multi_lookup_attribs(
                 }
             }
             AttributeLookupState::DataAttribute => {
-                if let Some(d_attrib) = ctx.g_attrib_data.get("data_attributes") {
-                    if !attrib_cache.contains("data-attributes") {
-                        // Store special data-* attribute name in attribute cache to prevent duplicate attribute lookups
-                        calculate_compat_score(
-                            WebFeatureContext {
-                                name: "data-attributes".to_string(),
-                                compat_type: CompatType::GlobalAttributes(d_attrib),
-                                lookup_type: LookupType::Attribute("data-attributes"),
-                            },
-                            results,
-                            browser_data_params,
-                        )?;
+                if let Some(d_attrib) = ctx.g_attrib_data.get("data_attributes")
+                    && !attrib_cache.contains("data-attributes")
+                {
+                    // Store special data-* attribute name in attribute cache to prevent duplicate attribute lookups
+                    calculate_compat_score(
+                        WebFeatureContext {
+                            name: "data-attributes".to_string(),
+                            compat_type: CompatType::GlobalAttributes(d_attrib),
+                            lookup_type: LookupType::Attribute("data-attributes"),
+                        },
+                        results,
+                        browser_data_params,
+                    )?;
 
-                        attrib_cache.insert("data-attributes".to_string());
-                    }
+                    attrib_cache.insert("data-attributes".to_string());
                 }
             }
             AttributeLookupState::LocalAttribute => {

@@ -19,9 +19,7 @@ fn engine_init() -> Result<(), Box<dyn Error>> {
 
 #[divan::bench]
 fn engine_init_from_compiled_data() -> Result<(), Box<dyn Error>> {
-    divan::black_box(
-        RustCompatEngine::from_compiled_data()?
-    );
+    divan::black_box(RustCompatEngine::from_compiled_data()?);
 
     Ok(())
 }
