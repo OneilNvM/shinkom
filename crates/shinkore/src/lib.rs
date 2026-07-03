@@ -13,28 +13,29 @@
 //!
 //! The library consists of modules containing functions used for performing cross-browser compatibility checks of web features on modern browsers.
 //! The engine requires compatibility data in JSON format, therefore usage of crates such as [`serde`] and [`serde_json`] or [`serde_wasm_bindgen`]
-//! for JSON parsing will be necessary. The JSON structure to follow for the compatibility data can be interpreted in the [`schema`] module, but most
+//! for JSON parsing will be necessary. The JSON structure to follow for the compatibility data can be interpreted in the [`shinkore_types`] crate, but most
 //! of the structure in the schema module is based on the [compat-data-schema](https://github.com/mdn/browser-compat-data/blob/main/schemas/compat-data-schema.md)
 //! in the [browser-compat-data](https://github.com/mdn/browser-compat-data) project by MDN, as well as the
-//! [browser-data](https://github.com/mdn/browser-compat-data/blob/main/schemas/browsers-schema.md) format in [`prelude`].
+//! [browser-data](https://github.com/mdn/browser-compat-data/blob/main/schemas/browsers-schema.md) format in [`shinkore_types::prelude`].
 //!
 //! The [`BrowserUsageData`] is based on the [caniuse-db](https://github.com/Fyrd/caniuse) format which only includes the usage data for each browser.
 //!
-//! If your not planning on using your own custom data, then you can download each JSON file from the [gen directory](https://github.com/OneilNvM/shinkom/tree/master/gen)
+//! If your not planning on using your own custom data, then you can download each JSON file from the [gen directory](https://github.com/OneilNvM/shinkom/tree/master/packages/shinkom/gen)
 //! on the Shinkom GitHub repository.
 pub mod compat;
 mod constants;
 pub mod engine;
 pub mod errors;
-pub mod prelude;
 pub mod preprocess;
-pub mod schema;
-use std::collections::HashSet;
+mod version;
+use std::collections::{HashMap, HashSet};
 use std::{cell::RefCell, rc::Rc};
 
-use lol_html::{RewriteStrSettings, element, rewrite_str};
-use prelude::*;
+pub use lol_html::{RewriteStrSettings, element, rewrite_str};
 use preprocess::{format_html, pre_process_html};
+pub use shinkore_types::prelude::*;
+pub use shinkore_types::{Deserialize, Serialize};
+pub use version::{Version, VersionRequirement};
 use wasm_bindgen::prelude::*;
 
 use crate::compat::lookup::{
@@ -122,27 +123,24 @@ impl CompatEngine {
         // Use rewrite_str to find tag for compatibility check
         let rewrite = rewrite_str(
             first_line,
-            RewriteStrSettings {
-                element_content_handlers: vec![element!("*", |el| {
-                    let tag_name = el.tag_name();
-                    let attributes = el.attributes();
+            RewriteStrSettings::new().append_element_content_handler(element!("*", |el| {
+                let tag_name = el.tag_name();
+                let attributes = el.attributes();
 
-                    let ctx = ElementContext {
-                        tag_name: &tag_name,
-                        attributes,
-                    };
+                let ctx = ElementContext {
+                    tag_name: &tag_name,
+                    attributes,
+                };
 
-                    let compat_results = self.compat_check(ctx, false);
+                let compat_results = self.compat_check(ctx);
 
-                    match compat_results {
-                        Ok(res) => results.borrow_mut().extend(res),
-                        Err(e) => return Err(format!("{e:?}").into()),
-                    }
+                match compat_results {
+                    Ok(res) => results.borrow_mut().extend(res),
+                    Err(e) => return Err(format!("{e:?}").into()),
+                }
 
-                    Ok(())
-                })],
-                ..Default::default()
-            },
+                Ok(())
+            })),
         );
 
         if let Err(e) = rewrite {
@@ -193,27 +191,24 @@ impl CompatEngine {
         // Use rewrite_str to find tags for compatibility checks
         let rewrite = rewrite_str(
             &elements,
-            RewriteStrSettings {
-                element_content_handlers: vec![element!("*", |el| {
-                    let tag_name = el.tag_name();
-                    let attributes = el.attributes();
+            RewriteStrSettings::new().append_element_content_handler(element!("*", |el| {
+                let tag_name = el.tag_name();
+                let attributes = el.attributes();
 
-                    let ctx = ElementContext {
-                        tag_name: &tag_name,
-                        attributes,
-                    };
+                let ctx = ElementContext {
+                    tag_name: &tag_name,
+                    attributes,
+                };
 
-                    let compat_results = self.multi_compat_check(ctx, &mut caches, false);
+                let compat_results = self.multi_compat_check(ctx, &mut caches);
 
-                    match compat_results {
-                        Ok(res) => results.borrow_mut().extend(res),
-                        Err(e) => return Err(format!("{e:?}").into()),
-                    }
+                match compat_results {
+                    Ok(res) => results.borrow_mut().extend(res),
+                    Err(e) => return Err(format!("{e:?}").into()),
+                }
 
-                    Ok(())
-                })],
-                ..Default::default()
-            },
+                Ok(())
+            })),
         );
 
         if let Err(e) = rewrite {
@@ -259,27 +254,24 @@ impl CompatEngine {
         // Use rewrite_str to find tags for compatibility checks
         let rewrite = rewrite_str(
             &formatted,
-            RewriteStrSettings {
-                element_content_handlers: vec![element!("*", |el| {
-                    let tag_name = el.tag_name();
-                    let attributes = el.attributes();
+            RewriteStrSettings::new().append_element_content_handler(element!("*", |el| {
+                let tag_name = el.tag_name();
+                let attributes = el.attributes();
 
-                    let ctx = ElementContext {
-                        tag_name: &tag_name,
-                        attributes,
-                    };
+                let ctx = ElementContext {
+                    tag_name: &tag_name,
+                    attributes,
+                };
 
-                    let compat_results = self.multi_compat_check(ctx, &mut caches, false);
+                let compat_results = self.multi_compat_check(ctx, &mut caches);
 
-                    match compat_results {
-                        Ok(res) => results.borrow_mut().extend(res),
-                        Err(e) => return Err(e.into()),
-                    }
+                match compat_results {
+                    Ok(res) => results.borrow_mut().extend(res),
+                    Err(e) => return Err(e.into()),
+                }
 
-                    Ok(())
-                })],
-                ..Default::default()
-            },
+                Ok(())
+            })),
         );
 
         if let Err(e) = rewrite {
@@ -314,11 +306,7 @@ impl CompatEngine {
     ///
     /// ## Errors
     /// A [`CheckError`] is returned if there are any errors in lookups.
-    fn compat_check(
-        &self,
-        ctx: ElementContext,
-        rust_engine: bool,
-    ) -> Result<Vec<LookupResults>, CheckError> {
+    fn compat_check(&self, ctx: ElementContext) -> Result<Vec<LookupResults>, CheckError> {
         let mut overall_results: Vec<LookupResults> = vec![];
         let mut attribs: HashMap<String, String> = HashMap::new();
 
@@ -343,19 +331,17 @@ impl CompatEngine {
                 lookup_el_ctx,
                 &mut overall_results,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
-                rust_engine,
             )?;
             lookup_attribs(
                 lookup_attribs_ctx,
                 &mut overall_results,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
-                rust_engine,
             )?;
         } else {
             let lookup_el_ctx = LookupElementsContext {
@@ -373,19 +359,17 @@ impl CompatEngine {
                 lookup_el_ctx,
                 &mut overall_results,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
-                rust_engine,
             )?;
             lookup_attribs(
                 lookup_attribs_ctx,
                 &mut overall_results,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
-                rust_engine,
             )?;
         }
 
@@ -402,7 +386,6 @@ impl CompatEngine {
         &self,
         ctx: ElementContext,
         caches: &mut LookupCaches,
-        rust_engine: bool,
     ) -> Result<Vec<LookupResults>, CheckError> {
         let mut overall_results: Vec<LookupResults> = vec![];
         let mut attribs: HashMap<String, String> = HashMap::new();
@@ -421,10 +404,9 @@ impl CompatEngine {
                 &mut overall_results,
                 &mut caches.element_cache,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
-                rust_engine,
             )?;
             multi_lookup_attribs(
                 LookupAttribsContext {
@@ -436,10 +418,9 @@ impl CompatEngine {
                 &mut overall_results,
                 &mut caches.attrib_cache,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
-                rust_engine,
             )?;
         } else {
             multi_lookup_element(
@@ -450,10 +431,9 @@ impl CompatEngine {
                 &mut overall_results,
                 &mut caches.element_cache,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
-                rust_engine,
             )?;
             multi_lookup_attribs(
                 LookupAttribsContext {
@@ -465,10 +445,9 @@ impl CompatEngine {
                 &mut overall_results,
                 &mut caches.attrib_cache,
                 &vec![
-                    BrowserDataParamType::BrowserData(self.browser_data.to_owned()),
-                    BrowserDataParamType::UsageData(self.browser_usage_data.to_owned()),
+                    BrowserDataParamType::BrowserData(&self.browser_data),
+                    BrowserDataParamType::UsageData(&self.browser_usage_data),
                 ],
-                rust_engine,
             )?;
         }
 

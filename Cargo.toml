@@ -1,0 +1,7 @@
+[workspace]
+resolver = "3"
+members = ["crates/shinkore", "crates/shinkore-hints", "crates/shinkore-types"]
+
+[profile.release]
+lto = true
+opt-level = 'z'
