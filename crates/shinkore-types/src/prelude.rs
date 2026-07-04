@@ -1,10 +1,12 @@
 //! This module exports all structs and enums in shinkore.
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
-use lol_html::html_content::Attribute;
+use crate::{Deserialize, Serialize};
+pub use lol_html::html_content::Attribute;
 
-use crate::compat::{CompatType, LookupType};
-pub use crate::schema::*;
+use crate::schema::{
+    Compat, CompatElement, CompatGlobalAttribs, ReleaseStatement, SupportData, SupportDetails,
+};
 
 pub struct ElementContext<'a> {
     pub tag_name: &'a str,
@@ -31,10 +33,12 @@ pub struct LookupCaches {
 pub struct WebFeatureContext<'a> {
     pub name: String,
     pub compat_type: CompatType<'a>,
-    pub lookup_type: LookupType,
+    pub lookup_type: LookupType<'a>,
 }
 
 pub struct BrowserSupportContext<'a> {
+    pub feature_name: &'a String,
+    pub compat: &'a Compat,
     pub browser_name: &'a String,
     pub support: &'a SupportData,
 }
@@ -47,6 +51,12 @@ pub struct SupportDetailContext<'a> {
 pub struct BrowserUsageContext<'a> {
     pub browser_name: &'a String,
     pub usage_data: &'a BrowserUsageData,
+}
+
+#[derive(Deserialize)]
+pub struct CompatDataPayload {
+    pub html: HTMLData,
+    pub svg: SVGData,
 }
 
 #[derive(Serialize, Deserialize, Default, Debug)]
@@ -77,10 +87,9 @@ pub struct BrowserUsageData {
     pub market_share: f32,
 }
 
-#[derive(Serialize, Deserialize)]
-pub enum BrowserDataParamType {
-    BrowserData(BrowserData),
-    UsageData(BrowserUsageData),
+pub enum BrowserDataParamType<'a> {
+    BrowserData(&'a BrowserData),
+    UsageData(&'a BrowserUsageData),
 }
 
 #[derive(Default, Serialize, Deserialize, Debug)]
@@ -110,4 +119,14 @@ pub struct LookupResults {
     pub browser_score: String,
     pub status_score: String,
     pub browsers: Option<Vec<BrowserResult>>,
+}
+
+pub enum LookupType<'a> {
+    Element(&'a str),
+    Attribute(&'a str),
+}
+
+pub enum CompatType<'a> {
+    Element(&'a CompatElement),
+    GlobalAttributes(&'a CompatGlobalAttribs),
 }
