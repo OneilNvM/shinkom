@@ -62,7 +62,14 @@ export default defineConfig([
         report: {
             gzip: false
         },
-        plugins: [copyWasmPlugin("bundles"), minifyJsonPlugin()],
+        plugins: [
+            copyWasmPlugin("bundles"),
+            minifyJsonPlugin([
+                '../dist/bundles/gen/compat-data.js',
+                '../dist/bundles/gen/browser-data.js',
+                '../dist/bundles/gen/browser-usage-data.js'
+            ])
+        ],
     },
     {
         entry: {
@@ -103,6 +110,13 @@ export default defineConfig([
             __PACKAGE_VERSION__: JSON.stringify(pkg.version),
             'import.meta': '{}'
         },
-        plugins: [copyWasmPlugin("modules")],
+        plugins: [
+            copyWasmPlugin("modules"),
+            minifyJsonPlugin([
+                '../dist/modules/gen/compat-data.cjs',
+                '../dist/modules/gen/browser-data.cjs',
+                '../dist/modules/gen/browser-usage-data.cjs'
+            ])
+        ],
     },
 ])
