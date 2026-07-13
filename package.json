@@ -5,6 +5,7 @@
     "dev": "pnpm --filter shinkom dev",
     "dev:nobuild": "pnpm --filter shinkom dev:nobuild",
     "build": "pnpm --filter shinkom build",
+    "build:docs": "pnpm --filter shinkom build:docs",
     "build:js": "pnpm --filter shinkom build:js",
     "build:wasm": "pnpm --filter shinkom build:wasm",
     "test": "pnpm --filter shinkom test",

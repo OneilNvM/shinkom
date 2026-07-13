@@ -77,6 +77,7 @@
     "dev:nobuild": "vite",
     "dev": "pnpm run build:wasm && vite",
     "build": "pnpm run build:wasm && pnpm run build:js",
+    "build:docs": "cp pkg/shinkore_bg.wasm ../../docs/pkg/shinkore_bg.wasm && cp pkg/shinkore.js ../../docs/pkg/shinkore.js && vite build",
     "build:js": "tsdown --config-loader unrun && cp src/types/public.d.ts dist/bundles/types/public.d.ts && cp src/types/types.d.ts dist/bundles/types/types.d.ts",
     "build:wasm": "wasm-pack build ../../crates/shinkore --target web --out-dir ../../packages/shinkom/pkg --release",
     "test": "vitest",
