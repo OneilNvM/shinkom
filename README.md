@@ -2,7 +2,7 @@
 
 <p align="center">
     <strong><em><span style="font-style:italic;">Shinkom</span></em>, the high-speed rail for real-time cross-browser compatibility analysis for websites.<br>
-    A JavaScript library powered by a Rust/WASM engine, providing native speed cross-browser compatibility data processing and analysis.<br>
+    A JavaScript toolkit driven by a Rust/WASM engine library, providing native speed cross-browser compatibility analysis.<br>
     </strong>
 </p>
 <div align="center">
@@ -11,7 +11,7 @@
 
 ## Introduction
 
-**Shinkom** is a JavaScript library for real-time website cross-browser compatibility analysis.
+**Shinkom** is a JavaScript toolkit for real-time website cross-browser compatibility analysis.
 
 It is *compatible* with many popular libraries and frameworks such as **React, Vue, NextJs, Nuxt** and Vanilla JS.
 It is also accessible in **Node.Js**, [see more on Node.Js usage here](#nodejs).
@@ -34,7 +34,7 @@ and the many versions of each single one.
 
 This is where **Shinkom** connects the rails!
 
-The purpose of this library is to provide web developers an intuitive library for analysing the compatibility of a website in real-time during development.
+The purpose of this project is to provide web developers an intuitive toolkit for analysing the compatibility of a website in real-time during development.
 This project depends heavily on the [@mdn/browser-compat-data](https://github.com/mdn/browser-compat-data/tree/main) project by MDN, which stores a large amount of compatibility data about
 browsers and web features.
 
@@ -43,7 +43,7 @@ finer control of what specifically to test within the website.
 Shinkom aims to provide that fine level of control, to allow web developers to discover the compatibility of their components
 across many browsers during development.
 
-This library can also make it easier to identify which specific browsers to test immediately without having to sift through documentation
+This toolkit can also make it easier to identify which specific browsers to test immediately without having to sift through documentation
 to check if a feature works on a particular browser or test the website on every browser to discover potential issues.
 
 **Shinkom conducts the analysis of the website content and browser compatibility data and delivers the compatibility result as fast as a bullet train.**
@@ -57,12 +57,12 @@ to check if a feature works on a particular browser or test the website on every
 It is important to mention that this project is made with **WebAssembly** through [wasm-bindgen](https://github.com/wasm-bindgen/wasm-bindgen).
 Therefore, the engine will need to be initialized asynchronously and your server will need to accept the `application/wasm` MIME type.
 It is recommended to read relevant documentation in whichever framework or bundler you are using to apply the correct configuration to accept
-WASM files on your server or visit the [examples](/examples) directory, if your framework or bundler of choice is listed there for a working example.
+WASM files on your server or visit the [playgrounds](/playgrounds) directory, if your framework or bundler of choice is listed there for a working example.
 
 ### Server-side Rendering Applications
 
 The core engine of Shinkom can be run in Node.js environments, but this is not true for the UI components and the Shinkom entry-point as they are browser-only.
-If using a framework that uses SSR, make sure to initialize the library in hooks that perform side-effects (i.e. `useEffect` or `onMounted`) to prevent
+If using a framework that uses SSR, make sure to initialize Shinkom in hooks that perform side-effects (i.e. `useEffect` or `onMounted`) to prevent
 `window is undefined` errors during SSR pre-rendering.
 
 ---
@@ -342,14 +342,15 @@ run()
 
 ## Development Scripts
 
-When cloning or forking this library, refer to this table in regards to the NPM scripts:
+When cloning or forking this repository, refer to this table in regards to the NPM scripts:
 
 | Scripts     |                                             Actions                                            |
 |-------------|:----------------------------------------------------------------------------------------------:|
 | dev:nobuild |                        Runs Vite dev server without running `build:wasm`                       |
 | dev         |             Runs Vite dev server and builds a new WASM files through `build:wasm`.             |
 | build       | Builds the WASM and JS through `build:wasm` and `build:js` and outputs files to `dist` folder. |
-| build:js    |               Builds the ESM bundles and CJS modules for the Javascript library.               |
+| build:docs  |     Build the ESM and UMD files with Vite for the GitHub Pages demo in the docs directory.     |
+| build:js    |               Builds the ESM bundles and CJS modules for the Javascript toolkit.               |
 | build:wasm  |        Builds the WASM files through `wasm-pack` and outputs files to a `pkg` directory.       |
 | test        |                                   Runs tests through Vitest.                                   |
 | dev:next    |                         Runs the dev server in the Next.js playground.                         |
