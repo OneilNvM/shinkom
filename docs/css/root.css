@@ -1,0 +1,21 @@
+:root {
+    --background-color-top: #191B1C;
+    --background-color-bottom: #201C35;
+    --button-color-top: #2B47FF;
+    --button-color-bottom: #00869E;
+    --carbon-black-var-1: #1A1A1A;
+    --carbon-black-var-2: #1E1E1E;
+    --carbon-black-var-3: #242424;
+    --header-height: 3.5rem;
+    --text-xs: .5rem;
+    --text-sm: .75rem;
+    --text-base: 1rem;
+    --text-md: 1.25rem;
+    --text-lg: 1.5rem;
+    --text-xl: 2rem;
+    --text-2xl: 2.5rem;
+    --text-3xl: 3rem;
+    --text-3-5xl: 3.25rem;
+    --text-4xl: 4rem;
+    --text-5xl: 5rem;
+}
