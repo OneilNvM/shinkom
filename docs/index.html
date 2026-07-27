@@ -42,16 +42,16 @@
                 </div>
             </div>
             <main class="main">
-                <section class="sect-compat-inspector">
+                <section class="sect-compat-inspector main-section">
                     <div class="sect-summary">
-                        <div style="display: flex; flex-direction: column; gap: 8rem;">
+                        <div class="sect-summary-text">
                             <p class="heading">A Dev-Tools-like Inspector</p>
-                            <div style="display: flex; flex-direction: column; gap: 4rem;">
+                            <div class="sect-summary-detail">
                                 <p style="width: 75%">
                                     Perform compatibility checks with the Inspector by simply clicking on elements on
                                     the page.
                                 </p>
-                                <p style="width: 75%">Try clicking on this container to get a result!</p>
+                                <p style="width: 75%">Try <b>clicking</b> on this container to <b>get a result</b></p>
                             </div>
                         </div>
                     </div>
@@ -61,15 +61,68 @@
                         </div>
                         <div class="pane">
                             <div class="pane-header">WASM Engine Output Terminal</div>
-                            <pre id="inspector-demo-output">Initialising WASM binary...</pre>
+                            <pre id="inspector-demo-output">Waiting for Shinkom to be initialized...</pre>
                         </div>
                     </div>
                 </section>
-                <section class="sect-control-panel">
-                    
+                <section class="sect-control-panel main-section">
+                    <div class="sect-summary">
+                        <div class="sect-summary-text">
+                            <p class="heading">The Control Panel</p>
+                            <div id="sect-ccp-summary-detail" class="sect-summary-detail">
+                                <p>
+                                    A component allowing the flexibility to toggle
+                                    features and configure state within the components.
+                                </p>
+                                <p>Click on the top left button to <b>open the Control Panel</b></p>
+                            </div>
+                        </div>
+                    </div>
                 </section>
-                <section class="sect-compat-view"></section>
-                <section class="sect-engine"></section>
+                <section class="sect-compat-view main-section">
+                    <div class="sect-summary" style="text-align: center;">
+                        <div class="sect-summary-text">
+                            <p class="heading">The Compatibility View</p>
+                            <div class="sect-summary-detail">
+                                <p>
+                                    Not interested in viewing results in the console?<br>
+                                    The Compatibility View is an intuitive component for viewing your compatibility
+                                    results.
+                                </p>
+                                <p>Click the top button to <b>open the Compatibility View</b></p>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+                <section class="sect-engine main-section">
+                    <div class="sect-summary">
+                        <div class="sect-summary-text">
+                            <p class="heading">Powerful Cross-Environment Engine.</p>
+                            <div class="sect-summary-detail">
+                                <p>
+                                    The compatibility engine is written in an optimized, memory-safe Rust library called
+                                    <b>Shinkore</b>.
+                                </p>
+                                <p>
+                                    It is compiled to <b>WebAssembly</b> using <b>wasm-bindgen</b>, allowing for use of
+                                    the engine in <b>both Browser and Node.js environments</b>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="node-playground">
+                        <div class="pane">
+                            <div class="pane-header">NodeJs Code</div>
+                            <textarea autocorrect="off" autocapitalize="off" autocomplete="off"
+                                id="code-editor"></textarea>
+                        </div>
+                        <div class="pane">
+                            <div class="pane-header">WASM Engine Output Terminal</div>
+                            <pre>Waiting for Shinkom to be initialized...</pre>
+                        </div>
+                    </div>
+                </section>
                 <section class="sect-benchmarks"></section>
                 <section class="sect-frameworks"></section>
                 <section class="sect-support"></section>
