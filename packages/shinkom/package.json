@@ -70,6 +70,16 @@
       "import": "./dist/bundles/ui/compat-ui/compat-ui.js",
       "require": "./dist/modules/ui/compat-ui/compat-ui.cjs"
     },
+    "./core/event-bus": {
+      "types": "./dist/bundles/core/event-bus.d.ts",
+      "import": "./dist/bundles/core/event-bus.js",
+      "require": "./dist/modules/core/event-bus.cjs"
+    },
+    "./core/state-service": {
+      "types": "./dist/bundles/core/state-service.d.ts",
+      "import": "./dist/bundles/core/state-service.js",
+      "require": "./dist/modules/core/state-service.cjs"
+    },
     "./@types": "./dist/bundles/types/public.d.ts",
     "./wasm": "./dist/bundles/pkg/shinkore_bg.wasm"
   },
