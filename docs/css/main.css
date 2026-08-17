@@ -186,19 +186,20 @@ button {
 }
 
 .pane {
+    display: flex;
+    flex-direction: column;
     width: 45rem;
     height: 35%;
-    padding: .5rem;
+    position: relative;
     background-size: 2.6777% 4.6777%;
     background-image: radial-gradient(circle at center, rgb(80, 80, 80) 5%, var(--carbon-black-var-2) 5%);
-    overflow: auto;
     scrollbar-width: thin;
     scrollbar-gutter: stable;
     scrollbar-color: var(--carbon-black-var-3) var(--carbon-black-var-1);
 }
 
 .pane-header {
-    padding-bottom: .5rem;
+    padding: .5rem;
 }
 
 .sect-compat-view {
@@ -234,12 +235,42 @@ button {
 
 #code-editor {
     width: 100%;
+    height: 100%;
+    padding: .5rem;
     background: none;
-    height: calc(100% - 1.7rem);
     resize: none;
-    font-size: var(--text-md);
+    font-size: var(--text-base);
     color: white;
-    scrollbar-width: thin;
+}
+
+.run-icon {
+    width: 0;
+    height: 0;
+    border-top: 1rem solid transparent;
+    border-bottom: 1rem solid transparent;
+    border-left: 1.5rem solid white;
+}
+
+.code-view:hover {
+    .pg-buttons {
+        opacity: 1;
+    }
+}
+
+.pg-buttons {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    position: absolute;
+    width: 8rem;
+    top: .5rem;
+    right: 2rem;
+    transition: opacity 300ms ease-in-out;
+    opacity: 0;
+}
+
+.wasm-output {
+    padding: .5rem;
 }
 
 .footer {

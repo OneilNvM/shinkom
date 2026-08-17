@@ -1,7 +1,6 @@
 /// <reference types="vite/client" />
 
 import { CompatInspector, CompatControlPanel, CompatView, CompatUI, ShinkomBus, ShinkomState, SKEngine } from '../lib/shinkom-lib'
-import { EditorView } from 'https://cdn.jsdelivr.net/npm/codemirror@6.0.2/+esm'
 import wasm from '../pkg/shinkore_bg.wasm?url'
 import { colorizeJson } from './helpers'
 
@@ -107,10 +106,6 @@ initialiseButton.addEventListener('click', async () => {
 
 const inspectorDemoOutput = document.getElementById('inspector-demo-output')
 const demoInspector = document.getElementById('demo-inspector')
-// const view = new EditorView({
-//     parent: document.body,
-//     doc: "Hello",
-// })
 
 if (demoInspector) {
     demoInspector.addEventListener('pointerenter', () => {
@@ -136,3 +131,7 @@ bus.on('results:ready', (e) => {
 })
 
 // Setup CompatControlPanel demo
+
+// Setup CompatView demo
+
+// Setup Node.js demo

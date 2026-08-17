@@ -61,7 +61,10 @@
                         </div>
                         <div class="pane">
                             <div class="pane-header">WASM Engine Output Terminal</div>
-                            <pre id="inspector-demo-output">Waiting for Shinkom to be initialized...</pre>
+                            <div style="overflow: auto; flex: 1;">
+                                <pre id="inspector-demo-output"
+                                    class="wasm-output">Waiting for Shinkom to be initialized...</pre>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -112,14 +115,69 @@
                         </div>
                     </div>
                     <div id="node-playground">
-                        <div class="pane">
-                            <div class="pane-header">NodeJs Code</div>
-                            <textarea autocorrect="off" autocapitalize="off" autocomplete="off"
-                                id="code-editor"></textarea>
+                        <div class="code-view pane">
+                            <div class="pane-header">Node.js Code</div>
+                            <div class="pg-buttons">
+                                <button title="Copy to Clipboard" id="cp-code-btn"
+                                    style="line-height: 0; width: fit-content">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        class="lucide lucide-clipboard-copy-icon lucide-clipboard-copy">
+                                        <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+                                        <path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+                                        <path d="M16 4h2a2 2 0 0 1 2 2v4" />
+                                        <path d="M21 14H11" />
+                                        <path d="m15 10-4 4 4 4" />
+                                    </svg>
+                                </button>
+                                <button title="Run Code" id="run-code-btn" class="run-icon"></button>
+                            </div>
+                            <pre
+                                style="display: flex; height: 100%; padding: .5rem; padding-right: 0; overflow: hidden;">
+<code id="code-editor" style="display: block; flex: 1; overflow: auto;">
+<span class="code-keyword">import</span> { SKEngine } <span class="code-keyword">from</span> <span class="code-string">'shinkom/engine'</span>;
+
+<span class="code-keyword span-break">const</span> <span class="code-variable">mockHTML</span> = <span class="code-string">`</span>
+    <span class="code-string span-break">&lt;div style="display: grid; gap: 20px;"></span>
+        <span class="code-string">&lt;dialog open></span>
+            <span class="code-string">&lt;p>Testing native dialog elements&lt;/p></span>
+        <span class="code-string">&lt;/dialog></span>
+        <span class="code-string">&lt;picture></span>
+            <span class="code-string">&lt;source srcset="image.webp" type="image/webp"></span>
+            <span class="code-string">&lt;img src="image.jpg" alt="Fallback"></span>
+        <span class="code-string">&lt;/picture></span>
+    <span class="code-string">&lt;/div></span>
+<span class="code-string">`</span>
+
+<span class="code-s-keyword">async</span> <span class="code-keyword">function</span> <span class="code-func-name">runAnalysis</span>(<span class="code-params-args">html</span>) {
+    <span class="code-keyword">const</span> <span class="code-variable">engine</span> = <span class="code-s-keyword">new</span> <span class="code-class">SKEngine</span>()
+
+    <span class="code-keyword">try</span> {
+        <span class="code-keyword">await</span> <span class="code-variable">engine</span>.<span class="code-func-name">initEngine</span>()
+
+        <span class="code-keyword">const</span> <span class="code-variable">depthLevel</span> = 3
+        <span class="code-keyword">const</span> <span class="code-variable">result</span> = <span class="code-variable">engine</span>.<span class="code-func-name">checkElements</span>(<span class="code-params-args">html</span>, <span class="code-params-args">depthLevel</span>)
+
+        <span class="code-keyword">if</span> (<span class="code-variable">!result</span>) {
+            <span class="code-variable">console</span>.<span class="code-func-name">log</span>(<span class="code-string">"No results returned"</span>)
+        }
+    } <span class="code-keyword">catch</span>(error) {
+        <span class="code-variable">console</span>.<span class="code-func-name">error</span>(<span class="code-string">`Run failed: ${error}`</span>)
+    } <span class="code-keyword">finally</span> {
+        <span class="code-variable">engine</span>.<span class="code-func-name">destroy</span>()
+    }
+}
+
+<span class="code-func-name">runAnalysis</span>(<span class="code-params-args">mockHTML</span>)
+</code>
+</pre>
                         </div>
                         <div class="pane">
                             <div class="pane-header">WASM Engine Output Terminal</div>
-                            <pre>Waiting for Shinkom to be initialized...</pre>
+                            <div style="overflow: auto; flex: 1">
+                                <pre id="node-demo-output" class="wasm-output">Waiting for code to be run...</pre>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -160,7 +218,36 @@
         .json-null {
             color: #001455
         }
+
+        .code-keyword {
+            color: #ae00ff;
+        }
+
+        .code-s-keyword {
+            color: #0059ff;
+        }
+
+        .code-string {
+            color: #9fd1ff;
+        }
+
+        .code-variable {
+            color: #73bbff;
+        }
+
+        .code-class {
+            color: #00ffb3;
+        }
+
+        .code-params-args {
+            color: #ff9e1f;
+        }
+
+        .code-func-name {
+            color: #e2a2ff;
+        }
     </style>
+    <script type="module" src="./js/node-example.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/animejs/dist/bundles/anime.umd.min.js"></script>
     <script type="module" src="./js/main.js"></script>
 </body>
