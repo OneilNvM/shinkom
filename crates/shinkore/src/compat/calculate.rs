@@ -33,31 +33,31 @@ pub fn calculate_compat_score(
     let mut browser_results: Vec<BrowserResult> = vec![];
     let mut compat_score = 0.0;
     match ctx.compat_type {
-        CompatType::Element(el) => {
+        CompatType::Feature(feat) => {
             let mut browser_score = calculate_browser_score(
                 ctx.name.clone(),
-                CompatType::Element(el),
+                CompatType::Feature(feat),
                 &mut browser_results,
                 browser_data_params,
             )?;
 
             // LookupType is used for returning the appropriate error message
             let status_score = match ctx.lookup_type {
-                LookupType::Element(name) => calculate_status_score(
+                LookupType::Feature(name) => calculate_status_score(
                     ctx.name.clone(),
-                    &el.compat.status,
-                    LookupType::Element(name),
+                    &feat.compat.status,
+                    LookupType::Feature(name),
                 )?,
                 LookupType::Attribute(name) => calculate_status_score(
                     ctx.name.clone(),
-                    &el.compat.status,
+                    &feat.compat.status,
                     LookupType::Attribute(name),
                 )?,
             };
 
             #[cfg(feature = "hints")]
             {
-                if let Some(tags) = &el.compat.tags {
+                if let Some(tags) = &feat.compat.tags {
                     let mut hint_engine = HintEngine::new();
 
                     hint_engine.tier_3_hints(tags);
@@ -76,7 +76,7 @@ pub fn calculate_compat_score(
 
             results.push(LookupResults {
                 name: ctx.name,
-                mdn_url: el.compat.mdn_url.clone(),
+                mdn_url: feat.compat.mdn_url.clone(),
                 compat_score: format!("{compat_score:.2}"),
                 browser_score: format!(
                     "{:.2}",
@@ -189,7 +189,7 @@ pub fn calculate_status_score(
         }
     } else {
         match lookup_type {
-            LookupType::Element(tag) => {
+            LookupType::Feature(tag) => {
                 return Err(CheckError::MissingStatus(format!("tag <{tag}>")));
             }
             LookupType::Attribute(attribute) => {
@@ -218,7 +218,7 @@ pub fn calculate_browser_score(
     let mut browser_score_total: f32 = 0.0;
 
     match compat_type {
-        CompatType::Element(el) => {
+        CompatType::Feature(el) => {
             for (browser_name, support) in &el.compat.support {
                 browser_score_total += calculate_support(
                     BrowserSupportContext {

@@ -5,7 +5,7 @@ use crate::{Deserialize, Serialize};
 pub use lol_html::html_content::Attribute;
 
 use crate::schema::{
-    Compat, CompatElement, CompatGlobalAttribs, ReleaseStatement, SupportData, SupportDetails,
+    Compat, CompatFeature, CompatGlobalAttribs, ReleaseStatement, SupportData, SupportDetails,
 };
 
 pub struct ElementContext<'a> {
@@ -15,13 +15,13 @@ pub struct ElementContext<'a> {
 
 pub struct LookupElementsContext<'a> {
     pub tag: &'a str,
-    pub el_data: &'a HashMap<String, CompatElement>,
+    pub el_data: &'a HashMap<String, CompatFeature>,
 }
 
 pub struct LookupAttribsContext<'a> {
     pub tag: &'a str,
     pub attribs: HashMap<String, String>,
-    pub el_data: &'a HashMap<String, CompatElement>,
+    pub el_data: &'a HashMap<String, CompatFeature>,
     pub g_attrib_data: &'a HashMap<String, CompatGlobalAttribs>,
 }
 
@@ -62,7 +62,7 @@ pub struct CompatDataPayload {
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct HTMLData {
     #[serde(rename = "elements")]
-    pub el_data: HashMap<String, CompatElement>,
+    pub el_data: HashMap<String, CompatFeature>,
     #[serde(rename = "global_attributes")]
     pub g_attrib_data: HashMap<String, CompatGlobalAttribs>,
 }
@@ -70,7 +70,7 @@ pub struct HTMLData {
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct SVGData {
     #[serde(rename = "elements")]
-    pub el_data: HashMap<String, CompatElement>,
+    pub el_data: HashMap<String, CompatFeature>,
     #[serde(rename = "global_attributes")]
     pub g_attrib_data: HashMap<String, CompatGlobalAttribs>,
 }
@@ -122,11 +122,11 @@ pub struct LookupResults {
 }
 
 pub enum LookupType<'a> {
-    Element(&'a str),
+    Feature(&'a str),
     Attribute(&'a str),
 }
 
 pub enum CompatType<'a> {
-    Element(&'a CompatElement),
+    Feature(&'a CompatFeature),
     GlobalAttributes(&'a CompatGlobalAttribs),
 }

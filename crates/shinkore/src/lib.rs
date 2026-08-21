@@ -38,6 +38,7 @@ pub use shinkore_types::{Deserialize, Serialize};
 pub use version::{Version, VersionRequirement};
 use wasm_bindgen::prelude::*;
 
+use crate::compat::calculate::calculate_compat_score;
 use crate::compat::lookup::{
     lookup_attribs, lookup_element, multi_lookup_attribs, multi_lookup_element,
 };
@@ -308,6 +309,7 @@ impl CompatEngine {
     /// A [`CheckError`] is returned if there are any errors in lookups.
     fn compat_check(&self, ctx: ElementContext) -> Result<Vec<LookupResults>, CheckError> {
         let mut overall_results: Vec<LookupResults> = vec![];
+        let mut features: Vec<WebFeatureContext> = vec![];
         let mut attribs: HashMap<String, String> = HashMap::new();
 
         for attribute in ctx.attributes {
@@ -316,10 +318,6 @@ impl CompatEngine {
 
         // If the element is an SVG element, opt for an SVG data lookup
         if self.svg.el_data.contains_key(ctx.tag_name) && !IGNORE_TAGS.contains(&ctx.tag_name) {
-            let lookup_el_ctx = LookupElementsContext {
-                tag: ctx.tag_name,
-                el_data: &self.svg.el_data,
-            };
             let lookup_attribs_ctx = LookupAttribsContext {
                 tag: ctx.tag_name,
                 attribs,
@@ -327,27 +325,27 @@ impl CompatEngine {
                 g_attrib_data: &self.svg.g_attrib_data,
             };
 
-            lookup_element(
-                lookup_el_ctx,
-                &mut overall_results,
-                &vec![
-                    BrowserDataParamType::BrowserData(&self.browser_data),
-                    BrowserDataParamType::UsageData(&self.browser_usage_data),
-                ],
-            )?;
-            lookup_attribs(
-                lookup_attribs_ctx,
-                &mut overall_results,
-                &vec![
-                    BrowserDataParamType::BrowserData(&self.browser_data),
-                    BrowserDataParamType::UsageData(&self.browser_usage_data),
-                ],
-            )?;
-        } else {
-            let lookup_el_ctx = LookupElementsContext {
+            if let Some(feat) = lookup_element(LookupElementsContext {
                 tag: ctx.tag_name,
-                el_data: &self.html.el_data,
-            };
+                el_data: &self.svg.el_data,
+            }) {
+                features.push(feat);
+            }
+            if let Some(feats) = lookup_attribs(&lookup_attribs_ctx) {
+                features.extend(feats);
+            }
+
+            for feat in features {
+                calculate_compat_score(
+                    feat,
+                    &mut overall_results,
+                    &vec![
+                        BrowserDataParamType::BrowserData(&self.browser_data),
+                        BrowserDataParamType::UsageData(&self.browser_usage_data),
+                    ],
+                )?;
+            }
+        } else {
             let lookup_attribs_ctx = LookupAttribsContext {
                 tag: ctx.tag_name,
                 attribs,
@@ -355,22 +353,26 @@ impl CompatEngine {
                 g_attrib_data: &self.html.g_attrib_data,
             };
 
-            lookup_element(
-                lookup_el_ctx,
-                &mut overall_results,
-                &vec![
-                    BrowserDataParamType::BrowserData(&self.browser_data),
-                    BrowserDataParamType::UsageData(&self.browser_usage_data),
-                ],
-            )?;
-            lookup_attribs(
-                lookup_attribs_ctx,
-                &mut overall_results,
-                &vec![
-                    BrowserDataParamType::BrowserData(&self.browser_data),
-                    BrowserDataParamType::UsageData(&self.browser_usage_data),
-                ],
-            )?;
+            if let Some(feat) = lookup_element(LookupElementsContext {
+                tag: ctx.tag_name,
+                el_data: &self.html.el_data,
+            }) {
+                features.push(feat);
+            }
+            if let Some(feats) = lookup_attribs(&lookup_attribs_ctx) {
+                features.extend(feats);
+            }
+
+            for feat in features {
+                calculate_compat_score(
+                    feat,
+                    &mut overall_results,
+                    &vec![
+                        BrowserDataParamType::BrowserData(&self.browser_data),
+                        BrowserDataParamType::UsageData(&self.browser_usage_data),
+                    ],
+                )?;
+            }
         }
 
         Ok(overall_results)
@@ -388,6 +390,7 @@ impl CompatEngine {
         caches: &mut LookupCaches,
     ) -> Result<Vec<LookupResults>, CheckError> {
         let mut overall_results: Vec<LookupResults> = vec![];
+        let mut features: Vec<WebFeatureContext> = vec![];
         let mut attribs: HashMap<String, String> = HashMap::new();
 
         for attribute in ctx.attributes {
@@ -396,59 +399,71 @@ impl CompatEngine {
 
         // If the element is an SVG element, opt for an SVG data lookup
         if self.svg.el_data.contains_key(ctx.tag_name) && !SKIP_TAGS.contains(&ctx.tag_name) {
-            multi_lookup_element(
-                LookupElementsContext {
-                    tag: ctx.tag_name,
-                    el_data: &self.svg.el_data,
-                },
-                &mut overall_results,
-                &mut caches.element_cache,
-                &vec![
-                    BrowserDataParamType::BrowserData(&self.browser_data),
-                    BrowserDataParamType::UsageData(&self.browser_usage_data),
-                ],
-            )?;
-            multi_lookup_attribs(
-                LookupAttribsContext {
-                    tag: ctx.tag_name,
-                    attribs,
-                    el_data: &self.svg.el_data,
-                    g_attrib_data: &self.svg.g_attrib_data,
-                },
-                &mut overall_results,
-                &mut caches.attrib_cache,
-                &vec![
-                    BrowserDataParamType::BrowserData(&self.browser_data),
-                    BrowserDataParamType::UsageData(&self.browser_usage_data),
-                ],
-            )?;
+            let lookup_els_context = LookupElementsContext {
+                tag: ctx.tag_name,
+                el_data: &self.svg.el_data,
+            };
+            let lookup_attribs_context = LookupAttribsContext {
+                tag: ctx.tag_name,
+                attribs,
+                el_data: &self.svg.el_data,
+                g_attrib_data: &self.svg.g_attrib_data,
+            };
+
+            if let Some(feat) = multi_lookup_element(&lookup_els_context, &mut caches.element_cache)
+            {
+                features.push(feat)
+            }
+
+            if let Some(feats) =
+                multi_lookup_attribs(&lookup_attribs_context, &mut caches.attrib_cache)
+            {
+                features.extend(feats);
+            }
+
+            for feat in features {
+                calculate_compat_score(
+                    feat,
+                    &mut overall_results,
+                    &vec![
+                        BrowserDataParamType::BrowserData(&self.browser_data),
+                        BrowserDataParamType::UsageData(&self.browser_usage_data),
+                    ],
+                )?;
+            }
         } else {
-            multi_lookup_element(
-                LookupElementsContext {
-                    tag: ctx.tag_name,
-                    el_data: &self.html.el_data,
-                },
-                &mut overall_results,
-                &mut caches.element_cache,
-                &vec![
-                    BrowserDataParamType::BrowserData(&self.browser_data),
-                    BrowserDataParamType::UsageData(&self.browser_usage_data),
-                ],
-            )?;
-            multi_lookup_attribs(
-                LookupAttribsContext {
-                    tag: ctx.tag_name,
-                    attribs,
-                    el_data: &self.html.el_data,
-                    g_attrib_data: &self.html.g_attrib_data,
-                },
-                &mut overall_results,
-                &mut caches.attrib_cache,
-                &vec![
-                    BrowserDataParamType::BrowserData(&self.browser_data),
-                    BrowserDataParamType::UsageData(&self.browser_usage_data),
-                ],
-            )?;
+            let lookup_els_context = LookupElementsContext {
+                tag: ctx.tag_name,
+                el_data: &self.html.el_data,
+            };
+            let lookup_attribs_context = LookupAttribsContext {
+                tag: ctx.tag_name,
+                attribs,
+                el_data: &self.html.el_data,
+                g_attrib_data: &self.html.g_attrib_data,
+            };
+
+            if let Some(feat) = multi_lookup_element(&lookup_els_context, &mut caches.element_cache)
+            {
+                features.push(feat)
+            }
+
+            if let Some(feats) =
+                multi_lookup_attribs(&lookup_attribs_context, &mut caches.attrib_cache)
+            {
+                features.extend(feats);
+            }
+
+            for feat in features {
+                calculate_compat_score(
+                    feat,
+                    &mut overall_results,
+                    &vec![
+                        BrowserDataParamType::BrowserData(&self.browser_data),
+                        BrowserDataParamType::UsageData(&self.browser_usage_data),
+                    ],
+                )?;
+            }
         }
 
         Ok(overall_results)

@@ -102,12 +102,12 @@ pub struct Compat {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct CompatElement {
+pub struct CompatFeature {
     #[serde(rename = "__compat")]
     pub compat: Compat,
 
     #[serde(flatten)]
-    pub sub_features: HashMap<String, CompatElement>,
+    pub sub_features: HashMap<String, CompatFeature>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
