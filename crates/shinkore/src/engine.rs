@@ -13,7 +13,7 @@ use std::{
 };
 
 use lol_html::{RewriteStrSettings, element, rewrite_str};
-use shinkore_types::prelude::{CompatDataPayload, WebFeatureContext};
+use shinkore_types::prelude::{BrowserDataContext, CompatDataPayload, WebFeatureContext};
 
 use crate::{
     compat::{
@@ -26,8 +26,8 @@ use crate::{
 };
 
 use shinkore_types::prelude::{
-    BrowserData, BrowserDataParamType, BrowserUsageData, CompatResult, ElementContext, HTMLData,
-    LookupAttribsContext, LookupCaches, LookupElementsContext, LookupResults, SVGData,
+    BrowserData, BrowserUsageData, CompatResult, ElementContext, HTMLData, LookupAttribsContext,
+    LookupCaches, LookupElementsContext, LookupResults, SVGData,
 };
 
 #[derive(Debug, Default)]
@@ -345,10 +345,10 @@ impl RustCompatEngine {
                 calculate_compat_score(
                     feat,
                     &mut overall_results,
-                    &vec![
-                        BrowserDataParamType::BrowserData(&self.browser_data),
-                        BrowserDataParamType::UsageData(&self.browser_usage_data),
-                    ],
+                    &BrowserDataContext {
+                        browser_data: &self.browser_data,
+                        browser_usage_data: &self.browser_usage_data,
+                    },
                 )?;
             }
         } else {
@@ -373,10 +373,10 @@ impl RustCompatEngine {
                 calculate_compat_score(
                     feat,
                     &mut overall_results,
-                    &vec![
-                        BrowserDataParamType::BrowserData(&self.browser_data),
-                        BrowserDataParamType::UsageData(&self.browser_usage_data),
-                    ],
+                    &BrowserDataContext {
+                        browser_data: &self.browser_data,
+                        browser_usage_data: &self.browser_usage_data,
+                    },
                 )?;
             }
         }
@@ -431,10 +431,10 @@ impl RustCompatEngine {
                 calculate_compat_score(
                     feat,
                     &mut overall_results,
-                    &vec![
-                        BrowserDataParamType::BrowserData(&self.browser_data),
-                        BrowserDataParamType::UsageData(&self.browser_usage_data),
-                    ],
+                    &BrowserDataContext {
+                        browser_data: &self.browser_data,
+                        browser_usage_data: &self.browser_usage_data,
+                    },
                 )?;
             }
         } else {
@@ -464,10 +464,10 @@ impl RustCompatEngine {
                 calculate_compat_score(
                     feat,
                     &mut overall_results,
-                    &vec![
-                        BrowserDataParamType::BrowserData(&self.browser_data),
-                        BrowserDataParamType::UsageData(&self.browser_usage_data),
-                    ],
+                    &BrowserDataContext {
+                        browser_data: &self.browser_data,
+                        browser_usage_data: &self.browser_usage_data,
+                    },
                 )?;
             }
         }

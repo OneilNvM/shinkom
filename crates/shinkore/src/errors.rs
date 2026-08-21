@@ -10,8 +10,6 @@ pub enum CheckError {
     NoLines,
     #[error("status is unavailable for {0}")]
     MissingStatus(String),
-    #[error("the required browser data parameter types were not given. expected: {0}\nfound: {1}")]
-    WrongBrowserDataParams(String, String),
     #[error("{0}")]
     RewriteError(String),
     #[error("{0}")]

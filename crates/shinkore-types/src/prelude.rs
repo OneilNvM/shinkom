@@ -87,9 +87,9 @@ pub struct BrowserUsageData {
     pub market_share: f32,
 }
 
-pub enum BrowserDataParamType<'a> {
-    BrowserData(&'a BrowserData),
-    UsageData(&'a BrowserUsageData),
+pub struct BrowserDataContext<'a> {
+    pub browser_data: &'a BrowserData,
+    pub browser_usage_data: &'a BrowserUsageData
 }
 
 #[derive(Default, Serialize, Deserialize, Debug)]

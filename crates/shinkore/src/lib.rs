@@ -339,10 +339,10 @@ impl CompatEngine {
                 calculate_compat_score(
                     feat,
                     &mut overall_results,
-                    &vec![
-                        BrowserDataParamType::BrowserData(&self.browser_data),
-                        BrowserDataParamType::UsageData(&self.browser_usage_data),
-                    ],
+                    &BrowserDataContext {
+                        browser_data: &self.browser_data,
+                        browser_usage_data: &self.browser_usage_data,
+                    },
                 )?;
             }
         } else {
@@ -367,10 +367,10 @@ impl CompatEngine {
                 calculate_compat_score(
                     feat,
                     &mut overall_results,
-                    &vec![
-                        BrowserDataParamType::BrowserData(&self.browser_data),
-                        BrowserDataParamType::UsageData(&self.browser_usage_data),
-                    ],
+                    &BrowserDataContext {
+                        browser_data: &self.browser_data,
+                        browser_usage_data: &self.browser_usage_data,
+                    },
                 )?;
             }
         }
@@ -425,10 +425,10 @@ impl CompatEngine {
                 calculate_compat_score(
                     feat,
                     &mut overall_results,
-                    &vec![
-                        BrowserDataParamType::BrowserData(&self.browser_data),
-                        BrowserDataParamType::UsageData(&self.browser_usage_data),
-                    ],
+                    &BrowserDataContext {
+                        browser_data: &self.browser_data,
+                        browser_usage_data: &self.browser_usage_data,
+                    },
                 )?;
             }
         } else {
@@ -458,10 +458,10 @@ impl CompatEngine {
                 calculate_compat_score(
                     feat,
                     &mut overall_results,
-                    &vec![
-                        BrowserDataParamType::BrowserData(&self.browser_data),
-                        BrowserDataParamType::UsageData(&self.browser_usage_data),
-                    ],
+                    &BrowserDataContext {
+                        browser_data: &self.browser_data,
+                        browser_usage_data: &self.browser_usage_data,
+                    },
                 )?;
             }
         }

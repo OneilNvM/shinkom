@@ -12,9 +12,8 @@ use crate::{
 
 use shinkore_types::{
     prelude::{
-        BrowserData, BrowserDataParamType, BrowserResult, BrowserSupportContext,
-        BrowserUsageContext, CompatType, LookupResults, LookupType, Scores, SupportDetailContext,
-        WebFeatureContext,
+        BrowserData, BrowserDataContext, BrowserResult, BrowserSupportContext, BrowserUsageContext,
+        CompatType, LookupResults, LookupType, Scores, SupportDetailContext, WebFeatureContext,
     },
     schema::{Status, SupportData, VersionValue},
 };
@@ -28,7 +27,7 @@ use shinkore_types::{
 pub fn calculate_compat_score(
     ctx: WebFeatureContext,
     results: &mut Vec<LookupResults>,
-    browser_data_params: &Vec<BrowserDataParamType>,
+    browser_data_ctx: &BrowserDataContext,
 ) -> Result<(), CheckError> {
     let mut browser_results: Vec<BrowserResult> = vec![];
     let mut compat_score = 0.0;
@@ -38,7 +37,7 @@ pub fn calculate_compat_score(
                 ctx.name.clone(),
                 CompatType::Feature(feat),
                 &mut browser_results,
-                browser_data_params,
+                browser_data_ctx,
             )?;
 
             // LookupType is used for returning the appropriate error message
@@ -96,7 +95,7 @@ pub fn calculate_compat_score(
                 ctx.name.clone(),
                 CompatType::GlobalAttributes(g_attrib),
                 &mut browser_results,
-                browser_data_params,
+                browser_data_ctx,
             )?;
             let status_score = calculate_status_score(
                 ctx.name.clone(),
@@ -213,7 +212,7 @@ pub fn calculate_browser_score(
     feature_name: String,
     compat_type: CompatType,
     browser_results: &mut Vec<BrowserResult>,
-    browser_data_params: &Vec<BrowserDataParamType>,
+    browser_data_ctx: &BrowserDataContext,
 ) -> Result<f32, CheckError> {
     let mut browser_score_total: f32 = 0.0;
 
@@ -227,7 +226,7 @@ pub fn calculate_browser_score(
                         browser_name,
                         support,
                     },
-                    browser_data_params,
+                    browser_data_ctx,
                     browser_results,
                 )?;
             }
@@ -241,7 +240,7 @@ pub fn calculate_browser_score(
                         browser_name,
                         support,
                     },
-                    browser_data_params,
+                    browser_data_ctx,
                     browser_results,
                 )?;
             }
@@ -259,12 +258,12 @@ pub fn calculate_browser_score(
 /// A [`CheckError`] is returned if the required browser data parameters are not provided.
 fn calculate_support(
     ctx: BrowserSupportContext,
-    browser_data_params: &Vec<BrowserDataParamType>,
+    browser_data_ctx: &BrowserDataContext,
     browser_results: &mut Vec<BrowserResult>,
 ) -> Result<f32, CheckError> {
-    let mut browser_data = None;
-    let mut usage_data = None;
     let mut browser_score: f32 = 0.0;
+    let browser_data = browser_data_ctx.browser_data;
+    let usage_data = browser_data_ctx.browser_usage_data;
 
     // Proxy browsers that have no usage data to browsers with similar engines.
     let browser_proxies = HashMap::from([
@@ -275,25 +274,6 @@ fn calculate_support(
         ),
         (String::from("webview_ios"), String::from("safari_ios")),
     ]);
-
-    // Retrieve data from parameter types
-    for param_type in browser_data_params {
-        match param_type {
-            BrowserDataParamType::BrowserData(data) => browser_data = Some(data),
-            BrowserDataParamType::UsageData(data) => usage_data = Some(data),
-        }
-    }
-
-    if browser_data.is_none() || usage_data.is_none() {
-        return Err(CheckError::WrongBrowserDataParams(
-            String::from("BrowserData and UsageData"),
-            format!(
-                "BrowserData is {:?} and UsageData is {:?}",
-                browser_data.is_some(),
-                usage_data.is_some()
-            ),
-        ));
-    }
 
     let mut raw_score_val: f32 = 0.0;
 
@@ -306,7 +286,7 @@ fn calculate_support(
                     detail,
                 },
                 &mut browser_score,
-                browser_data.unwrap(),
+                browser_data,
             )?;
 
             if detail.partial_implementation {
@@ -317,11 +297,7 @@ fn calculate_support(
             let raw_score = format!("{:.2}", browser_score);
             raw_score_val = browser_score;
 
-            if browser_data
-                .unwrap()
-                .browsers
-                .contains_key(ctx.browser_name)
-            {
+            if browser_data.browsers.contains_key(ctx.browser_name) {
                 // Calculate the proxy weight if the browser name is proxied
                 if browser_proxies.contains_key(ctx.browser_name) {
                     let proxy_name = browser_proxies.get(ctx.browser_name).unwrap();
@@ -329,7 +305,7 @@ fn calculate_support(
                     calculate_weight(
                         BrowserUsageContext {
                             browser_name: proxy_name,
-                            usage_data: usage_data.unwrap(),
+                            usage_data,
                         },
                         true,
                         &mut browser_score,
@@ -338,7 +314,7 @@ fn calculate_support(
                     calculate_weight(
                         BrowserUsageContext {
                             browser_name: ctx.browser_name,
-                            usage_data: usage_data.unwrap(),
+                            usage_data,
                         },
                         false,
                         &mut browser_score,
@@ -371,7 +347,7 @@ fn calculate_support(
                         detail,
                     },
                     &mut support_score,
-                    browser_data.unwrap(),
+                    browser_data,
                 )?;
 
                 if !skip {
@@ -383,11 +359,7 @@ fn calculate_support(
 
                 sum_of_raw_scores += support_score;
 
-                if browser_data
-                    .unwrap()
-                    .browsers
-                    .contains_key(ctx.browser_name)
-                {
+                if browser_data.browsers.contains_key(ctx.browser_name) {
                     // Calculate the proxy weight if the browser name is proxied
                     if browser_proxies.contains_key(ctx.browser_name) {
                         let proxy_name = browser_proxies.get(ctx.browser_name).unwrap();
@@ -395,7 +367,7 @@ fn calculate_support(
                         calculate_weight(
                             BrowserUsageContext {
                                 browser_name: proxy_name,
-                                usage_data: usage_data.unwrap(),
+                                usage_data,
                             },
                             true,
                             &mut support_score,
@@ -404,7 +376,7 @@ fn calculate_support(
                         calculate_weight(
                             BrowserUsageContext {
                                 browser_name: ctx.browser_name,
-                                usage_data: usage_data.unwrap(),
+                                usage_data,
                             },
                             false,
                             &mut support_score,
