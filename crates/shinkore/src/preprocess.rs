@@ -13,6 +13,7 @@ enum PreProcessState {
     Active,
     Ignoring,
     Truncating,
+    InStyleTag,
 }
 
 /// Used for pre-processing HTML to return all of the elements down to the specified `depth_level`,
@@ -92,6 +93,16 @@ pub fn pre_process_html(html: &str, depth_level: u32) -> String {
         }
 
         match state {
+            PreProcessState::InStyleTag => {
+                if line.contains("</style>") {
+                    result.push("\n");
+                    result.push(line);
+                    state = PreProcessState::Active
+                } else {
+                    result.push("\n");
+                    result.push(line);
+                }
+            }
             PreProcessState::Ignoring => {
                 // Ignore current line except for when the line is equal
                 // to the last String in `close_tags`
@@ -123,8 +134,12 @@ pub fn pre_process_html(html: &str, depth_level: u32) -> String {
                 }
             }
             PreProcessState::Active => {
-                // Decrement `cur_depth` if line is a cloes tag and matches last close tag
-                if line.starts_with("</") {
+                if line == "<style>" {
+                    result.push("\n");
+                    result.push(line);
+                    state = PreProcessState::InStyleTag;
+                } else if line.starts_with("</") {
+                    // Decrement `cur_depth` if line is a cloes tag and matches last close tag
                     if cur_depth > 0 && line == *close_tags.last().unwrap() {
                         cur_depth -= 1;
                         close_tags.pop();

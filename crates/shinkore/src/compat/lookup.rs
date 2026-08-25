@@ -6,7 +6,7 @@ use std::collections::HashSet;
 use wasm_bindgen::JsValue;
 
 use shinkore_types::prelude::{
-    CompatType, LookupAttribsContext, LookupElementsContext, LookupType, WebFeatureContext,
+    CompatType, LookupAttribsContext, LookupCSSContext, LookupElementsContext, LookupType, WebFeatureContext,
 };
 
 pub enum AttributeLookupState {
@@ -264,6 +264,37 @@ pub fn multi_lookup_attribs<'a>(
                 }
 
                 attrib_cache.insert(name.to_string());
+            }
+        }
+    }
+
+    if features.is_empty() {
+        None
+    } else {
+        Some(features)
+    }
+}
+
+pub fn lookup_css<'a>(ctx: &'a LookupCSSContext) -> Option<Vec<WebFeatureContext<'a>>> {
+    let mut features = Vec::new();
+
+    for (prop, _val) in &ctx.parsed_css_styles {
+        if let Some(property) = ctx.css_data.get(prop) {
+            features.push(WebFeatureContext {
+                name: prop.to_string(),
+                compat_type: CompatType::Feature(property),
+                lookup_type: LookupType::Feature(prop),
+            });
+        } else {
+            #[cfg(target_arch = "wasm32")]
+            {
+                web_sys::console::warn_1(&JsValue::from_str(&format!(
+                    "{prop} is not a CSS property or has no compat data"
+                )));
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                eprintln!("{prop} is not a CSS property or has no compat data")
             }
         }
     }

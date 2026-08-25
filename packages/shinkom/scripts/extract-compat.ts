@@ -4,40 +4,80 @@ import path from 'node:path'
 
 const htmlData = bcd.html
 const svgData = bcd.svg
+const cssData = bcd.css
 
-const output = {
+const htmlOutput = {
     html: {
         elements: {} as Record<string, Record<string, any>>,
         global_attributes: {} as Record<string, any>,
     },
+}
+
+const svgOutput = {
     svg: {
         elements: {} as Record<string, Record<string, any>>,
         global_attributes: {} as Record<string, any>,
+    },
+}
+
+const cssOutput = {
+    css: {
+        properties: {} as Record<string, Record<string, any>>
     }
 }
 
 const getCompatData = (data: any): CompatStatement | undefined => (data as Identifier).__compat
 
 const extractData = () => {
+    extractHTMLData()
+    extractSVGData()
+    extractCSSData()
+
+    console.log("Successfully generated compatibility data files!")
+}
+
+const extractHTMLData = () => {
     extractHTMLElements()
     extractHTMLGlobalAttributes()
+
+    const outDir = path.resolve("./gen")
+    if (!existsSync(outDir)) mkdirSync(outDir)
+
+    writeFileSync(path.join(outDir, 'html-compat-data.json'), JSON.stringify(htmlOutput))
+
+    console.log("Successfully generated html-compat-data JSON file.")
+}
+
+const extractSVGData = () => {
     extractSVGElements()
     extractSVGGlobalAttributes()
 
     const outDir = path.resolve("./gen")
     if (!existsSync(outDir)) mkdirSync(outDir)
 
-    writeFileSync(path.join(outDir, 'compat-data.json'), JSON.stringify(output))
+    writeFileSync(path.join(outDir, 'svg-compat-data.json'), JSON.stringify(svgOutput))
 
-    console.log("Successfully generated compat-data JSON file.")
+    console.log("Successfully generated svg-compat-data JSON file.")
 }
+
+const extractCSSData = () => {
+    extractCSSProperties()
+
+    const outDir = path.resolve("./gen")
+    if (!existsSync(outDir)) mkdirSync(outDir)
+
+    writeFileSync(path.join(outDir, 'css-compat-data.json'), JSON.stringify(cssOutput))
+
+    console.log("Successfully generated css-compat-data JSON file.")
+}
+
 
 const extractHTMLElements = () => {
     for (const [tag, tagData] of Object.entries(htmlData.elements)) {
         const elCompat = getCompatData(tagData)
 
         if (elCompat) {
-            output.html.elements[tag] = {
+            htmlOutput.html.elements[tag] = {
                 __compat: {
                     description: elCompat.description,
                     mdn_url: elCompat.mdn_url,
@@ -55,7 +95,7 @@ const extractHTMLElements = () => {
                 const inputCompat = getCompatData(inputData)
 
                 if (inputCompat) {
-                    output.html.elements[tag][inputAttr] = {
+                    htmlOutput.html.elements[tag][inputAttr] = {
                         __compat: {
                             description: inputCompat.description,
                             mdn_url: inputCompat.mdn_url,
@@ -77,8 +117,8 @@ const extractHTMLElements = () => {
             const attrCompat = getCompatData(attrData)
 
             if (attrCompat) {
-                output.html.elements[tag] = {
-                    ...output.html.elements[tag],
+                htmlOutput.html.elements[tag] = {
+                    ...htmlOutput.html.elements[tag],
                     [attr]: {
                         __compat: {
                             description: attrCompat.description,
@@ -101,7 +141,7 @@ const extractSVGElements = () => {
         const elCompat = getCompatData(tagData)
 
         if (elCompat) {
-            output.svg.elements[svg] = {
+            svgOutput.svg.elements[svg] = {
                 __compat: {
                     description: elCompat.description,
                     mdn_url: elCompat.mdn_url,
@@ -120,8 +160,8 @@ const extractSVGElements = () => {
             const attrCompat = getCompatData(attrData)
 
             if (attrCompat) {
-                output.svg.elements[svg] = {
-                    ...output.svg.elements[svg],
+                svgOutput.svg.elements[svg] = {
+                    ...svgOutput.svg.elements[svg],
                     [attr]: {
                         __compat: {
                             description: attrCompat.description,
@@ -144,7 +184,7 @@ const extractHTMLGlobalAttributes = () => {
         const compat = getCompatData(data)
 
         if (compat) {
-            output.html.global_attributes[attribute] = {
+            htmlOutput.html.global_attributes[attribute] = {
                 __compat: {
                     description: compat.description,
                     mdn_url: compat.mdn_url,
@@ -164,7 +204,7 @@ const extractSVGGlobalAttributes = () => {
         const compat = getCompatData(data)
 
         if (compat) {
-            output.svg.global_attributes[attribute] = {
+            svgOutput.svg.global_attributes[attribute] = {
                 __compat: {
                     description: compat.description,
                     mdn_url: compat.mdn_url,
@@ -173,6 +213,47 @@ const extractSVGGlobalAttributes = () => {
                     status: compat.status,
                     support: compat.support,
                     tags: compat.tags,
+                }
+            }
+        }
+    }
+}
+
+const extractCSSProperties = () => {
+    for (const [prop, propData] of Object.entries(cssData.properties)) {
+        const propCompat = getCompatData(propData)
+
+        if (propCompat) {
+            cssOutput.css.properties[prop] = {
+                __compat: {
+                    description: propCompat.description,
+                    mdn_url: propCompat.mdn_url,
+                    source_file: propCompat.source_file,
+                    spec_url: propCompat.spec_url,
+                    status: propCompat.status,
+                    support: propCompat.support,
+                    tags: propCompat.tags,
+                }
+            }
+        }
+
+        for (const [keyword, keywordData] of Object.entries(propData)) {
+            const keywordCompat = getCompatData(keywordData)
+
+            if (keywordCompat) {
+                cssOutput.css.properties[prop] = {
+                    ...cssOutput.css.properties[prop],
+                    [keyword]: {
+                        __compat: {
+                            description: keywordCompat.description,
+                            mdn_url: keywordCompat.mdn_url,
+                            source_file: keywordCompat.source_file,
+                            spec_url: keywordCompat.spec_url,
+                            status: keywordCompat.status,
+                            support: keywordCompat.support,
+                            tags: keywordCompat.tags,
+                        }
+                    }
                 }
             }
         }

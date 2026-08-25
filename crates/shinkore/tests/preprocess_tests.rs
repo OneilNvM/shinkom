@@ -30,6 +30,13 @@ fn should_pre_process_html() {
     let html_3 = "<section class='demo-container'>
 <div class='demo-text-container'>
 <p>Hello this is a simple test with a p element</p>
+<style>
+    .demo-text-container {
+        display: flex;
+        flex-direction: column;
+        color: white;
+    }
+</style>
 <script>
     let data = 12;
     console.log(data);
@@ -69,8 +76,8 @@ fn should_pre_process_html() {
     assert_eq!(val_2_4.lines().count(), 10);
 
     assert_eq!(val_3_1.lines().count(), 2);
-    assert_eq!(val_3_2.lines().count(), 8);
-    assert_eq!(val_3_3.lines().count(), 13);
+    assert_eq!(val_3_2.lines().count(), 15);
+    assert_eq!(val_3_3.lines().count(), 20);
 }
 
 #[test]

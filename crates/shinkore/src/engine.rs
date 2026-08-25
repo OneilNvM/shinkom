@@ -12,15 +12,19 @@ use std::{
     rc::Rc,
 };
 
-use lol_html::{RewriteStrSettings, element, rewrite_str};
-use shinkore_types::prelude::{BrowserDataContext, CompatDataPayload, WebFeatureContext};
+use lol_html::{RewriteStrSettings, element, rewrite_str, text};
+use shinkore_types::prelude::{BrowserDataContext, CSSData, LookupCSSContext, WebFeatureContext};
+use wasm_bindgen::JsValue;
 
 use crate::{
     compat::{
         calculate::calculate_compat_score,
-        lookup::{lookup_attribs, lookup_element, multi_lookup_attribs, multi_lookup_element},
+        lookup::{
+            lookup_attribs, lookup_css, lookup_element, multi_lookup_attribs, multi_lookup_element,
+        },
     },
     constants::{IGNORE_TAGS, SKIP_TAGS},
+    css::parse_stylesheet,
     errors::{CheckError, PreProcessError},
     preprocess::{format_html, pre_process_html},
 };
@@ -58,29 +62,42 @@ impl RustCompatEngineBuilder {
             Ok(value)
         };
 
-        let mut compat_root = read_json("compat-data.json")?;
+        let mut html_root = read_json("html-compat-data.json")?;
+        let mut svg_root = read_json("svg-compat-data.json")?;
+        let mut css_root = read_json("css-compat-data.json")?;
         let browsers_root = read_json("browser-data.json")?;
         let usage_root = read_json("browser-usage-data.json")?;
 
-        let compat_obj = compat_root
+        let html_obj = html_root
             .as_object_mut()
-            .ok_or("Could not convert to object")?;
+            .ok_or("Could not convert html root to object")?;
+        let svg_obj = svg_root
+            .as_object_mut()
+            .ok_or("Could not convert svg root to object")?;
+        let css_obj = css_root
+            .as_object_mut()
+            .ok_or("Could not convert css root to object")?;
 
-        let html_data_value = compat_obj
+        let html_data_val = html_obj
             .remove("html")
-            .ok_or("Could not find html field in object")?;
-        let svg_data_value = compat_obj
+            .ok_or("Could not find html property in object")?;
+        let svg_data_val = svg_obj
             .remove("svg")
-            .ok_or("Could not find svg field in object")?;
+            .ok_or("Could not find svg property in object")?;
+        let css_data_val = css_obj
+            .remove("css")
+            .ok_or("Could not find css property in object")?;
 
-        let html_data = serde_json::from_value(html_data_value)?;
-        let svg_data = serde_json::from_value(svg_data_value)?;
-        let browser_data: BrowserData = serde_json::from_value(browsers_root)?;
-        let usage_data: BrowserUsageData = serde_json::from_value(usage_root)?;
+        let html_data = serde_json::from_value(html_data_val).ok();
+        let svg_data = serde_json::from_value(svg_data_val).ok();
+        let css_data: Option<CSSData> = serde_json::from_value(css_data_val).ok();
+        let browser_data = serde_json::from_value(browsers_root).ok();
+        let usage_data = serde_json::from_value(usage_root).ok();
 
         Ok(RustCompatEngine::new(
             html_data,
             svg_data,
+            css_data,
             browser_data,
             usage_data,
         ))
@@ -91,42 +108,75 @@ impl RustCompatEngineBuilder {
 pub struct RustCompatEngine {
     html: HTMLData,
     svg: SVGData,
+    css: CSSData,
     browser_data: BrowserData,
     browser_usage_data: BrowserUsageData,
 }
 
 impl RustCompatEngine {
-    pub fn new(
-        bcd_html_data: HTMLData,
-        bcd_svg_data: SVGData,
-        bcd_browser_data: BrowserData,
-        ciu_usage_data: BrowserUsageData,
+    fn new(
+        bcd_html_data: Option<HTMLData>,
+        bcd_svg_data: Option<SVGData>,
+        bcd_css_data: Option<CSSData>,
+        bcd_browser_data: Option<BrowserData>,
+        ciu_usage_data: Option<BrowserUsageData>,
     ) -> Self {
         RustCompatEngine {
-            html: bcd_html_data,
-            svg: bcd_svg_data,
-            browser_data: bcd_browser_data,
-            browser_usage_data: ciu_usage_data,
+            html: bcd_html_data.unwrap_or_default(),
+            svg: bcd_svg_data.unwrap_or_default(),
+            css: bcd_css_data.unwrap_or_default(),
+            browser_data: bcd_browser_data.unwrap_or_default(),
+            browser_usage_data: ciu_usage_data.unwrap_or_default(),
         }
     }
 
     pub fn from_compiled_data() -> Result<Self, Box<dyn Error>> {
-        let compat_payload: CompatDataPayload = serde_json::from_str(include_str!(
-            "../../../packages/shinkom/gen/compat-data.json"
+        let mut html_root: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../packages/shinkom/gen/html-compat-data.json"
+        ))?;
+        let mut svg_root: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../packages/shinkom/gen/svg-compat-data.json"
+        ))?;
+        let mut css_root: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../packages/shinkom/gen/css-compat-data.json"
         ))?;
         let browsers_root: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../packages/shinkom/gen/compat-data.json"
+            "../../../packages/shinkom/gen/browser-data.json"
         ))?;
         let usage_root: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../packages/shinkom/gen/compat-data.json"
+            "../../../packages/shinkom/gen/browser-usage-data.json"
         ))?;
 
-        let browser_data: BrowserData = serde_json::from_value(browsers_root)?;
-        let usage_data: BrowserUsageData = serde_json::from_value(usage_root)?;
+        let html_obj = html_root
+            .as_object_mut()
+            .ok_or("Could not convert html root to object")?;
+        let svg_obj = svg_root
+            .as_object_mut()
+            .ok_or("Could not convert svg root to object")?;
+        let css_obj = css_root
+            .as_object_mut()
+            .ok_or("Could not convert css root to object")?;
+
+        let html_data_val = html_obj
+            .remove("html")
+            .ok_or("Could not find html property in object")?;
+        let svg_data_val = svg_obj
+            .remove("svg")
+            .ok_or("Could not find svg property in object")?;
+        let css_data_val = css_obj
+            .remove("css")
+            .ok_or("Could not find css property in object")?;
+
+        let bcd_html_data: Option<HTMLData> = serde_json::from_value(html_data_val).ok();
+        let bcd_svg_data: Option<SVGData> = serde_json::from_value(svg_data_val).ok();
+        let bcd_css_data: Option<CSSData> = serde_json::from_value(css_data_val).ok();
+        let browser_data: Option<BrowserData> = serde_json::from_value(browsers_root).ok();
+        let usage_data: Option<BrowserUsageData> = serde_json::from_value(usage_root).ok();
 
         Ok(Self::new(
-            compat_payload.html,
-            compat_payload.svg,
+            bcd_html_data,
+            bcd_svg_data,
+            bcd_css_data,
             browser_data,
             usage_data,
         ))
@@ -145,24 +195,37 @@ impl RustCompatEngine {
         // Use rewrite_str to find tag for compatibility check
         let rewrite = rewrite_str(
             first_line,
-            RewriteStrSettings::new().append_element_content_handler(element!("*", |el| {
-                let tag_name = el.tag_name();
-                let attributes = el.attributes();
+            RewriteStrSettings::new()
+                .append_element_content_handler(element!("*", |el| {
+                    let tag_name = el.tag_name();
+                    let attributes = el.attributes();
 
-                let ctx = ElementContext {
-                    tag_name: &tag_name,
-                    attributes,
-                };
+                    let ctx = ElementContext {
+                        tag_name: &tag_name,
+                        attributes,
+                    };
 
-                let compat_results = self.compat_check(ctx);
+                    let compat_results = self.compat_check(ctx);
 
-                match compat_results {
-                    Ok(res) => results.borrow_mut().extend(res),
-                    Err(e) => return Err(e.into()),
-                }
+                    match compat_results {
+                        Ok(res) => results.borrow_mut().extend(res),
+                        Err(e) => return Err(format!("{e:?}").into()),
+                    }
 
-                Ok(())
-            })),
+                    Ok(())
+                }))
+                .append_element_content_handler(text!("style", |el| {
+                    let style_content = el.as_str();
+
+                    let compat_results = self.css_compat_check(style_content);
+
+                    match compat_results {
+                        Ok(res) => results.borrow_mut().extend(res),
+                        Err(e) => return Err(format!("{e:?}").into()),
+                    }
+
+                    Ok(())
+                })),
         );
 
         if let Err(e) = rewrite {
@@ -209,24 +272,37 @@ impl RustCompatEngine {
         // Use rewrite_str to find tags for compatibility checks
         let rewrite = rewrite_str(
             &elements,
-            RewriteStrSettings::new().append_element_content_handler(element!("*", |el| {
-                let tag_name = el.tag_name();
-                let attributes = el.attributes();
+            RewriteStrSettings::new()
+                .append_element_content_handler(element!("*", |el| {
+                    let tag_name = el.tag_name();
+                    let attributes = el.attributes();
 
-                let ctx = ElementContext {
-                    tag_name: &tag_name,
-                    attributes,
-                };
+                    let ctx = ElementContext {
+                        tag_name: &tag_name,
+                        attributes,
+                    };
 
-                let compat_results = self.multi_compat_check(ctx, &mut caches);
+                    let compat_results = self.multi_compat_check(ctx, &mut caches);
 
-                match compat_results {
-                    Ok(res) => results.borrow_mut().extend(res),
-                    Err(e) => return Err(e.into()),
-                }
+                    match compat_results {
+                        Ok(res) => results.borrow_mut().extend(res),
+                        Err(e) => return Err(format!("{e:?}").into()),
+                    }
 
-                Ok(())
-            })),
+                    Ok(())
+                }))
+                .append_element_content_handler(text!("style", |el| {
+                    let style_content = el.as_str();
+
+                    let compat_results = self.css_compat_check(style_content);
+
+                    match compat_results {
+                        Ok(res) => results.borrow_mut().extend(res),
+                        Err(e) => return Err(format!("{e:?}").into()),
+                    }
+
+                    Ok(())
+                })),
         );
 
         if let Err(e) = rewrite {
@@ -266,24 +342,37 @@ impl RustCompatEngine {
         // Use rewrite_str to find tags for compatibility checks
         let rewrite = rewrite_str(
             &formatted,
-            RewriteStrSettings::new().append_element_content_handler(element!("*", |el| {
-                let tag_name = el.tag_name();
-                let attributes = el.attributes();
+            RewriteStrSettings::new()
+                .append_element_content_handler(element!("*", |el| {
+                    let tag_name = el.tag_name();
+                    let attributes = el.attributes();
 
-                let ctx = ElementContext {
-                    tag_name: &tag_name,
-                    attributes,
-                };
+                    let ctx = ElementContext {
+                        tag_name: &tag_name,
+                        attributes,
+                    };
 
-                let compat_results = self.multi_compat_check(ctx, &mut caches);
+                    let compat_results = self.multi_compat_check(ctx, &mut caches);
 
-                match compat_results {
-                    Ok(res) => results.borrow_mut().extend(res),
-                    Err(e) => return Err(e.into()),
-                }
+                    match compat_results {
+                        Ok(res) => results.borrow_mut().extend(res),
+                        Err(e) => return Err(e.into()),
+                    }
 
-                Ok(())
-            })),
+                    Ok(())
+                }))
+                .append_element_content_handler(text!("style", |el| {
+                    let style_content = el.as_str();
+
+                    let compat_results = self.css_compat_check(style_content);
+
+                    match compat_results {
+                        Ok(res) => results.borrow_mut().extend(res),
+                        Err(e) => return Err(format!("{e:?}").into()),
+                    }
+
+                    Ok(())
+                })),
         );
 
         if let Err(e) = rewrite {
@@ -470,6 +559,41 @@ impl RustCompatEngine {
                     },
                 )?;
             }
+        }
+
+        Ok(overall_results)
+    }
+
+    fn css_compat_check(&self, css_content: &str) -> Result<Vec<LookupResults>, CheckError> {
+        let mut overall_results = Vec::new();
+        let mut features: Vec<WebFeatureContext> = Vec::new();
+        let mut properties_values = HashMap::new();
+
+        for style in parse_stylesheet(css_content) {
+            properties_values.insert(style.property, style.value);
+        }
+
+        web_sys::console::log_1(&JsValue::from_str(&format!("{css_content}")));
+        web_sys::console::log_1(&JsValue::from_str(&format!("{properties_values:?}")));
+
+        let ctx = LookupCSSContext {
+            parsed_css_styles: properties_values,
+            css_data: &self.css.properties_data,
+        };
+
+        if let Some(feats) = lookup_css(&ctx) {
+            features.extend(feats);
+        }
+
+        for feat in features {
+            calculate_compat_score(
+                feat,
+                &mut overall_results,
+                &BrowserDataContext {
+                    browser_data: &self.browser_data,
+                    browser_usage_data: &self.browser_usage_data,
+                },
+            )?;
         }
 
         Ok(overall_results)

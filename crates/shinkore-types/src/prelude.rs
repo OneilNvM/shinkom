@@ -25,6 +25,11 @@ pub struct LookupAttribsContext<'a> {
     pub g_attrib_data: &'a HashMap<String, CompatGlobalAttribs>,
 }
 
+pub struct LookupCSSContext<'a> {
+    pub parsed_css_styles: HashMap<String, String>,
+    pub css_data: &'a HashMap<String, CompatFeature>
+}
+
 pub struct LookupCaches {
     pub element_cache: HashSet<String>,
     pub attrib_cache: HashSet<String>,
@@ -55,8 +60,9 @@ pub struct BrowserUsageContext<'a> {
 
 #[derive(Deserialize)]
 pub struct CompatDataPayload {
-    pub html: HTMLData,
-    pub svg: SVGData,
+    pub html: Option<HTMLData>,
+    pub svg: Option<SVGData>,
+    pub css: Option<CSSData>,
 }
 
 #[derive(Serialize, Deserialize, Default, Debug)]
@@ -73,6 +79,12 @@ pub struct SVGData {
     pub el_data: HashMap<String, CompatFeature>,
     #[serde(rename = "global_attributes")]
     pub g_attrib_data: HashMap<String, CompatGlobalAttribs>,
+}
+
+#[derive(Serialize, Deserialize, Default, Debug)]
+pub struct CSSData {
+    #[serde(rename = "properties")]
+    pub properties_data: HashMap<String, CompatFeature>
 }
 
 #[derive(Serialize, Deserialize, Default, Clone, Debug)]
@@ -129,4 +141,9 @@ pub enum LookupType<'a> {
 pub enum CompatType<'a> {
     Feature(&'a CompatFeature),
     GlobalAttributes(&'a CompatGlobalAttribs),
+}
+
+pub struct ParsedCssStyle {
+    pub property: String,
+    pub value: String
 }

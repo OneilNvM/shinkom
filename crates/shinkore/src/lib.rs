@@ -24,6 +24,7 @@
 //! on the Shinkom GitHub repository.
 pub mod compat;
 mod constants;
+pub mod css;
 pub mod engine;
 pub mod errors;
 pub mod preprocess;
@@ -31,6 +32,7 @@ mod version;
 use std::collections::{HashMap, HashSet};
 use std::{cell::RefCell, rc::Rc};
 
+use lol_html::text;
 pub use lol_html::{RewriteStrSettings, element, rewrite_str};
 use preprocess::{format_html, pre_process_html};
 pub use shinkore_types::prelude::*;
@@ -40,10 +42,26 @@ use wasm_bindgen::prelude::*;
 
 use crate::compat::calculate::calculate_compat_score;
 use crate::compat::lookup::{
-    lookup_attribs, lookup_element, multi_lookup_attribs, multi_lookup_element,
+    lookup_attribs, lookup_css, lookup_element, multi_lookup_attribs, multi_lookup_element,
 };
 use crate::constants::{IGNORE_TAGS, SKIP_TAGS};
+use crate::css::parse_stylesheet;
 use crate::errors::CheckError;
+
+#[derive(Deserialize, Default, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct CompatEngineConfig {
+    #[serde(default)]
+    html: Option<HTMLData>,
+    #[serde(default)]
+    svg: Option<SVGData>,
+    #[serde(default)]
+    css: Option<CSSData>,
+    #[serde(default)]
+    browser_data: Option<BrowserData>,
+    #[serde(default)]
+    usage_data: Option<BrowserUsageData>,
+}
 
 /// The [`CompatEngine`] struct stores the compatibility data
 /// and acts as an entry-point for the Rust/WASM engine.
@@ -52,6 +70,7 @@ use crate::errors::CheckError;
 pub struct CompatEngine {
     html: HTMLData,
     svg: SVGData,
+    css: CSSData,
     browser_data: BrowserData,
     browser_usage_data: BrowserUsageData,
 }
@@ -60,51 +79,17 @@ pub struct CompatEngine {
 impl CompatEngine {
     /// Constructs an new engine instance
     #[wasm_bindgen(constructor)]
-    pub fn new(
-        bcd_html_data: JsValue,
-        bcd_svg_data: JsValue,
-        bcd_browser_data: JsValue,
-        ciu_usage_data: JsValue,
-    ) -> Self {
-        let mut engine = CompatEngine::default();
+    pub fn new(config: JsValue) -> Result<Self, JsValue> {
+        let config: CompatEngineConfig = serde_wasm_bindgen::from_value(config)
+            .map_err(|e| JsValue::from_str(&format!("Failed to parse engine config: {e}")))?;
 
-        match serde_wasm_bindgen::from_value::<HTMLData>(bcd_html_data) {
-            Ok(parsed) => engine.html = parsed,
-            Err(e) => {
-                web_sys::console::error_1(&JsValue::from_str(&format!(
-                    "BCD HTML data parsing error: {e}"
-                )));
-            }
-        }
-
-        match serde_wasm_bindgen::from_value::<SVGData>(bcd_svg_data) {
-            Ok(parsed) => engine.svg = parsed,
-            Err(e) => {
-                web_sys::console::error_1(&JsValue::from_str(&format!(
-                    "BCD SVG data parsing error: {e}"
-                )));
-            }
-        }
-
-        match serde_wasm_bindgen::from_value::<BrowserData>(bcd_browser_data) {
-            Ok(parsed) => engine.browser_data = parsed,
-            Err(e) => {
-                web_sys::console::error_1(&JsValue::from_str(&format!(
-                    "BCD Browser data parsing error: {e}"
-                )));
-            }
-        }
-
-        match serde_wasm_bindgen::from_value::<BrowserUsageData>(ciu_usage_data) {
-            Ok(parsed) => engine.browser_usage_data = parsed,
-            Err(e) => {
-                web_sys::console::error_1(&JsValue::from_str(&format!(
-                    "BCD Browser Usage data parsing error: {e}"
-                )));
-            }
-        }
-
-        engine
+        Ok(Self {
+            html: config.html.unwrap_or_default(),
+            svg: config.svg.unwrap_or_default(),
+            css: config.css.unwrap_or_default(),
+            browser_data: config.browser_data.unwrap_or_default(),
+            browser_usage_data: config.usage_data.unwrap_or_default(),
+        })
     }
 
     /// Used for checking the compatibility of a single element and its attributes.
@@ -124,24 +109,37 @@ impl CompatEngine {
         // Use rewrite_str to find tag for compatibility check
         let rewrite = rewrite_str(
             first_line,
-            RewriteStrSettings::new().append_element_content_handler(element!("*", |el| {
-                let tag_name = el.tag_name();
-                let attributes = el.attributes();
+            RewriteStrSettings::new()
+                .append_element_content_handler(element!("*", |el| {
+                    let tag_name = el.tag_name();
+                    let attributes = el.attributes();
 
-                let ctx = ElementContext {
-                    tag_name: &tag_name,
-                    attributes,
-                };
+                    let ctx = ElementContext {
+                        tag_name: &tag_name,
+                        attributes,
+                    };
 
-                let compat_results = self.compat_check(ctx);
+                    let compat_results = self.compat_check(ctx);
 
-                match compat_results {
-                    Ok(res) => results.borrow_mut().extend(res),
-                    Err(e) => return Err(format!("{e:?}").into()),
-                }
+                    match compat_results {
+                        Ok(res) => results.borrow_mut().extend(res),
+                        Err(e) => return Err(format!("{e:?}").into()),
+                    }
 
-                Ok(())
-            })),
+                    Ok(())
+                }))
+                .append_element_content_handler(text!("style", |el| {
+                    let style_content = el.as_str();
+
+                    let compat_results = self.css_compat_check(style_content);
+
+                    match compat_results {
+                        Ok(res) => results.borrow_mut().extend(res),
+                        Err(e) => return Err(format!("{e:?}").into()),
+                    }
+
+                    Ok(())
+                })),
         );
 
         if let Err(e) = rewrite {
@@ -192,24 +190,37 @@ impl CompatEngine {
         // Use rewrite_str to find tags for compatibility checks
         let rewrite = rewrite_str(
             &elements,
-            RewriteStrSettings::new().append_element_content_handler(element!("*", |el| {
-                let tag_name = el.tag_name();
-                let attributes = el.attributes();
+            RewriteStrSettings::new()
+                .append_element_content_handler(element!("*", |el| {
+                    let tag_name = el.tag_name();
+                    let attributes = el.attributes();
 
-                let ctx = ElementContext {
-                    tag_name: &tag_name,
-                    attributes,
-                };
+                    let ctx = ElementContext {
+                        tag_name: &tag_name,
+                        attributes,
+                    };
 
-                let compat_results = self.multi_compat_check(ctx, &mut caches);
+                    let compat_results = self.multi_compat_check(ctx, &mut caches);
 
-                match compat_results {
-                    Ok(res) => results.borrow_mut().extend(res),
-                    Err(e) => return Err(format!("{e:?}").into()),
-                }
+                    match compat_results {
+                        Ok(res) => results.borrow_mut().extend(res),
+                        Err(e) => return Err(format!("{e:?}").into()),
+                    }
 
-                Ok(())
-            })),
+                    Ok(())
+                }))
+                .append_element_content_handler(text!("style", |el| {
+                    let style_content = el.as_str();
+
+                    let compat_results = self.css_compat_check(style_content);
+
+                    match compat_results {
+                        Ok(res) => results.borrow_mut().extend(res),
+                        Err(e) => return Err(format!("{e:?}").into()),
+                    }
+
+                    Ok(())
+                })),
         );
 
         if let Err(e) = rewrite {
@@ -255,24 +266,37 @@ impl CompatEngine {
         // Use rewrite_str to find tags for compatibility checks
         let rewrite = rewrite_str(
             &formatted,
-            RewriteStrSettings::new().append_element_content_handler(element!("*", |el| {
-                let tag_name = el.tag_name();
-                let attributes = el.attributes();
+            RewriteStrSettings::new()
+                .append_element_content_handler(element!("*", |el| {
+                    let tag_name = el.tag_name();
+                    let attributes = el.attributes();
 
-                let ctx = ElementContext {
-                    tag_name: &tag_name,
-                    attributes,
-                };
+                    let ctx = ElementContext {
+                        tag_name: &tag_name,
+                        attributes,
+                    };
 
-                let compat_results = self.multi_compat_check(ctx, &mut caches);
+                    let compat_results = self.multi_compat_check(ctx, &mut caches);
 
-                match compat_results {
-                    Ok(res) => results.borrow_mut().extend(res),
-                    Err(e) => return Err(e.into()),
-                }
+                    match compat_results {
+                        Ok(res) => results.borrow_mut().extend(res),
+                        Err(e) => return Err(e.into()),
+                    }
 
-                Ok(())
-            })),
+                    Ok(())
+                }))
+                .append_element_content_handler(text!("style", |el| {
+                    let style_content = el.as_str();
+
+                    let compat_results = self.css_compat_check(style_content);
+
+                    match compat_results {
+                        Ok(res) => results.borrow_mut().extend(res),
+                        Err(e) => return Err(format!("{e:?}").into()),
+                    }
+
+                    Ok(())
+                })),
         );
 
         if let Err(e) = rewrite {
@@ -464,6 +488,41 @@ impl CompatEngine {
                     },
                 )?;
             }
+        }
+
+        Ok(overall_results)
+    }
+
+    fn css_compat_check(&self, css_content: &str) -> Result<Vec<LookupResults>, CheckError> {
+        let mut overall_results = Vec::new();
+        let mut features: Vec<WebFeatureContext> = Vec::new();
+        let mut properties_values = HashMap::new();
+
+        for style in parse_stylesheet(css_content) {
+            properties_values.insert(style.property, style.value);
+        }
+
+        web_sys::console::log_1(&JsValue::from_str(&format!("{css_content}")));
+        web_sys::console::log_1(&JsValue::from_str(&format!("{properties_values:?}")));
+
+        let ctx = LookupCSSContext {
+            parsed_css_styles: properties_values,
+            css_data: &self.css.properties_data,
+        };
+
+        if let Some(feats) = lookup_css(&ctx) {
+            features.extend(feats);
+        }
+
+        for feat in features {
+            calculate_compat_score(
+                feat,
+                &mut overall_results,
+                &BrowserDataContext {
+                    browser_data: &self.browser_data,
+                    browser_usage_data: &self.browser_usage_data,
+                },
+            )?;
         }
 
         Ok(overall_results)
