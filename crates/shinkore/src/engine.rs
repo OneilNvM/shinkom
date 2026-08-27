@@ -6,7 +6,7 @@ use std::{
     collections::{HashMap, HashSet},
     error::Error,
     num::ParseFloatError,
-    path::PathBuf,
+    path::{Path, PathBuf},
     rc::Rc,
     sync::OnceLock,
 };
@@ -57,14 +57,14 @@ impl RustCompatEngineBuilder {
             .clone()
             .unwrap_or_else(|| PathBuf::from("./shinkore-data"));
 
-        fn read_bin(base_path: &PathBuf, filename: &str) -> Result<Vec<u8>, Box<dyn Error>> {
+        fn read_bin(base_path: &Path, filename: &str) -> Result<Vec<u8>, Box<dyn Error>> {
             let path = base_path.join(filename);
             let bytes = std::fs::read(path)?;
 
             Ok(bytes)
         }
 
-        fn deserialize_bytes<'de, T>(bytes: &'de Vec<u8>) -> Result<T, Box<dyn Error>>
+        fn deserialize_bytes<'de, T>(bytes: &'de [u8]) -> Result<T, Box<dyn Error>>
         where
             T: JSONStructure + SchemaRead<'de, DefaultConfig, Dst = T>,
         {
@@ -101,13 +101,15 @@ pub struct RustCompatEngine {
     browser_usage_data: BrowserUsageData,
 }
 
-static COMPILED_DATA: OnceLock<(
+type CompiledData = OnceLock<(
     Option<HTMLData>,
     Option<SVGData>,
     Option<CSSData>,
     Option<BrowserData>,
     Option<BrowserUsageData>,
-)> = OnceLock::new();
+)>;
+
+static COMPILED_DATA: CompiledData = OnceLock::new();
 
 impl RustCompatEngine {
     fn new(
@@ -548,7 +550,7 @@ impl RustCompatEngine {
             properties_values.insert(style.property, style.value);
         }
 
-        web_sys::console::log_1(&JsValue::from_str(&format!("{css_content}")));
+        web_sys::console::log_1(&JsValue::from_str(css_content));
         web_sys::console::log_1(&JsValue::from_str(&format!("{properties_values:?}")));
 
         let ctx = LookupCSSContext {

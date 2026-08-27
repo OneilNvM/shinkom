@@ -81,10 +81,12 @@ impl From<CustomValue> for serde_json::Value {
             CustomValue::Number(CustomNumber::Float(f)) => serde_json::Value::from(f),
             CustomValue::Array(v) => {
                 serde_json::Value::Array(v.into_iter().map(serde_json::Value::from).collect())
-            },
-            CustomValue::Object(o) => {
-                serde_json::Value::Object(o.into_iter().map(|(k, v)| (k, serde_json::Value::from(v))).collect())
             }
+            CustomValue::Object(o) => serde_json::Value::Object(
+                o.into_iter()
+                    .map(|(k, v)| (k, serde_json::Value::from(v)))
+                    .collect(),
+            ),
         }
     }
 }

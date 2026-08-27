@@ -502,7 +502,7 @@ impl CompatEngine {
             properties_values.insert(style.property, style.value);
         }
 
-        web_sys::console::log_1(&JsValue::from_str(&format!("{css_content}")));
+        web_sys::console::log_1(&JsValue::from_str(css_content));
         web_sys::console::log_1(&JsValue::from_str(&format!("{properties_values:?}")));
 
         let ctx = LookupCSSContext {

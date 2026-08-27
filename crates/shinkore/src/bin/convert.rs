@@ -74,7 +74,7 @@ where
 
 fn write_bin<T>(data: &T, filename: &str) -> Result<(), Box<dyn Error>>
 where
-    T: JSONStructure + SchemaWrite<DefaultConfig, Src = T> + ?Sized + Serialize + DeserializeOwned,
+    T: JSONStructure + SchemaWrite<DefaultConfig, Src = T> + Serialize + DeserializeOwned,
 {
     let encoded = wincode::serialize(data)?;
     let base_path = PathBuf::from("crates/shinkore/gen");

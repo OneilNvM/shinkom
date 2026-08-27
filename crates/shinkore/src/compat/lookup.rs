@@ -6,7 +6,8 @@ use std::collections::HashSet;
 use wasm_bindgen::JsValue;
 
 use shinkore_types::prelude::{
-    CompatType, LookupAttribsContext, LookupCSSContext, LookupElementsContext, LookupType, WebFeatureContext,
+    CompatType, LookupAttribsContext, LookupCSSContext, LookupElementsContext, LookupType,
+    WebFeatureContext,
 };
 
 pub enum AttributeLookupState {
@@ -278,7 +279,7 @@ pub fn multi_lookup_attribs<'a>(
 pub fn lookup_css<'a>(ctx: &'a LookupCSSContext) -> Option<Vec<WebFeatureContext<'a>>> {
     let mut features = Vec::new();
 
-    for (prop, _val) in &ctx.parsed_css_styles {
+    for prop in ctx.parsed_css_styles.keys() {
         if let Some(property) = ctx.css_data.get(prop) {
             features.push(WebFeatureContext {
                 name: prop.to_string(),
