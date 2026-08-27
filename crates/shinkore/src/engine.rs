@@ -5,16 +5,18 @@ use std::{
     cell::RefCell,
     collections::{HashMap, HashSet},
     error::Error,
-    fs::File,
-    io::BufReader,
     num::ParseFloatError,
     path::PathBuf,
     rc::Rc,
+    sync::OnceLock,
 };
 
 use lol_html::{RewriteStrSettings, element, rewrite_str, text};
-use shinkore_types::prelude::{BrowserDataContext, CSSData, LookupCSSContext, WebFeatureContext};
+use shinkore_types::prelude::{
+    BrowserDataContext, CSSData, JSONStructure, LookupCSSContext, WebFeatureContext,
+};
 use wasm_bindgen::JsValue;
+use wincode::{SchemaRead, config::DefaultConfig};
 
 use crate::{
     compat::{
@@ -55,44 +57,30 @@ impl RustCompatEngineBuilder {
             .clone()
             .unwrap_or_else(|| PathBuf::from("./shinkore-data"));
 
-        let read_json = |filename: &str| -> Result<serde_json::Value, Box<dyn Error>> {
+        fn read_bin(base_path: &PathBuf, filename: &str) -> Result<Vec<u8>, Box<dyn Error>> {
             let path = base_path.join(filename);
-            let file = File::open(path)?;
-            let value = serde_json::from_reader(BufReader::new(file))?;
-            Ok(value)
-        };
+            let bytes = std::fs::read(path)?;
 
-        let mut html_root = read_json("html-compat-data.json")?;
-        let mut svg_root = read_json("svg-compat-data.json")?;
-        let mut css_root = read_json("css-compat-data.json")?;
-        let browsers_root = read_json("browser-data.json")?;
-        let usage_root = read_json("browser-usage-data.json")?;
+            Ok(bytes)
+        }
 
-        let html_obj = html_root
-            .as_object_mut()
-            .ok_or("Could not convert html root to object")?;
-        let svg_obj = svg_root
-            .as_object_mut()
-            .ok_or("Could not convert svg root to object")?;
-        let css_obj = css_root
-            .as_object_mut()
-            .ok_or("Could not convert css root to object")?;
+        fn deserialize_bytes<'de, T>(bytes: &'de Vec<u8>) -> Result<T, Box<dyn Error>>
+        where
+            T: JSONStructure + SchemaRead<'de, DefaultConfig, Dst = T>,
+        {
+            Ok(wincode::deserialize::<T>(bytes)?)
+        }
 
-        let html_data_val = html_obj
-            .remove("html")
-            .ok_or("Could not find html property in object")?;
-        let svg_data_val = svg_obj
-            .remove("svg")
-            .ok_or("Could not find svg property in object")?;
-        let css_data_val = css_obj
-            .remove("css")
-            .ok_or("Could not find css property in object")?;
-
-        let html_data = serde_json::from_value(html_data_val).ok();
-        let svg_data = serde_json::from_value(svg_data_val).ok();
-        let css_data: Option<CSSData> = serde_json::from_value(css_data_val).ok();
-        let browser_data = serde_json::from_value(browsers_root).ok();
-        let usage_data = serde_json::from_value(usage_root).ok();
+        let html_data: Option<HTMLData> =
+            deserialize_bytes(&read_bin(&base_path, "html-compat-data.bin")?).ok();
+        let svg_data: Option<SVGData> =
+            deserialize_bytes(&read_bin(&base_path, "svg-compat-data.bin")?).ok();
+        let css_data: Option<CSSData> =
+            deserialize_bytes(&read_bin(&base_path, "css-compat-data.bin")?).ok();
+        let browser_data: Option<BrowserData> =
+            deserialize_bytes(&read_bin(&base_path, "browser-data.bin")?).ok();
+        let usage_data: Option<BrowserUsageData> =
+            deserialize_bytes(&read_bin(&base_path, "browser-usage-data.bin")?).ok();
 
         Ok(RustCompatEngine::new(
             html_data,
@@ -113,6 +101,14 @@ pub struct RustCompatEngine {
     browser_usage_data: BrowserUsageData,
 }
 
+static COMPILED_DATA: OnceLock<(
+    Option<HTMLData>,
+    Option<SVGData>,
+    Option<CSSData>,
+    Option<BrowserData>,
+    Option<BrowserUsageData>,
+)> = OnceLock::new();
+
 impl RustCompatEngine {
     fn new(
         bcd_html_data: Option<HTMLData>,
@@ -131,54 +127,33 @@ impl RustCompatEngine {
     }
 
     pub fn from_compiled_data() -> Result<Self, Box<dyn Error>> {
-        let mut html_root: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../packages/shinkom/gen/html-compat-data.json"
-        ))?;
-        let mut svg_root: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../packages/shinkom/gen/svg-compat-data.json"
-        ))?;
-        let mut css_root: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../packages/shinkom/gen/css-compat-data.json"
-        ))?;
-        let browsers_root: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../packages/shinkom/gen/browser-data.json"
-        ))?;
-        let usage_root: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../packages/shinkom/gen/browser-usage-data.json"
-        ))?;
+        let (html, svg, css, browser_data, usage_data) = COMPILED_DATA.get_or_init(|| {
+            let bcd_html_data: Option<HTMLData> =
+                wincode::deserialize(include_bytes!("../gen/html-compat-data.bin")).ok();
+            let bcd_svg_data: Option<SVGData> =
+                wincode::deserialize(include_bytes!("../gen/svg-compat-data.bin")).ok();
+            let bcd_css_data: Option<CSSData> =
+                wincode::deserialize(include_bytes!("../gen/css-compat-data.bin")).ok();
+            let browser_data: Option<BrowserData> =
+                wincode::deserialize(include_bytes!("../gen/browser-data.bin")).ok();
+            let usage_data: Option<BrowserUsageData> =
+                wincode::deserialize(include_bytes!("../gen/browser-usage-data.bin")).ok();
 
-        let html_obj = html_root
-            .as_object_mut()
-            .ok_or("Could not convert html root to object")?;
-        let svg_obj = svg_root
-            .as_object_mut()
-            .ok_or("Could not convert svg root to object")?;
-        let css_obj = css_root
-            .as_object_mut()
-            .ok_or("Could not convert css root to object")?;
-
-        let html_data_val = html_obj
-            .remove("html")
-            .ok_or("Could not find html property in object")?;
-        let svg_data_val = svg_obj
-            .remove("svg")
-            .ok_or("Could not find svg property in object")?;
-        let css_data_val = css_obj
-            .remove("css")
-            .ok_or("Could not find css property in object")?;
-
-        let bcd_html_data: Option<HTMLData> = serde_json::from_value(html_data_val).ok();
-        let bcd_svg_data: Option<SVGData> = serde_json::from_value(svg_data_val).ok();
-        let bcd_css_data: Option<CSSData> = serde_json::from_value(css_data_val).ok();
-        let browser_data: Option<BrowserData> = serde_json::from_value(browsers_root).ok();
-        let usage_data: Option<BrowserUsageData> = serde_json::from_value(usage_root).ok();
+            (
+                bcd_html_data,
+                bcd_svg_data,
+                bcd_css_data,
+                browser_data,
+                usage_data,
+            )
+        });
 
         Ok(Self::new(
-            bcd_html_data,
-            bcd_svg_data,
-            bcd_css_data,
-            browser_data,
-            usage_data,
+            html.clone(),
+            svg.clone(),
+            css.clone(),
+            browser_data.clone(),
+            usage_data.clone(),
         ))
     }
 

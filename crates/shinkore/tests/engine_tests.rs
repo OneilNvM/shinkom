@@ -5,7 +5,7 @@ use shinkore::engine::{RustCompatEngine, RustCompatEngineBuilder};
 #[test]
 fn should_create_engine() -> Result<(), Box<dyn Error>> {
     let _engine = RustCompatEngineBuilder::new()
-        .with_data_dir("../../packages/shinkom/gen".into())
+        .with_data_dir("gen".into())
         .build()?;
 
     Ok(())
@@ -14,8 +14,6 @@ fn should_create_engine() -> Result<(), Box<dyn Error>> {
 #[test]
 fn should_create_engine_from_compiled_data() -> Result<(), Box<dyn Error>> {
     let _engine = RustCompatEngine::from_compiled_data()?;
-
-    println!("{_engine:?}");
 
     Ok(())
 }

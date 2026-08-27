@@ -58,14 +58,16 @@ impl HintEngine {
     fn tier_2_hints(&mut self, issue: &BrowserIssue) {
         match issue.support {
             SupportData::Single(detail) => {
-                if detail.partial_implementation
-                    && let Some(notes_val) = &detail.notes
-                    && let NotesValue::Single(note) = notes_val
-                {
-                    self.hints.push(format!(
-                        "[shinkore] 💡 Hint: {} is partially implemented in {}. {note}",
-                        issue.feature_name, issue.browser_target
-                    ));
+                if let Some(partial) = detail.partial_implementation {
+                    if partial
+                        && let Some(notes_val) = &detail.notes
+                        && let NotesValue::Single(note) = notes_val
+                    {
+                        self.hints.push(format!(
+                            "[shinkore] 💡 Hint: {} is partially implemented in {}. {note}",
+                            issue.feature_name, issue.browser_target
+                        ));
+                    }
                 }
 
                 if let Some(prefix) = &detail.prefix {
@@ -110,14 +112,16 @@ impl HintEngine {
                         self.hints.push(format!("[shinkore] 💡 Hint: {} was removed in version {version}. If you need support for {} version {version}, consider using supported alternatives.",issue.feature_name,issue.browser_target))
                     }
 
-                    if detail.partial_implementation
-                        && let Some(notes_val) = &detail.notes
-                        && let NotesValue::Single(note) = notes_val
-                    {
-                        self.hints.push(format!(
-                            "[shinkore] 💡 Hint: {} is partially implemented in {}. {note}",
-                            issue.feature_name, issue.browser_target
-                        ));
+                    if let Some(partial) = detail.partial_implementation {
+                        if partial
+                            && let Some(notes_val) = &detail.notes
+                            && let NotesValue::Single(note) = notes_val
+                        {
+                            self.hints.push(format!(
+                                "[shinkore] 💡 Hint: {} is partially implemented in {}. {note}",
+                                issue.feature_name, issue.browser_target
+                            ));
+                        }
                     }
 
                     if let Some(prefix) = &detail.prefix {

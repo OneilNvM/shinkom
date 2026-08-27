@@ -1,7 +1,7 @@
 /**@typedef {import('../types/types').CustomEventEngineDetail} CustomEventEngineDetail */
 /**@typedef {import('../types/public').CompatResult} CompatResult */
 import init, { CompatEngine } from '../../pkg/shinkore'
-import { browserData, htmlCompatData, svgCompatData, usageData } from '../../gen/index'
+import { htmlCompatData, svgCompatData, cssCompatData, browserData, usageData } from '../../gen/index'
 import { ShinkomBus } from '../core/event-bus'
 import { getModulePath } from '../core/helpers'
 
@@ -188,8 +188,9 @@ export class SKEngine {
                 }
 
                 this.compatEngine = new CompatEngine({
-                    html: htmlCompatData,
-                    svg: svgCompatData,
+                    html: htmlCompatData.html,
+                    svg: svgCompatData.svg,
+                    css: cssCompatData.css,
                     browserData,
                     usageData,
                 })

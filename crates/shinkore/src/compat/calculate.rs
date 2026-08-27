@@ -289,8 +289,10 @@ fn calculate_support(
                 browser_data,
             )?;
 
-            if detail.partial_implementation {
-                browser_score *= 0.2;
+            if let Some(partial) = detail.partial_implementation {
+                if partial {
+                    browser_score *= 0.2;
+                }
             }
 
             // Get the raw score before the weighting calculation
@@ -351,9 +353,12 @@ fn calculate_support(
                 )?;
 
                 if !skip {
-                    if detail.partial_implementation {
-                        support_score *= 0.2;
+                    if let Some(partial) = detail.partial_implementation {
+                        if partial {
+                            support_score *= 0.2;
+                        }
                     }
+
                     skip = true;
                 }
 

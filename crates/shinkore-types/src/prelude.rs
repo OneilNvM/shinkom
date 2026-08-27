@@ -1,12 +1,14 @@
 //! This module exports all structs and enums in shinkore.
-use std::collections::{HashMap, HashSet};
-
 use crate::{Deserialize, Serialize};
 pub use lol_html::html_content::Attribute;
+use std::collections::{HashMap, HashSet};
+use wincode::{SchemaRead, SchemaWrite};
 
 use crate::schema::{
     Compat, CompatFeature, CompatGlobalAttribs, ReleaseStatement, SupportData, SupportDetails,
 };
+
+pub trait JSONStructure {}
 
 pub struct ElementContext<'a> {
     pub tag_name: &'a str,
@@ -27,7 +29,7 @@ pub struct LookupAttribsContext<'a> {
 
 pub struct LookupCSSContext<'a> {
     pub parsed_css_styles: HashMap<String, String>,
-    pub css_data: &'a HashMap<String, CompatFeature>
+    pub css_data: &'a HashMap<String, CompatFeature>,
 }
 
 pub struct LookupCaches {
@@ -65,7 +67,7 @@ pub struct CompatDataPayload {
     pub css: Option<CSSData>,
 }
 
-#[derive(Serialize, Deserialize, Default, Debug)]
+#[derive(Serialize, Deserialize, SchemaRead, SchemaWrite, Default, Debug, Clone)]
 pub struct HTMLData {
     #[serde(rename = "elements")]
     pub el_data: HashMap<String, CompatFeature>,
@@ -73,7 +75,7 @@ pub struct HTMLData {
     pub g_attrib_data: HashMap<String, CompatGlobalAttribs>,
 }
 
-#[derive(Serialize, Deserialize, Default, Debug)]
+#[derive(Serialize, Deserialize, SchemaRead, SchemaWrite, Default, Debug, Clone)]
 pub struct SVGData {
     #[serde(rename = "elements")]
     pub el_data: HashMap<String, CompatFeature>,
@@ -81,27 +83,33 @@ pub struct SVGData {
     pub g_attrib_data: HashMap<String, CompatGlobalAttribs>,
 }
 
-#[derive(Serialize, Deserialize, Default, Debug)]
+#[derive(Serialize, Deserialize, SchemaRead, SchemaWrite, Default, Debug, Clone)]
 pub struct CSSData {
     #[serde(rename = "properties")]
-    pub properties_data: HashMap<String, CompatFeature>
+    pub properties_data: HashMap<String, CompatFeature>,
 }
 
-#[derive(Serialize, Deserialize, Default, Clone, Debug)]
+#[derive(Serialize, Deserialize, SchemaRead, SchemaWrite, Default, Clone, Debug)]
 pub struct BrowserData {
     pub browsers: HashMap<String, HashMap<String, ReleaseStatement>>,
 }
 
-#[derive(Serialize, Deserialize, Default, Clone, Debug)]
+#[derive(Serialize, Deserialize, SchemaRead, SchemaWrite, Default, Clone, Debug)]
 pub struct BrowserUsageData {
     pub agents: HashMap<String, HashMap<String, f32>>,
     #[serde(rename = "marketShare")]
     pub market_share: f32,
 }
 
+impl JSONStructure for HTMLData {}
+impl JSONStructure for SVGData {}
+impl JSONStructure for CSSData {}
+impl JSONStructure for BrowserData {}
+impl JSONStructure for BrowserUsageData {}
+
 pub struct BrowserDataContext<'a> {
     pub browser_data: &'a BrowserData,
-    pub browser_usage_data: &'a BrowserUsageData
+    pub browser_usage_data: &'a BrowserUsageData,
 }
 
 #[derive(Default, Serialize, Deserialize, Debug)]
@@ -145,5 +153,5 @@ pub enum CompatType<'a> {
 
 pub struct ParsedCssStyle {
     pub property: String,
-    pub value: String
+    pub value: String,
 }

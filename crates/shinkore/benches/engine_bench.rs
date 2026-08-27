@@ -1,5 +1,6 @@
 use std::error::Error;
 
+use divan::Bencher;
 use shinkore::engine::{RustCompatEngine, RustCompatEngineBuilder};
 
 const SMALL_HTML: &str = r#"
@@ -85,37 +86,45 @@ fn engine_init_from_compiled_data() -> Result<(), Box<dyn Error>> {
 }
 
 #[divan::bench(args = [1, 2])]
-fn engine_check_small_html(depth_level: u32) -> Result<(), Box<dyn Error>> {
-    let engine = divan::black_box(RustCompatEngine::from_compiled_data())?;
+fn engine_check_small_html(bencher: Bencher, depth_level: u32) {
+    let engine = RustCompatEngine::from_compiled_data().unwrap();
 
-    let _ = engine.check_elements(SMALL_HTML, depth_level)?;
+    bencher.bench_local(|| -> Result<(), Box<dyn Error>> {
+        let _ = divan::black_box(engine.check_elements(SMALL_HTML, depth_level))?;
 
-    Ok(())
+        Ok(())
+    });
 }
 
 #[divan::bench(args = [1, 2, 3, 4])]
-fn engine_check_attribute_heavy_html(depth_level: u32) -> Result<(), Box<dyn Error>> {
-    let engine = divan::black_box(RustCompatEngine::from_compiled_data())?;
+fn engine_check_attribute_heavy_html(bencher: Bencher, depth_level: u32) {
+    let engine = RustCompatEngine::from_compiled_data().unwrap();
 
-    let _ = engine.check_elements(ATTRIBUTE_HEAVY_HTML, depth_level)?;
+    bencher.bench_local(|| -> Result<(), Box<dyn Error>> {
+        let _ = divan::black_box(engine.check_elements(ATTRIBUTE_HEAVY_HTML, depth_level))?;
 
-    Ok(())
+        Ok(())
+    });
 }
 
 #[divan::bench(args = [1, 3, 5, 7, 9, 11, 13])]
-fn engine_check_deeply_nested_html(depth_level: u32) -> Result<(), Box<dyn Error>> {
-    let engine = divan::black_box(RustCompatEngine::from_compiled_data())?;
+fn engine_check_deeply_nested_html(bencher: Bencher, depth_level: u32) {
+    let engine = RustCompatEngine::from_compiled_data().unwrap();
 
-    let _ = engine.check_elements(DEEPLY_NESTED_HTML, depth_level)?;
+    bencher.bench_local(|| -> Result<(), Box<dyn Error>> {
+        let _ = divan::black_box(engine.check_elements(DEEPLY_NESTED_HTML, depth_level))?;
 
-    Ok(())
+        Ok(())
+    });
 }
 
 #[divan::bench(args = [1, 2])]
-fn engine_check_malformed_html(depth_level: u32) -> Result<(), Box<dyn Error>> {
-    let engine = divan::black_box(RustCompatEngine::from_compiled_data())?;
+fn engine_check_malformed_html(bencher: Bencher, depth_level: u32) {
+    let engine = RustCompatEngine::from_compiled_data().unwrap();
 
-    let _ = engine.check_elements(MALFORMED_HTML, depth_level)?;
+    bencher.bench_local(|| -> Result<(), Box<dyn Error>> {
+        let _ = divan::black_box(engine.check_elements(MALFORMED_HTML, depth_level))?;
 
-    Ok(())
+        Ok(())
+    });
 }
