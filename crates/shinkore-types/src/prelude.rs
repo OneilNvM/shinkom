@@ -151,6 +151,7 @@ pub enum CompatType<'a> {
     GlobalAttributes(&'a CompatGlobalAttribs),
 }
 
+#[derive(Debug)]
 pub struct ParsedCssStyle {
     pub property: String,
     pub value: String,

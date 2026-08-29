@@ -14,5 +14,7 @@ color: whitesmoke;
 
     let result = parse_stylesheet(simple_css);
 
-    assert!(!result.is_empty())
+    println!("{result:#?}");
+
+    assert!(result.len() == 6)
 }
