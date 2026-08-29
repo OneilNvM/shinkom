@@ -1,6 +1,6 @@
 /**@typedef {import('../types/types').CustomEventEngineDetail} CustomEventEngineDetail */
 /**@typedef {import('../types/public').CompatResult} CompatResult */
-import init, { CompatEngine } from '../../pkg/shinkore'
+import init, { CompatEngine, CompatEngineBuilder } from '../../pkg/shinkore'
 import { htmlCompatData, svgCompatData, cssCompatData, browserData, usageData } from '../../gen/index'
 import { ShinkomBus } from '../core/event-bus'
 import { getModulePath } from '../core/helpers'
@@ -175,7 +175,7 @@ export class SKEngine {
         if (this.unsubEvents.length === 0) {
             this.#setupEventBusListeners()
         }
-
+        
         try {
             if (!this.compatEngine) {
                 if (!this.#wasmLoaded) {
@@ -187,17 +187,17 @@ export class SKEngine {
                     }
                 }
 
-                this.compatEngine = new CompatEngine({
-                    html: htmlCompatData.html,
-                    svg: svgCompatData.svg,
-                    css: cssCompatData.css,
-                    browserData,
-                    usageData,
-                })
+                const builder = new CompatEngineBuilder()
+
+                builder.set_html_binary_data(Uint8Array.fromBase64(htmlCompatData))
+                builder.set_svg_binary_data(Uint8Array.fromBase64(svgCompatData))
+                builder.set_css_binary_data(Uint8Array.fromBase64(cssCompatData))
+                builder.set_browser_binary_data(Uint8Array.fromBase64(browserData))
+                builder.set_browser_usage_binary_data(Uint8Array.fromBase64(usageData))
+
+                this.compatEngine = builder.build()
 
                 this.initialized = true
-
-                this.getInstance()
 
                 console.log("initialized engine")
             }

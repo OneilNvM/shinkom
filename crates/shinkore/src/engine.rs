@@ -51,10 +51,9 @@ impl RustCompatEngineBuilder {
         self
     }
 
-    pub fn build(&self) -> Result<RustCompatEngine, Box<dyn Error>> {
+    pub fn build(self) -> Result<RustCompatEngine, Box<dyn Error>> {
         let base_path = self
             .data_dir
-            .clone()
             .unwrap_or_else(|| PathBuf::from("./shinkore-data"));
 
         fn read_bin(base_path: &Path, filename: &str) -> Result<Vec<u8>, Box<dyn Error>> {

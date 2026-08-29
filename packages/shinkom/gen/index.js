@@ -1,6 +1,6 @@
-import htmlCompatData from './html-compat-data.json' with {type: 'json'}
-import svgCompatData from './svg-compat-data.json' with {type: 'json'}
-import cssCompatData from './css-compat-data.json' with {type: 'json'}
-import browserData from './browser-data.json' with {type: 'json'}
-import usageData from './browser-usage-data.json' with {type: 'json'}
-export { htmlCompatData, svgCompatData, cssCompatData, browserData, usageData }
+import { htmlCompatDataB64 } from './html-compat-data.bin'
+import { svgCompatDataB64 } from './svg-compat-data.bin'
+import { cssCompatDataB64 } from './css-compat-data.bin'
+import { browserDataB64 } from './browser-data.bin'
+import { browserUsageDataB64 } from './browser-usage-data.bin'
+export { htmlCompatDataB64 as htmlCompatData, svgCompatDataB64 as svgCompatData, cssCompatDataB64 as cssCompatData, browserDataB64 as browserData, browserUsageDataB64 as usageData }

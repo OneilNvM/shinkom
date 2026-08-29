@@ -50,7 +50,8 @@ use crate::errors::CheckError;
 
 #[derive(Deserialize, Default, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct CompatEngineConfig {
+#[wasm_bindgen]
+pub struct CompatEngineBuilder {
     #[serde(default)]
     html: Option<HTMLData>,
     #[serde(default)]
@@ -61,6 +62,60 @@ pub struct CompatEngineConfig {
     browser_data: Option<BrowserData>,
     #[serde(default)]
     usage_data: Option<BrowserUsageData>,
+}
+
+#[wasm_bindgen]
+impl CompatEngineBuilder {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    #[wasm_bindgen]
+    pub fn set_html_binary_data(&mut self, data: &[u8]) {
+        let html_data: Option<HTMLData> = wincode::deserialize(data).ok();
+
+        self.html = html_data;
+    }
+
+    #[wasm_bindgen]
+    pub fn set_svg_binary_data(&mut self, data: &[u8]) {
+        let svg_data: Option<SVGData> = wincode::deserialize(data).ok();
+
+        self.svg = svg_data;
+    }
+
+    #[wasm_bindgen]
+    pub fn set_css_binary_data(&mut self, data: &[u8]) {
+        let css_data: Option<CSSData> = wincode::deserialize(data).ok();
+
+        self.css = css_data;
+    }
+
+    #[wasm_bindgen]
+    pub fn set_browser_binary_data(&mut self, data: &[u8]) {
+        let browser_data: Option<BrowserData> = wincode::deserialize(data).ok();
+
+        self.browser_data = browser_data;
+    }
+
+    #[wasm_bindgen]
+    pub fn set_browser_usage_binary_data(&mut self, data: &[u8]) {
+        let browser_usage_data: Option<BrowserUsageData> = wincode::deserialize(data).ok();
+
+        self.usage_data = browser_usage_data;
+    }
+
+    #[wasm_bindgen]
+    pub fn build(self) -> CompatEngine {
+        CompatEngine {
+            html: self.html.unwrap_or_default(),
+            svg: self.svg.unwrap_or_default(),
+            css: self.css.unwrap_or_default(),
+            browser_data: self.browser_data.unwrap_or_default(),
+            browser_usage_data: self.usage_data.unwrap_or_default(),
+        }
+    }
 }
 
 /// The [`CompatEngine`] struct stores the compatibility data
@@ -77,21 +132,6 @@ pub struct CompatEngine {
 
 #[wasm_bindgen]
 impl CompatEngine {
-    /// Constructs an new engine instance
-    #[wasm_bindgen(constructor)]
-    pub fn new(config: JsValue) -> Result<Self, JsValue> {
-        let config: CompatEngineConfig = serde_wasm_bindgen::from_value(config)
-            .map_err(|e| JsValue::from_str(&format!("Failed to parse engine config: {e}")))?;
-
-        Ok(Self {
-            html: config.html.unwrap_or_default(),
-            svg: config.svg.unwrap_or_default(),
-            css: config.css.unwrap_or_default(),
-            browser_data: config.browser_data.unwrap_or_default(),
-            browser_usage_data: config.usage_data.unwrap_or_default(),
-        })
-    }
-
     /// Used for checking the compatibility of a single element and its attributes.
     #[wasm_bindgen]
     pub fn check_element(&self, html: &str) -> Result<JsValue, JsError> {
