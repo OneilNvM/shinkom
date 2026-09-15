@@ -156,3 +156,10 @@ pub struct ParsedCssStyle {
     pub property: String,
     pub value: String,
 }
+
+#[derive(Debug)]
+pub enum CSSType {
+    Inline,
+    StyleTag,
+    Class
+}

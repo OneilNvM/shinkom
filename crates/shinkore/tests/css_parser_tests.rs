@@ -12,7 +12,7 @@ color: whitesmoke;
 }
     ";
 
-    let result = parse_stylesheet(simple_css);
+    let result = parse_stylesheet(simple_css).unwrap();
 
     println!("{result:#?}");
 

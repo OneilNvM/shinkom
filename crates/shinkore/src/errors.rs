@@ -1,5 +1,6 @@
 use std::{error::Error, fmt::Display, num::ParseFloatError};
 
+use cssparser::{ParseError, ParseErrorKind};
 use thiserror::Error;
 
 #[derive(Error, Debug, Clone)]
@@ -16,6 +17,8 @@ pub enum CheckError {
     ParseFloatError(#[from] ParseFloatError),
     #[error("{0}")]
     ParseVersionError(#[from] ParseVersionError),
+    #[error("{0}")]
+    ParseStylesError(#[from] ParseStylesError),
 }
 
 impl From<lol_html::errors::RewritingError> for CheckError {
@@ -84,5 +87,37 @@ impl Error for ParseVersionError {}
 impl Display for ParseVersionError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "parse version error: {}", self.message)
+    }
+}
+
+#[derive(Error, Debug, Clone)]
+pub struct ParseStylesError {
+    pub message: String,
+    content: String,
+}
+
+impl Display for ParseStylesError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "error parsing css styles: {}\nCSS content: {}",
+            self.message, self.content
+        )
+    }
+}
+
+impl<E> From<ParseError<'_, E>> for ParseStylesError {
+    fn from(value: ParseError<'_, E>) -> Self {
+        if let ParseErrorKind::Basic(basic) = value.kind {
+            return Self {
+                message: basic.to_string(),
+                content: String::new(),
+            }
+        }
+
+        Self {
+            message: "encountered an error parsing css styles".to_string(),
+            content: String::new()
+        }
     }
 }

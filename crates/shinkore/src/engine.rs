@@ -13,9 +13,8 @@ use std::{
 
 use lol_html::{RewriteStrSettings, element, rewrite_str, text};
 use shinkore_types::prelude::{
-    BrowserDataContext, CSSData, JSONStructure, LookupCSSContext, WebFeatureContext,
+    BrowserDataContext, CSSData, CSSType, JSONStructure, LookupCSSContext, WebFeatureContext,
 };
-use wasm_bindgen::JsValue;
 use wincode::{SchemaRead, config::DefaultConfig};
 
 use crate::{
@@ -26,7 +25,7 @@ use crate::{
         },
     },
     constants::{IGNORE_TAGS, SKIP_TAGS},
-    css::parse_stylesheet,
+    css::{parse_inline_styles, parse_stylesheet},
     errors::{CheckError, PreProcessError},
     preprocess::{format_html, pre_process_html},
 };
@@ -193,7 +192,7 @@ impl RustCompatEngine {
                 .append_element_content_handler(text!("style", |el| {
                     let style_content = el.as_str();
 
-                    let compat_results = self.css_compat_check(style_content);
+                    let compat_results = self.css_compat_check(style_content, CSSType::StyleTag);
 
                     match compat_results {
                         Ok(res) => results.borrow_mut().extend(res),
@@ -270,7 +269,7 @@ impl RustCompatEngine {
                 .append_element_content_handler(text!("style", |el| {
                     let style_content = el.as_str();
 
-                    let compat_results = self.css_compat_check(style_content);
+                    let compat_results = self.css_compat_check(style_content, CSSType::StyleTag);
 
                     match compat_results {
                         Ok(res) => results.borrow_mut().extend(res),
@@ -340,7 +339,7 @@ impl RustCompatEngine {
                 .append_element_content_handler(text!("style", |el| {
                     let style_content = el.as_str();
 
-                    let compat_results = self.css_compat_check(style_content);
+                    let compat_results = self.css_compat_check(style_content, CSSType::StyleTag);
 
                     match compat_results {
                         Ok(res) => results.borrow_mut().extend(res),
@@ -385,6 +384,10 @@ impl RustCompatEngine {
 
         for attribute in ctx.attributes {
             attribs.insert(attribute.name_preserve_case(), attribute.value());
+        }
+
+        if let Some(inline_styles) = attribs.get("style") {
+            overall_results.extend(self.css_compat_check(inline_styles, CSSType::Inline)?);
         }
 
         // If the element is an SVG element, opt for an SVG data lookup
@@ -468,6 +471,10 @@ impl RustCompatEngine {
             attribs.insert(attribute.name_preserve_case(), attribute.value());
         }
 
+        if let Some(inline_styles) = attribs.get("style") {
+            overall_results.extend(self.css_compat_check(inline_styles, CSSType::Inline)?);
+        }
+
         // If the element is an SVG element, opt for an SVG data lookup
         if self.svg.el_data.contains_key(ctx.tag_name) && !SKIP_TAGS.contains(&ctx.tag_name) {
             let lookup_els_context = LookupElementsContext {
@@ -540,17 +547,28 @@ impl RustCompatEngine {
         Ok(overall_results)
     }
 
-    fn css_compat_check(&self, css_content: &str) -> Result<Vec<LookupResults>, CheckError> {
+    fn css_compat_check(
+        &self,
+        css_content: &str,
+        css_type: CSSType,
+    ) -> Result<Vec<LookupResults>, CheckError> {
         let mut overall_results = Vec::new();
         let mut features: Vec<WebFeatureContext> = Vec::new();
         let mut properties_values = HashMap::new();
 
-        for style in parse_stylesheet(css_content) {
-            properties_values.insert(style.property, style.value);
+        match css_type {
+            CSSType::Inline => {
+                for style in parse_inline_styles(css_content)? {
+                    properties_values.insert(style.property, style.value);
+                }
+            }
+            CSSType::StyleTag => {
+                for style in parse_stylesheet(css_content)? {
+                    properties_values.insert(style.property, style.value);
+                }
+            }
+            _ => {}
         }
-
-        web_sys::console::log_1(&JsValue::from_str(css_content));
-        web_sys::console::log_1(&JsValue::from_str(&format!("{properties_values:?}")));
 
         let ctx = LookupCSSContext {
             parsed_css_styles: properties_values,

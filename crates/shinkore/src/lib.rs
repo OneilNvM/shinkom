@@ -45,7 +45,7 @@ use crate::compat::lookup::{
     lookup_attribs, lookup_css, lookup_element, multi_lookup_attribs, multi_lookup_element,
 };
 use crate::constants::{IGNORE_TAGS, SKIP_TAGS};
-use crate::css::parse_stylesheet;
+use crate::css::{parse_inline_styles, parse_stylesheet};
 use crate::errors::CheckError;
 
 #[derive(Deserialize, Default, Debug)]
@@ -171,11 +171,14 @@ impl CompatEngine {
                 .append_element_content_handler(text!("style", |el| {
                     let style_content = el.as_str();
 
-                    let compat_results = self.css_compat_check(style_content);
+                    if !style_content.is_empty() {
+                        let compat_results =
+                            self.css_compat_check(style_content, CSSType::StyleTag);
 
-                    match compat_results {
-                        Ok(res) => results.borrow_mut().extend(res),
-                        Err(e) => return Err(format!("{e:?}").into()),
+                        match compat_results {
+                            Ok(res) => results.borrow_mut().extend(res),
+                            Err(e) => return Err(format!("{e:?}").into()),
+                        }
                     }
 
                     Ok(())
@@ -252,11 +255,14 @@ impl CompatEngine {
                 .append_element_content_handler(text!("style", |el| {
                     let style_content = el.as_str();
 
-                    let compat_results = self.css_compat_check(style_content);
+                    if !style_content.is_empty() {
+                        let compat_results =
+                            self.css_compat_check(style_content, CSSType::StyleTag);
 
-                    match compat_results {
-                        Ok(res) => results.borrow_mut().extend(res),
-                        Err(e) => return Err(format!("{e:?}").into()),
+                        match compat_results {
+                            Ok(res) => results.borrow_mut().extend(res),
+                            Err(e) => return Err(format!("{e:?}").into()),
+                        }
                     }
 
                     Ok(())
@@ -328,11 +334,14 @@ impl CompatEngine {
                 .append_element_content_handler(text!("style", |el| {
                     let style_content = el.as_str();
 
-                    let compat_results = self.css_compat_check(style_content);
+                    if !style_content.is_empty() {
+                        let compat_results =
+                            self.css_compat_check(style_content, CSSType::StyleTag);
 
-                    match compat_results {
-                        Ok(res) => results.borrow_mut().extend(res),
-                        Err(e) => return Err(format!("{e:?}").into()),
+                        match compat_results {
+                            Ok(res) => results.borrow_mut().extend(res),
+                            Err(e) => return Err(format!("{e:?}").into()),
+                        }
                     }
 
                     Ok(())
@@ -378,6 +387,10 @@ impl CompatEngine {
 
         for attribute in ctx.attributes {
             attribs.insert(attribute.name_preserve_case(), attribute.value());
+        }
+
+        if let Some(inline_styles) = attribs.get("style") {
+            overall_results.extend(self.css_compat_check(inline_styles, CSSType::Inline)?);
         }
 
         // If the element is an SVG element, opt for an SVG data lookup
@@ -461,6 +474,10 @@ impl CompatEngine {
             attribs.insert(attribute.name_preserve_case(), attribute.value());
         }
 
+        if let Some(inline_styles) = attribs.get("style") {
+            overall_results.extend(self.css_compat_check(inline_styles, CSSType::Inline)?);
+        }
+
         // If the element is an SVG element, opt for an SVG data lookup
         if self.svg.el_data.contains_key(ctx.tag_name) && !SKIP_TAGS.contains(&ctx.tag_name) {
             let lookup_els_context = LookupElementsContext {
@@ -533,16 +550,34 @@ impl CompatEngine {
         Ok(overall_results)
     }
 
-    fn css_compat_check(&self, css_content: &str) -> Result<Vec<LookupResults>, CheckError> {
+    fn css_compat_check(
+        &self,
+        css_content: &str,
+        css_type: CSSType,
+    ) -> Result<Vec<LookupResults>, CheckError> {
         let mut overall_results = Vec::new();
         let mut features: Vec<WebFeatureContext> = Vec::new();
         let mut properties_values = HashMap::new();
 
-        for style in parse_stylesheet(css_content) {
-            properties_values.insert(style.property, style.value);
+        web_sys::console::log_1(&JsValue::from_str(css_content));
+        match css_type {
+            CSSType::Inline => {
+                for style in parse_inline_styles(css_content)? {
+                    if !properties_values.contains_key(&style.property) {
+                        properties_values.insert(style.property, style.value);
+                    }
+                }
+            }
+            CSSType::StyleTag => {
+                for style in parse_stylesheet(css_content)? {
+                    if !properties_values.contains_key(&style.property) {
+                        properties_values.insert(style.property, style.value);
+                    }
+                }
+            }
+            _ => {}
         }
 
-        web_sys::console::log_1(&JsValue::from_str(css_content));
         web_sys::console::log_1(&JsValue::from_str(&format!("{properties_values:?}")));
 
         let ctx = LookupCSSContext {
