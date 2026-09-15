@@ -1,9 +1,7 @@
 version: 2
 updates:
   - package-ecosystem: "npm"
-    directory:
-      - "/"
-      - "/packages/shinkom"
+    directory: "/"
     schedule:
       interval: "weekly"
     allow:
