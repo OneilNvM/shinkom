@@ -1,7 +1,6 @@
 import pkg from './package.json' with { type: 'json' }
 import { defineConfig } from "tsdown";
 import copyWasmPlugin from './plugins/copyWasmPlugin';
-import minifyJsonPlugin from './plugins/minifyJsonPlugin';
 
 const banner = (c: any) => {
     if (c.name.includes('.json')) return "";
@@ -64,11 +63,6 @@ export default defineConfig([
         },
         plugins: [
             copyWasmPlugin("bundles"),
-            minifyJsonPlugin([
-                '../dist/bundles/gen/compat-data.js',
-                '../dist/bundles/gen/browser-data.js',
-                '../dist/bundles/gen/browser-usage-data.js'
-            ])
         ],
     },
     {
@@ -112,11 +106,6 @@ export default defineConfig([
         },
         plugins: [
             copyWasmPlugin("modules"),
-            minifyJsonPlugin([
-                '../dist/modules/gen/compat-data.cjs',
-                '../dist/modules/gen/browser-data.cjs',
-                '../dist/modules/gen/browser-usage-data.cjs'
-            ])
         ],
     },
 ])
