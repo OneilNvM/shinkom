@@ -18,5 +18,4 @@ updates:
       - dependency-name: "@types/node"
         update-types:
           - "version-update:semver-major"
-    exlude-paths:
-      - "playgrounds/**"
+    exlude-paths: "playgrounds/**"
