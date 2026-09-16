@@ -92,7 +92,10 @@
     "build:wasm": "wasm-pack build ../../crates/shinkore --target web --out-dir ../../packages/shinkom/pkg --release",
     "test": "vitest",
     "type:check": "tsc --project tsconfig.json",
-    "gen:data": "tsx ./scripts/extract-compat.ts && tsx ./scripts/extract-browser-data.ts && tsx ./scripts/extract-usage-data.ts"
+    "gen:json": "tsx ./scripts/extract-compat.ts && tsx ./scripts/extract-browser-data.ts && tsx ./scripts/extract-usage-data.ts",
+    "gen:bin": "cargo run -p shinkore --bin convert",
+    "gen:binjs": "tsx ./scripts/bin2js.ts",
+    "gen:data": "pnpm run gen:json && pnpm run gen:bin && pnpm run gen:binjs"
   },
   "devDependencies": {
     "@mdn/browser-compat-data": "8.0.2",

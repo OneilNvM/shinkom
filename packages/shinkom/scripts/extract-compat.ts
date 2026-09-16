@@ -40,7 +40,7 @@ const extractHTMLData = () => {
     extractHTMLElements()
     extractHTMLGlobalAttributes()
 
-    const outDir = path.resolve("./gen")
+    const outDir = path.resolve("./gen/json")
     if (!existsSync(outDir)) mkdirSync(outDir)
 
     writeFileSync(path.join(outDir, 'html-compat-data.json'), JSON.stringify(htmlOutput))
@@ -52,7 +52,7 @@ const extractSVGData = () => {
     extractSVGElements()
     extractSVGGlobalAttributes()
 
-    const outDir = path.resolve("./gen")
+    const outDir = path.resolve("./gen/json")
     if (!existsSync(outDir)) mkdirSync(outDir)
 
     writeFileSync(path.join(outDir, 'svg-compat-data.json'), JSON.stringify(svgOutput))
@@ -63,7 +63,7 @@ const extractSVGData = () => {
 const extractCSSData = () => {
     extractCSSProperties()
 
-    const outDir = path.resolve("./gen")
+    const outDir = path.resolve("./gen/json")
     if (!existsSync(outDir)) mkdirSync(outDir)
 
     writeFileSync(path.join(outDir, 'css-compat-data.json'), JSON.stringify(cssOutput))

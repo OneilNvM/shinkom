@@ -10,6 +10,8 @@ if (fs.existsSync(rustGenDir) && fs.existsSync(jsGenDir)) {
     bin2Base64("css-compat-data.bin")
     bin2Base64("browser-data.bin")
     bin2Base64("browser-usage-data.bin")
+
+    console.log("Successfully generated .bin.js files!")
 }
 
 function bin2Base64(filename: string) {
