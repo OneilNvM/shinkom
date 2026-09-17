@@ -22,6 +22,8 @@ jobs:
       - uses: actions/checkout@v6
       - name: Install pnpm
         uses: pnpm/action-setup@v6
+        with:
+          version: 10
       - name: Install wasm-pack
         run: cargo install wasm-pack
       - name: Run Clippy
@@ -55,6 +57,8 @@ jobs:
           path: packages/shinkom/pkg
       - name: Install pnpm
         uses: pnpm/action-setup@v6
+        with:
+          version: 10
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v6
         with:
