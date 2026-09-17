@@ -69,13 +69,13 @@ jobs:
       - name: Generate JSON Data
         if: steps.check_diff.outputs.updated == 'true'
         run: pnpm gen:data
-        working-directory: "/packages/shinkom"
+        working-directory: "./packages/shinkom"
 
       # Build both Shinkom and Shinkore with the new data
       - name: Build JS and WASM
         if: steps.check_diff.outputs.updated == 'true'
         run: pnpm build
-        working-directory: "/"
+        working-directory: "."
 
       - name: Bump Package Version
         if: steps.check_diff.outputs.updated == 'true'
@@ -83,11 +83,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           pnpm version patch -m "chore(release): %s [skip ci]"
-        working-directory: "/packages/shinkom"
+        working-directory: "./packages/shinkom"
       - name: Publish to npm
         if: steps.check_diff.outputs.updated == 'true'
         run: pnpm publish --filter shinkom --access public --provenance --no-git-checks
-        working-directory: "/"
+        working-directory: "./"
       - name: Push Git Tags and Commits
         if: steps.check_diff.outputs.updated == 'true'
         run: git push --follow-tags
