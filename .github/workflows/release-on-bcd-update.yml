@@ -46,6 +46,7 @@ jobs:
           if [[ ${{ github.event_name }} == "workflow_dispatch" ]]; then
             echo "Manual workflow trigger - forcing build"
             echo "updated=true" >> $GITHUB_OUTPUT
+            exit 0
           fi
 
           BEFORE="${{ github.event.before }}"
@@ -58,6 +59,7 @@ jobs:
 
           CHANGED=$(git diff $BEFORE $AFTER -- pnpm-lock.yaml | grep -E '@mdn/browser-compat-data|caniuse-db' || true)
           if [[ -n $CHANGED ]]; then
+              echo ""
               echo "updated=true" >> $GITHUB_OUTPUT
           else
               echo "updated=false" >> $GITHUB_OUTPUT
