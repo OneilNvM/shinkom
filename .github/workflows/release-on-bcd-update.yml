@@ -1,0 +1,76 @@
+name: Build and Publish on BCD/Caniuse Update
+
+on:
+    push:
+        branches: ["master"]
+        paths:
+            - pnpm-lock.yaml
+            - packages/shinkom/package.json
+    pull_request:
+        branches: ["master"]
+        paths:
+            - pnpm-lock.yaml
+            - packages/shinkom/package.json
+
+permissions:
+    contents: write
+    id-token: write
+
+jobs:
+    publish:
+        name: Build and Publish to npm
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v6
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: 24
+                  registry-url: "https://registry.npmjs.org"
+                  package-manager-cache: false
+            - name: Install wasm-pack
+              run: cargo install wasm-pack
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            # Check if the @mdn/browser-compat-data or caniuse-db dependencies were changed in the last commit
+            - name: Check for BCD/Caniuse dependency changes
+              id: check_diff
+              run: |
+                  CHANGED=$(git diff HEAD~1 HEAD -- pnpm-lock.yaml | grep -E '@mdn/browser-compat-data|caniuse-db' || true)
+                  if [-n $CHANGED]; then
+                      echo "updated=true" >> GITHUB_OUTPUT
+                  elif
+                      echo "updated=false" >> GITHUB_OUTPUT
+                  fi
+
+            # Generate the JSON files for the compatibility data and browser data
+            - name: Generate JSON Data
+              if: steps.check_diff.outputs.updated == 'true'
+              run: pnpm gen:data
+              working-directory: "/packages/shinkom"
+
+            # Build both Shinkom and Shinkore with the new data
+            - name: Build JS and WASM
+              if: steps.check_diff.outputs.updated == 'true'
+              run: pnpm build
+              working-directory: "/"
+              
+            - name: Bump Package Version
+              if: steps.check_diff.outputs.updated == 'true'
+              run: |
+                git config user.name "github-actions[bot]"
+                git config user.email "github-actions[bot]@users.noreply.github.com"
+                pnpm version patch -m "chore(release): %s [skip ci]"
+            - name: Publish to npm
+              if: steps.check_diff.outputs.updated == 'true'
+              run: pnpm publish --access public --provenance --no-git-checks
+            - name: Push Git Tags and Commits
+              if: steps.check_diff.outputs.updated == 'true'
+              run: git push --follow-tags
+
