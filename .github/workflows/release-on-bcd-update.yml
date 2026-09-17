@@ -44,7 +44,7 @@ jobs:
               id: check_diff
               run: |
                   CHANGED=$(git diff HEAD~1 HEAD -- pnpm-lock.yaml | grep -E '@mdn/browser-compat-data|caniuse-db' || true)
-                  if [-n $CHANGED]; then
+                  if [[ -n $CHANGED ]]; then
                       echo "updated=true" >> GITHUB_OUTPUT
                   else
                       echo "updated=false" >> GITHUB_OUTPUT
