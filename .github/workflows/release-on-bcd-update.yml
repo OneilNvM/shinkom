@@ -86,7 +86,7 @@ jobs:
         working-directory: "./packages/shinkom"
       - name: Publish to npm
         if: steps.check_diff.outputs.updated == 'true'
-        run: pnpm publish --filter shinkom --access public --provenance --no-git-checks
+        run: pnpm stage publish --filter shinkom --access public --provenance --no-git-checks
         working-directory: "./"
       - name: Push Git Tags and Commits
         if: steps.check_diff.outputs.updated == 'true'
