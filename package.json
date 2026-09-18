@@ -1,7 +1,7 @@
 {
   "name": "shinkom-project",
   "private": true,
-  "packageManager": "pnpm@11.5.2",
+  "packageManager": "pnpm@9.15.9",
   "scripts": {
     "dev": "pnpm --filter shinkom dev",
     "dev:nobuild": "pnpm --filter shinkom dev:nobuild",
