@@ -82,7 +82,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          pnpm version patch -m "chore(release): %s [skip ci]" --no-git-checks
+          pnpm version patch -m "chore(release): %s [skip ci]"
         working-directory: "./packages/shinkom"
       - name: Publish to npm
         if: steps.check_diff.outputs.updated == 'true'
