@@ -71,7 +71,12 @@ jobs:
         run: |
           pnpm gen:data
 
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          echo "Add gen directory changes to git index"
           git add gen
+          echo "Commit changes to repository"
           git commit -m "chore: Generated new JSON data for bcd/caniuse-db"
         working-directory: "./packages/shinkom"
 
