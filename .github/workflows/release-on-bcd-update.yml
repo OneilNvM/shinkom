@@ -45,7 +45,6 @@ jobs:
           echo "tag=v$VERSION" > $GITHUB_OUTPUT
       - name: Publish to npm
         run: pnpm publish --filter shinkom --access public --provenance --no-git-checks
-        working-directory: "./"
       - name: Push Git Tags and Commits
         run: git push origin --tags
       - name: Create GitHub Release
