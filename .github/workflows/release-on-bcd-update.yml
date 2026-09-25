@@ -68,7 +68,16 @@ jobs:
       # Generate the JSON files for the compatibility data and browser data
       - name: Generate JSON Data
         if: steps.check_diff.outputs.updated == 'true'
-        run: pnpm gen:data
+        run: |
+          pnpm gen:data
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          echo "Add gen directory changes to git index"
+          git add gen
+          echo "Commit changes to repository"
+          git commit -m "chore: Generated new JSON data for bcd/caniuse-db"
         working-directory: "./packages/shinkom"
 
       # Build both Shinkom and Shinkore with the new data
@@ -78,11 +87,15 @@ jobs:
         working-directory: "."
 
       - name: Bump Package Version
+        id: version_bump
         if: steps.check_diff.outputs.updated == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          pnpm version patch -m "chore(release): %s [skip ci]" --no-git-checks
+          pnpm version patch -m "chore(release): %s [skip ci]"
+
+          TAG_NAME=$(git describe --tags --abbrev=0)
+          echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
         working-directory: "./packages/shinkom"
       - name: Publish to npm
         if: steps.check_diff.outputs.updated == 'true'
@@ -90,4 +103,14 @@ jobs:
         working-directory: "./"
       - name: Push Git Tags and Commits
         if: steps.check_diff.outputs.updated == 'true'
-        run: git push --follow-tags
+        run: git push origin HEAD:${{ github.event.repository.default_branch }} --tags
+      - name: Create GitHub Release
+        if: steps.check_diff.outputs.updated == 'true'
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: "v${{steps.version_bump.outputs.tag}}"
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
