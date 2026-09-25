@@ -68,7 +68,11 @@ jobs:
       # Generate the JSON files for the compatibility data and browser data
       - name: Generate JSON Data
         if: steps.check_diff.outputs.updated == 'true'
-        run: pnpm gen:data
+        run: |
+          pnpm gen:data
+
+          git add gen
+          git commit -m "chore: Generated new JSON data for bcd/caniuse-db"
         working-directory: "./packages/shinkom"
 
       # Build both Shinkom and Shinkore with the new data
