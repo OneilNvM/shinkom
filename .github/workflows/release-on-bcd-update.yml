@@ -1,0 +1,58 @@
+name: Build and Publish on BCD/Caniuse Update
+
+on:
+  push:
+    branches: ["master"]
+    paths:
+      - pnpm-lock.yaml
+      - packages/shinkom/package.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    name: Build and Publish to npm
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+      - name: Install wasm-pack
+        run: cargo install wasm-pack
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      # Build both Shinkom and Shinkore with the new data
+      - name: Build JS and WASM
+        run: pnpm build
+      - name: Extract Tag from package.json
+        id: get_tag
+        run: |
+          VERSION=$(node -p "require('./packages/shinkom/package.json').version")
+
+          git tag "v$VERSION"
+          echo "tag=v$VERSION" > $GITHUB_OUTPUT
+      - name: Publish to npm
+        run: pnpm publish --filter shinkom --access public --provenance --no-git-checks
+      - name: Push Git Tags and Commits
+        run: git push origin --tags
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: "${{ steps.get_tag.outputs.tag }}"
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
