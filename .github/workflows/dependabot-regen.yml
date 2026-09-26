@@ -38,6 +38,7 @@ jobs:
                     git commit -m "chore: Generated new JSON data for bcd/caniuse-db [skip ci]"
                     git push
                 fi
+              working-directory: ./packages/shinkom
             - name: Bump Package Version
               id: version_bump
               run: |
