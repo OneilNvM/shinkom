@@ -1,6 +1,7 @@
 {
   "name": "shinkom-project",
   "private": true,
+  "packageManager": "pnpm@11.5.2",
   "scripts": {
     "dev": "pnpm --filter shinkom dev",
     "dev:nobuild": "pnpm --filter shinkom dev:nobuild",
@@ -16,12 +17,5 @@
     "dev:vite": "pnpm --filter vite-playground dev",
     "dev:nodeesm": "pnpm --filter esm-playground dev",
     "dev:nodecjs": "pnpm --filter cjs-playground dev"
-  },
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "^11.5.2",
-      "onFail": "download"
-    }
   }
 }

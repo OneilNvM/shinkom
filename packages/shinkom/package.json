@@ -1,6 +1,6 @@
 {
   "name": "shinkom",
-  "version": "1.2.1",
+  "version": "1.2.4",
   "description": "A cross-browser compatibility library for developers",
   "license": "MIT",
   "author": "OneilNvM <oneil324@outlook.com>",
@@ -27,7 +27,7 @@
     "compat"
   ],
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=24.21.0"
   },
   "exports": {
     ".": {
@@ -98,9 +98,9 @@
     "gen:data": "pnpm run gen:json && pnpm run gen:bin && pnpm run gen:binjs"
   },
   "devDependencies": {
-    "@mdn/browser-compat-data": "8.0.2",
+    "@mdn/browser-compat-data": "8.1.2",
     "@types/node": "^25.6.0",
-    "caniuse-db": "^1.0.30001793",
+    "caniuse-db": "1.0.30001810",
     "construct-style-sheets-polyfill": "^3.1.0",
     "jsdom": "^28.1.0",
     "node": "^25.9.0",
