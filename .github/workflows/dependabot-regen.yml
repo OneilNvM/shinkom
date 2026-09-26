@@ -1,0 +1,51 @@
+name: Regenerate Data on Dependabot PR
+
+on:
+    pull_request_target: 
+        branches: [master]
+
+jobs:
+    regen:
+        if: github.actor == 'dependabot[bot]'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout PR Branch
+              uses: actions/checkout@v6
+              with:
+                ref: ${{ github.event.pull_request.head.ref }}
+                repository: ${{ github.event.pull_request.head.repo.full_name }}
+            - name: Setup Node
+              uses: actions/setup-node@v6
+              with:
+                node-version: 24
+            - name: Setup PNPM
+              uses: pnpm/action-setup@v6
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+            - name: Regenerate data files
+              run: pnpm gen:data
+              working-directory: ./packages/shinkom
+            - name: Commit Updated gen file to PR
+              run: |
+                git config user.name "github-actions[bot]"
+                git config user.email "github-actions[bot]@users.noreply.github.com"
+
+                echo "Add gen directory changes to git index"
+                git add gen
+                echo "Commit changes to repository"
+
+                if ! git diff --staged --quiet; then
+                    git commit -m "chore: Generated new JSON data for bcd/caniuse-db [skip ci]"
+                    git push
+                fi
+            - name: Bump Package Version
+              id: version_bump
+              run: |
+                git config user.name "github-actions[bot]"
+                git config user.email "github-actions[bot]@users.noreply.github.com"
+                pnpm version patch -m "chore(release): %s [skip ci]"
+                  
+                TAG_NAME=$(git describe --tags --abbrev=0)
+                echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
+                
+

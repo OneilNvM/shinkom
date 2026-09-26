@@ -6,11 +6,6 @@ on:
     paths:
       - pnpm-lock.yaml
       - packages/shinkom/package.json
-  pull_request:
-    branches: ["master"]
-    paths:
-      - pnpm-lock.yaml
-      - packages/shinkom/package.json
   workflow_dispatch:
 
 permissions:
@@ -38,77 +33,24 @@ jobs:
         run: cargo install wasm-pack
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      # Check if the @mdn/browser-compat-data or caniuse-db dependencies were changed in the last commit
-      - name: Check for BCD/Caniuse dependency changes
-        id: check_diff
-        run: |
-          if [[ ${{ github.event_name }} == "workflow_dispatch" ]]; then
-            echo "Manual workflow trigger - forcing build"
-            echo "updated=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          BEFORE="${{ github.event.before }}"
-          AFTER="${{ github.event.after }}"
-
-          if [[ -z $BEFORE || $BEFORE == "0000000000000000000000000000000000000000" ]]; then
-            BEFORE=HEAD~1
-            AFTER=HEAD
-          fi
-
-          CHANGED=$(git diff $BEFORE $AFTER -- pnpm-lock.yaml | grep -E '@mdn/browser-compat-data|caniuse-db' || true)
-          if [[ -n $CHANGED ]]; then
-              echo ""
-              echo "updated=true" >> $GITHUB_OUTPUT
-          else
-              echo "updated=false" >> $GITHUB_OUTPUT
-          fi
-
-      # Generate the JSON files for the compatibility data and browser data
-      - name: Generate JSON Data
-        if: steps.check_diff.outputs.updated == 'true'
-        run: |
-          pnpm gen:data
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          echo "Add gen directory changes to git index"
-          git add gen
-          echo "Commit changes to repository"
-          git commit -m "chore: Generated new JSON data for bcd/caniuse-db"
-        working-directory: "./packages/shinkom"
-
       # Build both Shinkom and Shinkore with the new data
       - name: Build JS and WASM
-        if: steps.check_diff.outputs.updated == 'true'
         run: pnpm build
-        working-directory: "."
-
-      - name: Bump Package Version
-        id: version_bump
-        if: steps.check_diff.outputs.updated == 'true'
+      - name: Extract Tag from package.json
+        id: get_tag
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          pnpm version patch -m "chore(release): %s [skip ci]"
+          VERSION=$(node -p "require('./packages/shinkom/package.json').version")
 
-          TAG_NAME=$(git describe --tags --abbrev=0)
-          echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
-        working-directory: "./packages/shinkom"
+          git tag "v$VERSION"
+          echo "tag=v$VERSION" > $GITHUB_OUTPUT
       - name: Publish to npm
-        if: steps.check_diff.outputs.updated == 'true'
         run: pnpm publish --filter shinkom --access public --provenance --no-git-checks
-        working-directory: "./"
       - name: Push Git Tags and Commits
-        if: steps.check_diff.outputs.updated == 'true'
-        run: git push origin HEAD:${{ github.event.repository.default_branch }} --tags
+        run: git push origin --tags
       - name: Create GitHub Release
-        if: steps.check_diff.outputs.updated == 'true'
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: "v${{steps.version_bump.outputs.tag}}"
+          tag_name: "${{ steps.get_tag.outputs.tag }}"
           generate_release_notes: true
           draft: false
           prerelease: false

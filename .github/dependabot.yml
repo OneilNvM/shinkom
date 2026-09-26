@@ -4,6 +4,11 @@ updates:
     directory: /
     schedule:
       interval: "weekly"
+    groups:
+      browser-data:
+        patterns:
+          - "@mdn/browser-compat-data"
+          - "caniuse-db"
     allow:
       - dependency-name: "@mdn/browser-compat-data"
         update-types:
