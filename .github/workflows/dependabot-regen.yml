@@ -50,8 +50,4 @@ jobs:
                 git config user.name "github-actions[bot]"
                 git config user.email "github-actions[bot]@users.noreply.github.com"
                 pnpm version patch -m "chore(release): %s [skip ci]"
-                  
-                TAG_NAME=$(git describe --tags --abbrev=0)
-                echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
-                
-
+              working-directory: ./packages/shinkom
