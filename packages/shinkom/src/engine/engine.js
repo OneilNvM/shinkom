@@ -1,6 +1,6 @@
 /**@typedef {import('../types/types').CustomEventEngineDetail} CustomEventEngineDetail */
 /**@typedef {import('../types/public').CompatResult} CompatResult */
-import init, { CompatEngine, CompatEngineBuilder } from '../../pkg/shinkore'
+import init, { WASMEngine, WASMEngineBuilder } from '../../pkg/shinkore'
 import { htmlCompatData, svgCompatData, cssCompatData, browserData, usageData } from '../../gen/index'
 import { ShinkomBus } from '../core/event-bus'
 import { getModulePath } from '../core/helpers'
@@ -34,7 +34,7 @@ export class SKEngine {
         }
 
         this.initialized = false
-        /**@type {CompatEngine | null} */
+        /**@type {WASMEngine | null} */
         this.compatEngine = null
 
         /**@type {ShinkomBus | null} */
@@ -187,7 +187,7 @@ export class SKEngine {
                     }
                 }
 
-                const builder = new CompatEngineBuilder()
+                const builder = new WASMEngineBuilder()
 
                 builder.set_html_binary_data(Uint8Array.fromBase64(htmlCompatData))
                 builder.set_svg_binary_data(Uint8Array.fromBase64(svgCompatData))

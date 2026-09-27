@@ -1,10 +1,11 @@
 use std::error::Error;
 
-use shinkore::engine::{RustCompatEngine, RustCompatEngineBuilder};
+use shinkore::engine::{RustEngine, RustEngineBuilder};
+
 
 #[test]
 fn should_create_engine() -> Result<(), Box<dyn Error>> {
-    let _engine = RustCompatEngineBuilder::new()
+    let _engine = RustEngineBuilder::new()
         .with_data_dir("gen".into())
         .build()?;
 
@@ -13,7 +14,7 @@ fn should_create_engine() -> Result<(), Box<dyn Error>> {
 
 #[test]
 fn should_create_engine_from_compiled_data() -> Result<(), Box<dyn Error>> {
-    let _engine = RustCompatEngine::from_compiled_data()?;
+    let _engine = RustEngine::from_compiled_data()?;
 
     Ok(())
 }

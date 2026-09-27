@@ -112,12 +112,12 @@ impl<E> From<ParseError<'_, E>> for ParseStylesError {
             return Self {
                 message: basic.to_string(),
                 content: String::new(),
-            }
+            };
         }
 
         Self {
             message: "encountered an error parsing css styles".to_string(),
-            content: String::new()
+            content: String::new(),
         }
     }
 }

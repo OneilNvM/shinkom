@@ -12,6 +12,7 @@ use std::{
 };
 
 use lol_html::{RewriteStrSettings, element, rewrite_str, text};
+use serde::{Deserialize, Serialize};
 use shinkore_types::prelude::{
     BrowserDataContext, CSSData, CSSType, JSONStructure, LookupCSSContext, WebFeatureContext,
 };
@@ -36,11 +37,11 @@ use shinkore_types::prelude::{
 };
 
 #[derive(Debug, Default)]
-pub struct RustCompatEngineBuilder {
+pub struct RustEngineBuilder {
     data_dir: Option<PathBuf>,
 }
 
-impl RustCompatEngineBuilder {
+impl RustEngineBuilder {
     pub fn new() -> Self {
         Self { data_dir: None }
     }
@@ -50,7 +51,7 @@ impl RustCompatEngineBuilder {
         self
     }
 
-    pub fn build(self) -> Result<RustCompatEngine, Box<dyn Error>> {
+    pub fn build(self) -> Result<RustEngine, Box<dyn Error>> {
         let base_path = self
             .data_dir
             .unwrap_or_else(|| PathBuf::from("./shinkore-data"));
@@ -80,7 +81,7 @@ impl RustCompatEngineBuilder {
         let usage_data: Option<BrowserUsageData> =
             deserialize_bytes(&read_bin(&base_path, "browser-usage-data.bin")?).ok();
 
-        Ok(RustCompatEngine::new(
+        Ok(RustEngine::new(
             html_data,
             svg_data,
             css_data,
@@ -90,8 +91,8 @@ impl RustCompatEngineBuilder {
     }
 }
 
-#[derive(Default, Debug)]
-pub struct RustCompatEngine {
+#[derive(Serialize, Deserialize, Default, Debug)]
+pub struct RustEngine {
     html: HTMLData,
     svg: SVGData,
     css: CSSData,
@@ -109,15 +110,15 @@ type CompiledData = OnceLock<(
 
 static COMPILED_DATA: CompiledData = OnceLock::new();
 
-impl RustCompatEngine {
-    fn new(
+impl RustEngine {
+    pub fn new(
         bcd_html_data: Option<HTMLData>,
         bcd_svg_data: Option<SVGData>,
         bcd_css_data: Option<CSSData>,
         bcd_browser_data: Option<BrowserData>,
         ciu_usage_data: Option<BrowserUsageData>,
     ) -> Self {
-        RustCompatEngine {
+        RustEngine {
             html: bcd_html_data.unwrap_or_default(),
             svg: bcd_svg_data.unwrap_or_default(),
             css: bcd_css_data.unwrap_or_default(),
@@ -239,10 +240,10 @@ impl RustCompatEngine {
         let elements = pre_process_html(&formatted, depth_level);
 
         // Create HashSet cache to prevent repeated element/ attribute searches
-        let mut caches = LookupCaches {
-            element_cache: HashSet::new(),
-            attrib_cache: HashSet::new(),
-        };
+        let caches = Rc::new(RefCell::new(LookupCaches {
+            element_cache: Rc::new(RefCell::new(HashSet::new())),
+            attrib_cache: Rc::new(RefCell::new(HashSet::new())),
+        }));
 
         // Use rewrite_str to find tags for compatibility checks
         let rewrite = rewrite_str(
@@ -257,7 +258,7 @@ impl RustCompatEngine {
                         attributes,
                     };
 
-                    let compat_results = self.multi_compat_check(ctx, &mut caches);
+                    let compat_results = self.multi_compat_check(ctx, caches.clone());
 
                     match compat_results {
                         Ok(res) => results.borrow_mut().extend(res),
@@ -309,10 +310,10 @@ impl RustCompatEngine {
         let formatted = format_html(html).map_err(<PreProcessError as Into<CheckError>>::into)?;
 
         // Create HashSet cache to prevent repeated element/ attribute searches
-        let mut caches = LookupCaches {
-            element_cache: HashSet::new(),
-            attrib_cache: HashSet::new(),
-        };
+        let caches = Rc::new(RefCell::new(LookupCaches {
+            element_cache: Rc::new(RefCell::new(HashSet::new())),
+            attrib_cache: Rc::new(RefCell::new(HashSet::new())),
+        }));
 
         // Use rewrite_str to find tags for compatibility checks
         let rewrite = rewrite_str(
@@ -327,7 +328,7 @@ impl RustCompatEngine {
                         attributes,
                     };
 
-                    let compat_results = self.multi_compat_check(ctx, &mut caches);
+                    let compat_results = self.multi_compat_check(ctx, caches.clone());
 
                     match compat_results {
                         Ok(res) => results.borrow_mut().extend(res),
@@ -461,7 +462,7 @@ impl RustCompatEngine {
     fn multi_compat_check(
         &self,
         ctx: ElementContext,
-        caches: &mut LookupCaches,
+        caches: Rc<RefCell<LookupCaches>>,
     ) -> Result<Vec<LookupResults>, CheckError> {
         let mut overall_results: Vec<LookupResults> = vec![];
         let mut features: Vec<WebFeatureContext> = vec![];
@@ -488,14 +489,16 @@ impl RustCompatEngine {
                 g_attrib_data: &self.svg.g_attrib_data,
             };
 
-            if let Some(feat) = multi_lookup_element(&lookup_els_context, &mut caches.element_cache)
+            if let Some(feat) =
+                multi_lookup_element(&lookup_els_context, caches.borrow().element_cache.clone())
             {
                 features.push(feat)
             }
 
-            if let Some(feats) =
-                multi_lookup_attribs(&lookup_attribs_context, &mut caches.attrib_cache)
-            {
+            if let Some(feats) = multi_lookup_attribs(
+                &lookup_attribs_context,
+                caches.borrow().attrib_cache.clone(),
+            ) {
                 features.extend(feats);
             }
 
@@ -521,14 +524,16 @@ impl RustCompatEngine {
                 g_attrib_data: &self.html.g_attrib_data,
             };
 
-            if let Some(feat) = multi_lookup_element(&lookup_els_context, &mut caches.element_cache)
+            if let Some(feat) =
+                multi_lookup_element(&lookup_els_context, caches.borrow().element_cache.clone())
             {
                 features.push(feat)
             }
 
-            if let Some(feats) =
-                multi_lookup_attribs(&lookup_attribs_context, &mut caches.attrib_cache)
-            {
+            if let Some(feats) = multi_lookup_attribs(
+                &lookup_attribs_context,
+                caches.borrow().attrib_cache.clone(),
+            ) {
                 features.extend(feats);
             }
 

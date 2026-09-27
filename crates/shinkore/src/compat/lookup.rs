@@ -1,6 +1,6 @@
 //! Module contains functions for performing compatibility data lookup logic to calculate the
 //! compatibility score.
-use std::collections::HashSet;
+use std::{cell::RefCell, collections::HashSet, rc::Rc};
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsValue;
@@ -51,12 +51,12 @@ pub fn lookup_element(ctx: LookupElementsContext) -> Option<WebFeatureContext> {
 /// A [`CheckError`] is returned if there are any errors in score calculations.
 pub fn multi_lookup_element<'a>(
     ctx: &'a LookupElementsContext,
-    element_cache: &'a mut HashSet<String>,
+    element_cache: Rc<RefCell<HashSet<String>>>,
 ) -> Option<WebFeatureContext<'a>> {
     if let Some(el) = ctx.el_data.get(ctx.tag) {
         // Store tag name in element cache to prevent duplicate element lookups
-        if !element_cache.contains(ctx.tag) {
-            element_cache.insert(ctx.tag.to_string());
+        if !element_cache.borrow().contains(ctx.tag) {
+            element_cache.borrow_mut().insert(ctx.tag.to_string());
 
             return Some(WebFeatureContext {
                 name: String::from(ctx.tag),
@@ -64,7 +64,7 @@ pub fn multi_lookup_element<'a>(
                 lookup_type: LookupType::Feature(ctx.tag),
             });
         }
-    } else if !element_cache.contains(ctx.tag) {
+    } else if !element_cache.borrow().contains(ctx.tag) {
         #[cfg(target_arch = "wasm32")]
         {
             web_sys::console::warn_1(&JsValue::from_str(&format!(
@@ -76,7 +76,7 @@ pub fn multi_lookup_element<'a>(
         {
             eprintln!("<{}> is not an element or has no compat data", ctx.tag)
         }
-        element_cache.insert(ctx.tag.to_string());
+        element_cache.borrow_mut().insert(ctx.tag.to_string());
     }
 
     None
@@ -175,7 +175,7 @@ pub fn lookup_attribs<'a>(ctx: &'a LookupAttribsContext) -> Option<Vec<WebFeatur
 /// A [`CheckError`] is returned if there are any errors in score calculations.
 pub fn multi_lookup_attribs<'a>(
     ctx: &'a LookupAttribsContext,
-    attrib_cache: &'a mut HashSet<String>,
+    attrib_cache: Rc<RefCell<HashSet<String>>>,
 ) -> Option<Vec<WebFeatureContext<'a>>> {
     let mut state;
     let mut features: Vec<WebFeatureContext> = vec![];
@@ -195,19 +195,19 @@ pub fn multi_lookup_attribs<'a>(
             AttributeLookupState::GlobalAttribute => {
                 if let Some(g_attrib) = ctx.g_attrib_data.get(name) {
                     // Store global attribute name in attribute cache to prevent duplicate attribute lookups
-                    if !attrib_cache.contains(name) {
+                    if !attrib_cache.borrow().contains(name) {
                         features.push(WebFeatureContext {
                             name: name.to_string(),
                             compat_type: CompatType::GlobalAttributes(g_attrib),
                             lookup_type: LookupType::Attribute(name),
                         });
-                        attrib_cache.insert(name.to_string());
+                        attrib_cache.borrow_mut().insert(name.to_string());
                     }
                 }
             }
             AttributeLookupState::DataAttribute => {
                 if let Some(d_attrib) = ctx.g_attrib_data.get("data_attributes")
-                    && !attrib_cache.contains("data-attributes")
+                    && !attrib_cache.borrow().contains("data-attributes")
                 {
                     // Store special data-* attribute name in attribute cache to prevent duplicate attribute lookups
                     features.push(WebFeatureContext {
@@ -216,7 +216,9 @@ pub fn multi_lookup_attribs<'a>(
                         lookup_type: LookupType::Attribute("data-attributes"),
                     });
 
-                    attrib_cache.insert("data-attributes".to_string());
+                    attrib_cache
+                        .borrow_mut()
+                        .insert("data-attributes".to_string());
                 }
             }
             AttributeLookupState::LocalAttribute => {
@@ -225,24 +227,24 @@ pub fn multi_lookup_attribs<'a>(
                         && let Some(input_attrib) = el.sub_features.get(&format!("type_{value}"))
                     {
                         // Store input attribute name in attribute cache to prevent duplicate attribute lookups
-                        if !attrib_cache.contains(&format!("type_{value}")) {
+                        if !attrib_cache.borrow().contains(&format!("type_{value}")) {
                             features.push(WebFeatureContext {
                                 name: format!("type_{value}"),
                                 compat_type: CompatType::Feature(input_attrib),
                                 lookup_type: LookupType::Attribute(name),
                             });
-                            attrib_cache.insert(format!("type_{value}"));
+                            attrib_cache.borrow_mut().insert(format!("type_{value}"));
                         }
                     }
                     if let Some(l_attrib) = el.sub_features.get(name) {
                         // Store local attribute name in attribute cache to prevent duplicate attribute lookups
-                        if !attrib_cache.contains(name) {
+                        if !attrib_cache.borrow().contains(name) {
                             features.push(WebFeatureContext {
                                 name: name.to_string(),
                                 compat_type: CompatType::Feature(l_attrib),
                                 lookup_type: LookupType::Attribute(name),
                             });
-                            attrib_cache.insert(name.to_string());
+                            attrib_cache.borrow_mut().insert(name.to_string());
                         }
                     }
                 }
@@ -252,7 +254,7 @@ pub fn multi_lookup_attribs<'a>(
 
         if let AttributeLookupState::MissingAttribute = state {
             // Insert name into attribute cache to prevent duplicate error messages
-            if !attrib_cache.contains(name) {
+            if !attrib_cache.borrow().contains(name) {
                 #[cfg(target_arch = "wasm32")]
                 {
                     web_sys::console::warn_1(&JsValue::from_str(&format!(
@@ -264,7 +266,7 @@ pub fn multi_lookup_attribs<'a>(
                     eprintln!("{name} is not an attribute or has no compat data")
                 }
 
-                attrib_cache.insert(name.to_string());
+                attrib_cache.borrow_mut().insert(name.to_string());
             }
         }
     }

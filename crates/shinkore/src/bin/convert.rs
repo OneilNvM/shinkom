@@ -1,9 +1,5 @@
 use std::{
-    env,
-    error::Error,
-    fs,
-    io::{BufReader, Write},
-    path::PathBuf,
+    env, error::Error, fs, io::{BufReader, Write}, path::{Path, PathBuf},
 };
 
 use serde::{Serialize, de::DeserializeOwned};
@@ -27,10 +23,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let base_path = root.join(PathBuf::from("packages/shinkom/gen/json"));
     let read_json = |filename: &str| -> Result<serde_json::Value, Box<dyn Error>> {
         let path = base_path.join(filename);
-        let file = fs::File::open(&path).map_err(|e| {
-            eprintln!("Could not find path: {}", path.into_string().unwrap());
-            e
-        })?;
+        let file = fs::File::open(&path).inspect_err(|_| eprintln!("Could not find path: {}", path.into_string().unwrap()))?;
         let value = serde_json::from_reader(BufReader::new(file))?;
         Ok(value)
     };
@@ -87,7 +80,7 @@ where
     }
 }
 
-fn write_bin<T>(data: &T, root: &PathBuf, filename: &str) -> Result<(), Box<dyn Error>>
+fn write_bin<T>(data: &T, root: &Path, filename: &str) -> Result<(), Box<dyn Error>>
 where
     T: JSONStructure + SchemaWrite<DefaultConfig, Src = T> + Serialize + DeserializeOwned,
 {

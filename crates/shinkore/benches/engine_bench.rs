@@ -1,7 +1,7 @@
 use std::error::Error;
 
 use divan::Bencher;
-use shinkore::engine::{RustCompatEngine, RustCompatEngineBuilder};
+use shinkore::engine::{RustEngine, RustEngineBuilder};
 
 const SMALL_HTML: &str = r#"
 <div class="container" id="main-content">
@@ -70,7 +70,7 @@ fn main() {
 #[divan::bench]
 fn engine_init() -> Result<(), Box<dyn Error>> {
     divan::black_box(
-        RustCompatEngineBuilder::new()
+        RustEngineBuilder::new()
             .with_data_dir(divan::black_box("../../packages/shinkom/gen".into()))
             .build()?,
     );
@@ -80,14 +80,14 @@ fn engine_init() -> Result<(), Box<dyn Error>> {
 
 #[divan::bench]
 fn engine_init_from_compiled_data() -> Result<(), Box<dyn Error>> {
-    divan::black_box(RustCompatEngine::from_compiled_data()?);
+    divan::black_box(RustEngine::from_compiled_data()?);
 
     Ok(())
 }
 
 #[divan::bench(args = [1, 2])]
 fn engine_check_small_html(bencher: Bencher, depth_level: u32) {
-    let engine = RustCompatEngine::from_compiled_data().unwrap();
+    let engine = RustEngine::from_compiled_data().unwrap();
 
     bencher.bench_local(|| -> Result<(), Box<dyn Error>> {
         let _ = divan::black_box(engine.check_elements(SMALL_HTML, depth_level))?;
@@ -98,7 +98,7 @@ fn engine_check_small_html(bencher: Bencher, depth_level: u32) {
 
 #[divan::bench(args = [1, 2, 3, 4])]
 fn engine_check_attribute_heavy_html(bencher: Bencher, depth_level: u32) {
-    let engine = RustCompatEngine::from_compiled_data().unwrap();
+    let engine = RustEngine::from_compiled_data().unwrap();
 
     bencher.bench_local(|| -> Result<(), Box<dyn Error>> {
         let _ = divan::black_box(engine.check_elements(ATTRIBUTE_HEAVY_HTML, depth_level))?;
@@ -109,7 +109,7 @@ fn engine_check_attribute_heavy_html(bencher: Bencher, depth_level: u32) {
 
 #[divan::bench(args = [1, 3, 5, 7, 9, 11, 13])]
 fn engine_check_deeply_nested_html(bencher: Bencher, depth_level: u32) {
-    let engine = RustCompatEngine::from_compiled_data().unwrap();
+    let engine = RustEngine::from_compiled_data().unwrap();
 
     bencher.bench_local(|| -> Result<(), Box<dyn Error>> {
         let _ = divan::black_box(engine.check_elements(DEEPLY_NESTED_HTML, depth_level))?;
@@ -120,7 +120,7 @@ fn engine_check_deeply_nested_html(bencher: Bencher, depth_level: u32) {
 
 #[divan::bench(args = [1, 2])]
 fn engine_check_malformed_html(bencher: Bencher, depth_level: u32) {
-    let engine = RustCompatEngine::from_compiled_data().unwrap();
+    let engine = RustEngine::from_compiled_data().unwrap();
 
     bencher.bench_local(|| -> Result<(), Box<dyn Error>> {
         let _ = divan::black_box(engine.check_elements(MALFORMED_HTML, depth_level))?;

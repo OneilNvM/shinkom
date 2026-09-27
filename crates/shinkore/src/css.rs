@@ -85,11 +85,10 @@ fn parse_value_tokens(parser: &mut Parser, value: &mut String) -> Result<(), Par
                 value.push_str(func_name);
                 value.push('(');
 
-                parser
-                    .parse_nested_block(|nested| {
-                        let _ = parse_value_tokens(nested, value);
-                        Ok::<(), ParseError<'_, ParseStylesError>>(())
-                    })?;
+                parser.parse_nested_block(|nested| {
+                    let _ = parse_value_tokens(nested, value);
+                    Ok::<(), ParseError<'_, ParseStylesError>>(())
+                })?;
                 value.push(')');
             }
             Token::ParenthesisBlock => {
