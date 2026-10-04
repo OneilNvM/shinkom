@@ -1,11 +1,7 @@
 //! This module exports all structs and enums in shinkore.
 use crate::{Deserialize, Serialize};
 pub use lol_html::html_content::Attribute;
-use std::{
-    cell::RefCell,
-    collections::{HashMap, HashSet},
-    rc::Rc,
-};
+use std::collections::{HashMap, HashSet};
 use wincode::{SchemaRead, SchemaWrite};
 
 use crate::schema::{
@@ -37,8 +33,9 @@ pub struct LookupCSSContext<'a> {
 }
 
 pub struct LookupCaches {
-    pub element_cache: Rc<RefCell<HashSet<String>>>,
-    pub attrib_cache: Rc<RefCell<HashSet<String>>>,
+    pub element_cache: Option<HashSet<String>>,
+    pub attrib_cache: Option<HashSet<String>>,
+    pub style_cache: Option<HashSet<String>>,
 }
 
 pub struct WebFeatureContext<'a> {

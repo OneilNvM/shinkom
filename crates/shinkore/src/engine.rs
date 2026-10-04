@@ -168,6 +168,12 @@ impl RustEngine {
         // Only get the first line of the HTML String
         let first_line = formatted.lines().next().ok_or(CheckError::NoLines)?;
 
+        let caches = Rc::new(RefCell::new(LookupCaches {
+            element_cache: None,
+            attrib_cache: None,
+            style_cache: Some(HashSet::new()),
+        }));
+
         // Use rewrite_str to find tag for compatibility check
         let rewrite = rewrite_str(
             first_line,
@@ -181,7 +187,7 @@ impl RustEngine {
                         attributes,
                     };
 
-                    let compat_results = self.compat_check(ctx);
+                    let compat_results = self.compat_check(ctx, caches.clone());
 
                     match compat_results {
                         Ok(res) => results.borrow_mut().extend(res),
@@ -193,7 +199,7 @@ impl RustEngine {
                 .append_element_content_handler(text!("style", |el| {
                     let style_content = el.as_str();
 
-                    let compat_results = self.css_compat_check(style_content, CSSType::StyleTag);
+                    let compat_results = self.css_compat_check(style_content, CSSType::StyleTag, caches.borrow_mut().style_cache.as_mut().unwrap_or(&mut HashSet::new()));
 
                     match compat_results {
                         Ok(res) => results.borrow_mut().extend(res),
@@ -241,8 +247,9 @@ impl RustEngine {
 
         // Create HashSet cache to prevent repeated element/ attribute searches
         let caches = Rc::new(RefCell::new(LookupCaches {
-            element_cache: Rc::new(RefCell::new(HashSet::new())),
-            attrib_cache: Rc::new(RefCell::new(HashSet::new())),
+            element_cache: Some(HashSet::new()),
+            attrib_cache: Some(HashSet::new()),
+            style_cache: Some(HashSet::new()),
         }));
 
         // Use rewrite_str to find tags for compatibility checks
@@ -270,7 +277,7 @@ impl RustEngine {
                 .append_element_content_handler(text!("style", |el| {
                     let style_content = el.as_str();
 
-                    let compat_results = self.css_compat_check(style_content, CSSType::StyleTag);
+                    let compat_results = self.css_compat_check(style_content, CSSType::StyleTag, caches.borrow_mut().style_cache.as_mut().unwrap_or(&mut HashSet::new()));
 
                     match compat_results {
                         Ok(res) => results.borrow_mut().extend(res),
@@ -311,8 +318,9 @@ impl RustEngine {
 
         // Create HashSet cache to prevent repeated element/ attribute searches
         let caches = Rc::new(RefCell::new(LookupCaches {
-            element_cache: Rc::new(RefCell::new(HashSet::new())),
-            attrib_cache: Rc::new(RefCell::new(HashSet::new())),
+            element_cache: Some(HashSet::new()),
+            attrib_cache: Some(HashSet::new()),
+            style_cache: Some(HashSet::new()),
         }));
 
         // Use rewrite_str to find tags for compatibility checks
@@ -340,7 +348,7 @@ impl RustEngine {
                 .append_element_content_handler(text!("style", |el| {
                     let style_content = el.as_str();
 
-                    let compat_results = self.css_compat_check(style_content, CSSType::StyleTag);
+                    let compat_results = self.css_compat_check(style_content, CSSType::StyleTag, caches.borrow_mut().style_cache.as_mut().unwrap_or(&mut HashSet::new()));
 
                     match compat_results {
                         Ok(res) => results.borrow_mut().extend(res),
@@ -378,7 +386,7 @@ impl RustEngine {
     ///
     /// ## Errors
     /// A [`CheckError`] is returned if there are any errors in lookups.
-    fn compat_check(&self, ctx: ElementContext) -> Result<Vec<LookupResults>, CheckError> {
+    fn compat_check(&self, ctx: ElementContext, caches: Rc<RefCell<LookupCaches>>) -> Result<Vec<LookupResults>, CheckError> {
         let mut overall_results: Vec<LookupResults> = vec![];
         let mut features: Vec<WebFeatureContext> = vec![];
         let mut attribs: HashMap<String, String> = HashMap::new();
@@ -388,7 +396,7 @@ impl RustEngine {
         }
 
         if let Some(inline_styles) = attribs.get("style") {
-            overall_results.extend(self.css_compat_check(inline_styles, CSSType::Inline)?);
+            overall_results.extend(self.css_compat_check(inline_styles, CSSType::Inline, caches.borrow_mut().style_cache.as_mut().unwrap_or(&mut HashSet::new()))?);
         }
 
         // If the element is an SVG element, opt for an SVG data lookup
@@ -473,7 +481,7 @@ impl RustEngine {
         }
 
         if let Some(inline_styles) = attribs.get("style") {
-            overall_results.extend(self.css_compat_check(inline_styles, CSSType::Inline)?);
+            overall_results.extend(self.css_compat_check(inline_styles, CSSType::Inline, caches.borrow_mut().style_cache.as_mut().unwrap_or(&mut HashSet::new()))?);
         }
 
         // If the element is an SVG element, opt for an SVG data lookup
@@ -490,14 +498,14 @@ impl RustEngine {
             };
 
             if let Some(feat) =
-                multi_lookup_element(&lookup_els_context, caches.borrow().element_cache.clone())
+                multi_lookup_element(&lookup_els_context, caches.borrow_mut().element_cache.as_mut().unwrap_or(&mut HashSet::new()))
             {
                 features.push(feat)
             }
 
             if let Some(feats) = multi_lookup_attribs(
                 &lookup_attribs_context,
-                caches.borrow().attrib_cache.clone(),
+                caches.borrow_mut().attrib_cache.as_mut().unwrap_or(&mut HashSet::new()),
             ) {
                 features.extend(feats);
             }
@@ -525,14 +533,14 @@ impl RustEngine {
             };
 
             if let Some(feat) =
-                multi_lookup_element(&lookup_els_context, caches.borrow().element_cache.clone())
+                multi_lookup_element(&lookup_els_context, caches.borrow_mut().element_cache.as_mut().unwrap_or(&mut HashSet::new()))
             {
                 features.push(feat)
             }
 
             if let Some(feats) = multi_lookup_attribs(
                 &lookup_attribs_context,
-                caches.borrow().attrib_cache.clone(),
+                caches.borrow_mut().attrib_cache.as_mut().unwrap_or(&mut HashSet::new()),
             ) {
                 features.extend(feats);
             }
@@ -556,6 +564,7 @@ impl RustEngine {
         &self,
         css_content: &str,
         css_type: CSSType,
+        style_cache: &mut HashSet<String>
     ) -> Result<Vec<LookupResults>, CheckError> {
         let mut overall_results = Vec::new();
         let mut features: Vec<WebFeatureContext> = Vec::new();
@@ -580,7 +589,7 @@ impl RustEngine {
             css_data: &self.css.properties_data,
         };
 
-        if let Some(feats) = lookup_css(&ctx) {
+        if let Some(feats) = lookup_css(&ctx, style_cache) {
             features.extend(feats);
         }
 
