@@ -152,10 +152,16 @@ pub enum CompatType<'a> {
     GlobalAttributes(&'a CompatGlobalAttribs),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ParsedCssStyle {
     pub property: String,
     pub value: String,
+}
+
+#[derive(Debug)]
+pub struct CSSClass {
+    pub name: String,
+    pub styles: Vec<ParsedCssStyle>
 }
 
 #[derive(Debug)]
