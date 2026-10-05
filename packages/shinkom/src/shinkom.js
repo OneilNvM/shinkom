@@ -32,7 +32,7 @@ export class Shinkom {
         const state = new ShinkomState()
 
         /**@type {SKEngine} */
-        this.skEngine = new SKEngine(bus)
+        this.skEngine = new SKEngine(bus, this.#config?.engine)
 
         /**@type {CompatUI} */
         this.compatUI = new CompatUI(bus, state, [
@@ -53,7 +53,7 @@ export class Shinkom {
                 console.warn("Shinkom is already initialized.")
                 return
             }
-            await this.skEngine.initEngine(this.#config?.engine?.wasmURL)
+            await this.skEngine.initEngine()
             this.compatUI.init()
 
             this.initialized = true

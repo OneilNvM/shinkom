@@ -2,6 +2,7 @@
 
 import { Shinkom } from '../../src/index'
 import wasm from '../../pkg/shinkore_bg.wasm?url'
+import maincss from './css/main.css?raw'
 
 const shinkom = new Shinkom({
     inspector: {
@@ -9,7 +10,12 @@ const shinkom = new Shinkom({
         keyboardShortcuts: true
     },
     engine: {
-        wasmURL: wasm
+        wasmURL: wasm,
+        css: {
+            externalCSS: {
+                imports: [maincss]
+            }
+        }
     }
 })
 
