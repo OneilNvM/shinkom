@@ -161,7 +161,7 @@ pub struct ParsedCssStyle {
 #[derive(Debug)]
 pub struct CSSClass {
     pub name: String,
-    pub styles: Vec<ParsedCssStyle>
+    pub styles: Vec<ParsedCssStyle>,
 }
 
 #[derive(Debug)]

@@ -2,7 +2,6 @@ use std::error::Error;
 
 use shinkore::engine::{RustEngine, RustEngineBuilder};
 
-
 #[test]
 fn should_create_engine() -> Result<(), Box<dyn Error>> {
     let _engine = RustEngineBuilder::new()

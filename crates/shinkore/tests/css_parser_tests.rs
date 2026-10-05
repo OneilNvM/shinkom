@@ -67,8 +67,11 @@ h1 {
 }";
     let result = parse_css_classes(test_css).unwrap();
 
-    for class in result.iter().clone(){
-        println!("class_name: {}, declarations: {:?}", class.name, class.styles);
+    for class in result.iter().clone() {
+        println!(
+            "class_name: {}, declarations: {:?}",
+            class.name, class.styles
+        );
     }
 
     assert_eq!(result.len(), 2)

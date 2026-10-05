@@ -28,7 +28,7 @@ impl<'i> DeclarationParser<'i> for CSSBodyParser {
     ) -> Result<Self::Declaration, ParseError<'i, Self::Error>> {
         let pos = input.position();
 
-        while let Ok(_) = input.next() {}
+        while input.next().is_ok() {}
 
         let value = input.slice_from(pos);
 
@@ -59,10 +59,10 @@ impl<'i> QualifiedRuleParser<'i> for TopLevelCSSParser {
     ) -> Result<Self::Prelude, ParseError<'i, Self::Error>> {
         let mut class_name = String::new();
         while let Ok(token) = input.next() {
-            if let Token::Delim('.') = token {
-                if let Ok(Token::Ident(name)) = input.next() {
-                    class_name.push_str(&name.to_string().to_lowercase());
-                }
+            if let Token::Delim('.') = token
+                && let Ok(Token::Ident(name)) = input.next()
+            {
+                class_name.push_str(&name.to_string().to_lowercase());
             }
         }
         Ok(class_name)
@@ -76,12 +76,10 @@ impl<'i> QualifiedRuleParser<'i> for TopLevelCSSParser {
     ) -> Result<Self::QualifiedRule, ParseError<'i, Self::Error>> {
         let mut declarations = Vec::new();
         let mut handler = CSSBodyParser;
-        let mut body_parser = RuleBodyParser::new(input, &mut handler);
+        let body_parser = RuleBodyParser::new(input, &mut handler);
 
-        while let Some(res) = body_parser.next() {
-            if let Ok(declaration) = res {
-                declarations.push(declaration);
-            }
+        for declaration in body_parser.flatten() {
+            declarations.push(declaration);
         }
 
         if prelude.is_empty() {
@@ -118,26 +116,21 @@ pub fn parse_css_classes(css_content: &str) -> Result<Vec<CSSClass>, ParseStyles
 
     let mut css_classes = Vec::new();
 
-    for sheet in stylesheets {
-        match sheet {
-            Ok(res) => {
-                let mut styles = Vec::new();
-                if let Some(style) = res {
-                    for declaration in style.declarations {
-                        let parsed_styles = ParsedCssStyle {
-                            property: declaration.0,
-                            value: declaration.1,
-                        };
+    for res in stylesheets.flatten() {
+        let mut styles = Vec::new();
+        if let Some(style) = res {
+            for declaration in style.declarations {
+                let parsed_styles = ParsedCssStyle {
+                    property: declaration.0,
+                    value: declaration.1,
+                };
 
-                        styles.push(parsed_styles)
-                    }
-                    css_classes.push(CSSClass {
-                        name: style.class,
-                        styles,
-                    });
-                }
+                styles.push(parsed_styles)
             }
-            Err(_) => {}
+            css_classes.push(CSSClass {
+                name: style.class,
+                styles,
+            });
         }
     }
 

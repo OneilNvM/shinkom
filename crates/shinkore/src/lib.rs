@@ -108,7 +108,9 @@ impl WASMEngineBuilder {
                 self.browser_data,
                 self.usage_data,
             ),
-            css_store: Some(CSSStore { class_index: HashMap::new() }),
+            css_store: Some(CSSStore {
+                class_index: HashMap::new(),
+            }),
         }
     }
 }
@@ -191,9 +193,7 @@ impl WASMEngine {
 
                     for class in parsed_classes {
                         if let Some(ref mut store) = self.css_store {
-                            if !store.class_index.contains_key(&class.name) {
-                                store.class_index.insert(class.name, class.styles);
-                            }
+                            store.class_index.entry(class.name).or_insert(class.styles);
                         }
                     }
                 }
