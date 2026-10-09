@@ -1,7 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  turbopack: {
+    rules: {
+      "*.css": {
+        loaders: ['raw-loader'],
+        as: '*.js',
+        type: 'raw',
+        condition: {
+          "query": /raw/
+        }
+      }
+    }
+  }
 };
 
 export default nextConfig;
