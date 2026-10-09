@@ -29,7 +29,6 @@ pub mod engine;
 pub mod errors;
 pub mod preprocess;
 mod version;
-use std::collections::HashMap;
 
 pub use lol_html::{RewriteStrSettings, element, rewrite_str};
 pub use shinkore_types::prelude::*;
@@ -108,16 +107,8 @@ impl WASMEngineBuilder {
                 self.browser_data,
                 self.usage_data,
             ),
-            css_store: Some(CSSStore {
-                class_index: HashMap::new(),
-            }),
         }
     }
-}
-
-#[derive(Serialize, Deserialize, Default, Debug)]
-pub struct CSSStore {
-    class_index: HashMap<String, Vec<ParsedCssStyle>>,
 }
 
 /// The [`CompatEngine`] struct stores the compatibility data
@@ -126,7 +117,6 @@ pub struct CSSStore {
 #[wasm_bindgen]
 pub struct WASMEngine {
     inner: RustEngine,
-    css_store: Option<CSSStore>,
 }
 
 #[wasm_bindgen]
@@ -192,7 +182,7 @@ impl WASMEngine {
                     let parsed_classes = parse_css_classes(&sheet)?;
 
                     for class in parsed_classes {
-                        if let Some(ref mut store) = self.css_store {
+                        if let Some(ref mut store) = self.inner.css_store {
                             store.class_index.entry(class.name).or_insert(class.styles);
                         }
                     }
@@ -210,7 +200,7 @@ impl WASMEngine {
 
     #[wasm_bindgen]
     pub fn log_class_indexes(&self) {
-        if let Some(ref store) = self.css_store {
+        if let Some(ref store) = self.inner.css_store {
             let class_indexes = serde_wasm_bindgen::to_value(&store.class_index).unwrap_throw();
             web_sys::console::log_1(&class_indexes);
         }

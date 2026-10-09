@@ -14,7 +14,8 @@ use std::{
 use lol_html::{RewriteStrSettings, element, rewrite_str, text};
 use serde::{Deserialize, Serialize};
 use shinkore_types::prelude::{
-    BrowserDataContext, CSSData, CSSType, JSONStructure, LookupCSSContext, WebFeatureContext,
+    BrowserDataContext, CSSData, CSSType, JSONStructure, LookupCSSContext, ParsedCssStyle,
+    WebFeatureContext,
 };
 use wincode::{SchemaRead, config::DefaultConfig};
 
@@ -35,6 +36,11 @@ use shinkore_types::prelude::{
     BrowserData, BrowserUsageData, CompatResult, ElementContext, HTMLData, LookupAttribsContext,
     LookupCaches, LookupElementsContext, LookupResults, SVGData,
 };
+
+#[derive(Serialize, Deserialize, Default, Debug)]
+pub struct CSSStore {
+    pub class_index: HashMap<String, Vec<ParsedCssStyle>>,
+}
 
 #[derive(Debug, Default)]
 pub struct RustEngineBuilder {
@@ -98,6 +104,7 @@ pub struct RustEngine {
     css: CSSData,
     browser_data: BrowserData,
     browser_usage_data: BrowserUsageData,
+    pub css_store: Option<CSSStore>,
 }
 
 type CompiledData = OnceLock<(
@@ -124,6 +131,7 @@ impl RustEngine {
             css: bcd_css_data.unwrap_or_default(),
             browser_data: bcd_browser_data.unwrap_or_default(),
             browser_usage_data: ciu_usage_data.unwrap_or_default(),
+            css_store: Some(CSSStore::default()),
         }
     }
 
@@ -437,6 +445,20 @@ impl RustEngine {
             );
         }
 
+        if let Some(class_value) = attribs.get("class") {
+            overall_results.extend(
+                self.css_compat_check(
+                    class_value,
+                    CSSType::Class,
+                    caches
+                        .borrow_mut()
+                        .style_cache
+                        .as_mut()
+                        .unwrap_or(&mut HashSet::new()),
+                )?,
+            )
+        }
+
         // If the element is an SVG element, opt for an SVG data lookup
         if self.svg.el_data.contains_key(ctx.tag_name) && !IGNORE_TAGS.contains(&ctx.tag_name) {
             let lookup_attribs_ctx = LookupAttribsContext {
@@ -530,6 +552,20 @@ impl RustEngine {
                         .unwrap_or(&mut HashSet::new()),
                 )?,
             );
+        }
+
+        if let Some(class_value) = attribs.get("class") {
+            overall_results.extend(
+                self.css_compat_check(
+                    class_value,
+                    CSSType::Class,
+                    caches
+                        .borrow_mut()
+                        .style_cache
+                        .as_mut()
+                        .unwrap_or(&mut HashSet::new()),
+                )?,
+            )
         }
 
         // If the element is an SVG element, opt for an SVG data lookup
@@ -647,7 +683,21 @@ impl RustEngine {
                     properties_values.insert(style.property, style.value);
                 }
             }
-            _ => {}
+            CSSType::Class => {
+                let class_names = css_content.split_whitespace();
+                if let Some(ref store) = self.css_store {
+                    for name in class_names {
+                        if store.class_index.contains_key(name)
+                            && let Some(vals) = store.class_index.get(name)
+                        {
+                            for style in vals {
+                                properties_values
+                                    .insert(style.property.clone(), style.value.clone());
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         let ctx = LookupCSSContext {
