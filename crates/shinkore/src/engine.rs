@@ -14,8 +14,8 @@ use std::{
 use lol_html::{RewriteStrSettings, element, rewrite_str, text};
 use serde::{Deserialize, Serialize};
 use shinkore_types::prelude::{
-    BrowserDataContext, CSSData, CSSType, JSONStructure, LookupCSSContext, ParsedCssStyle,
-    WebFeatureContext,
+    AtRule, BrowserDataContext, CSSClass, CSSData, CSSDeclaration, CSSType, JSONStructure,
+    LookupCSSContext, WebFeatureContext,
 };
 use wincode::{SchemaRead, config::DefaultConfig};
 
@@ -27,8 +27,8 @@ use crate::{
         },
     },
     constants::{IGNORE_TAGS, SKIP_TAGS},
-    css::{parse_inline_styles, parse_stylesheet},
-    errors::{CheckError, PreProcessError},
+    css::{CSSRule, ParsedCss, parse_css, parse_inline_styles, parse_stylesheet},
+    errors::{CheckError, ParseStylesError, PreProcessError},
     preprocess::{format_html, pre_process_html},
 };
 
@@ -37,9 +37,49 @@ use shinkore_types::prelude::{
     LookupCaches, LookupElementsContext, LookupResults, SVGData,
 };
 
+macro_rules! process_css_rules {
+    ($queue:expr, $classes:expr, $at_rules:expr) => {
+        while !$queue.is_empty() {
+            let rule = $queue.remove(0);
+            match rule {
+                CSSRule::QualifiedRule(s) => {
+                    let mut styles = Vec::new();
+                    for item in s.declarations {
+                        if let CSSRule::Declaration((property, value)) = item {
+                            styles.push(CSSDeclaration { property, value });
+                        } else {
+                            $queue.push(item);
+                        }
+                    }
+                    $classes.push(CSSClass {
+                        name: s.selector,
+                        styles,
+                    });
+                }
+                CSSRule::Media(q) => {
+                    $at_rules.push(AtRule {
+                        name: q.name,
+                        condition: q.condition,
+                    });
+
+                    for item in q.rules {
+                        if matches!(item, CSSRule::Declaration(_)) {
+                            continue;
+                        } else {
+                            $queue.push(item);
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+    };
+}
+
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct CSSStore {
-    pub class_index: HashMap<String, Vec<ParsedCssStyle>>,
+    pub class_index: HashMap<String, Vec<CSSDeclaration>>,
+    pub at_rule_index: HashMap<String, String>,
 }
 
 #[derive(Debug, Default)]
@@ -688,12 +728,8 @@ impl RustEngine {
                 if let Some(ref store) = self.css_store {
                     for name in class_names {
                         if store.class_index.contains_key(name)
-                            && let Some(vals) = store.class_index.get(name)
+                            && let Some(_rules) = store.class_index.get(name)
                         {
-                            for style in vals {
-                                properties_values
-                                    .insert(style.property.clone(), style.value.clone());
-                            }
                         }
                     }
                 }
@@ -721,5 +757,97 @@ impl RustEngine {
         }
 
         Ok(overall_results)
+    }
+
+    pub fn add_external_css_styles(
+        &mut self,
+        stylesheets: Vec<String>,
+    ) -> Result<(), ParseStylesError> {
+        for sheet in stylesheets {
+            let parsed_css = parse_css(&sheet)?;
+            let mut classes: Vec<CSSClass> = Vec::new();
+            let mut at_rules: Vec<AtRule> = Vec::new();
+
+            for css in parsed_css {
+                match css {
+                    ParsedCss::SelectorRule(style) => {
+                        let mut queue = Vec::new();
+
+                        let mut top_level_declarations = Vec::new();
+                        for rule in style.declarations {
+                            if let CSSRule::Declaration((property, value)) = rule {
+                                top_level_declarations.push(CSSDeclaration { property, value });
+                            } else {
+                                queue.push(rule);
+                            }
+                        }
+                        classes.push(CSSClass {
+                            name: style.selector,
+                            styles: top_level_declarations,
+                        });
+
+                        process_css_rules!(queue, classes, at_rules);
+                    }
+                    ParsedCss::TopLevelAtRule(query) => {
+                        let mut queue = Vec::new();
+                        at_rules.push(AtRule {
+                            name: query.name,
+                            condition: query.condition,
+                        });
+
+                        for rule in query.rules {
+                            if matches!(rule, CSSRule::Declaration(_)) {
+                                continue;
+                            } else {
+                                queue.push(rule);
+                            }
+                        }
+
+                        process_css_rules!(queue, classes, at_rules);
+                    }
+                }
+            }
+
+            if let Some(ref mut store) = self.css_store
+                && !classes.is_empty()
+            {
+                for class in classes {
+                    store.class_index.entry(class.name).or_insert(class.styles);
+                }
+            }
+            if let Some(ref mut store) = self.css_store
+                && !at_rules.is_empty()
+            {
+                for at_rule in at_rules {
+                    store
+                        .at_rule_index
+                        .entry(at_rule.name)
+                        .or_insert(at_rule.condition);
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn log_css_indices(&self) {
+        #[cfg(target_arch = "wasm32")]
+        {
+            use wasm_bindgen::UnwrapThrowExt;
+            if let Some(ref store) = self.css_store {
+                let class_indices = serde_wasm_bindgen::to_value(&store.class_index).unwrap_throw();
+                let at_rule_indices =
+                    serde_wasm_bindgen::to_value(&store.at_rule_index).unwrap_throw();
+                web_sys::console::log_1(&class_indices);
+                web_sys::console::log_1(&at_rule_indices);
+            }
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            if let Some(ref store) = self.css_store {
+                println!("Class indices: {:?}", store.class_index);
+                println!("At rule indices: {:?}", store.at_rule_index);
+            }
+        }
     }
 }

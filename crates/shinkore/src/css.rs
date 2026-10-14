@@ -2,22 +2,43 @@ use cssparser::{
     AtRuleParser, DeclarationParser, ParseError, Parser, ParserInput, QualifiedRuleParser,
     RuleBodyItemParser, RuleBodyParser, StyleSheetParser, ToCss, Token,
 };
-use shinkore_types::prelude::{CSSClass, ParsedCssStyle};
+use serde::{Deserialize, Serialize};
+use shinkore_types::prelude::CSSDeclaration;
 
 use crate::errors::ParseStylesError;
 
 #[derive(Debug)]
-pub struct StyleItem {
-    pub class: String,
-    pub declarations: Vec<(String, String)>,
+pub enum ParsedCss {
+    SelectorRule(StyleItem),
+    TopLevelAtRule(QueryItem),
 }
 
-pub struct TopLevelCSSParser;
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StyleItem {
+    pub selector: String,
+    pub declarations: Vec<CSSRule>,
+}
 
-pub struct CSSBodyParser;
+#[derive(Debug, Serialize, Deserialize)]
+pub struct QueryItem {
+    pub name: String,
+    pub condition: String,
+    pub rules: Vec<CSSRule>,
+}
 
-impl<'i> DeclarationParser<'i> for CSSBodyParser {
-    type Declaration = (String, String);
+#[derive(Debug, Serialize, Deserialize)]
+pub enum CSSRule {
+    Declaration((String, String)),
+    QualifiedRule(StyleItem),
+    Media(QueryItem),
+}
+
+pub struct CSSParserDriver;
+
+pub struct CSSDeclarationParser;
+
+impl<'i> DeclarationParser<'i> for CSSDeclarationParser {
+    type Declaration = Option<CSSRule>;
     type Error = ();
 
     fn parse_value<'t>(
@@ -32,26 +53,17 @@ impl<'i> DeclarationParser<'i> for CSSBodyParser {
 
         let value = input.slice_from(pos);
 
-        Ok((name.to_string().to_lowercase(), value.to_string()))
+        Ok(Some(CSSRule::Declaration((
+            name.to_string().to_lowercase(),
+            value.trim().to_string(),
+        ))))
     }
 }
 
-impl<'i> QualifiedRuleParser<'i> for CSSBodyParser {
-    type Error = ();
-    type Prelude = ();
-    type QualifiedRule = (String, String);
-}
-
-impl<'a> AtRuleParser<'a> for CSSBodyParser {
-    type AtRule = (String, String);
-    type Error = ();
-    type Prelude = ();
-}
-
-impl<'i> QualifiedRuleParser<'i> for TopLevelCSSParser {
+impl<'i> QualifiedRuleParser<'i> for CSSDeclarationParser {
     type Error = ();
     type Prelude = String;
-    type QualifiedRule = Option<StyleItem>;
+    type QualifiedRule = Option<CSSRule>;
 
     fn parse_prelude<'t>(
         &mut self,
@@ -62,7 +74,100 @@ impl<'i> QualifiedRuleParser<'i> for TopLevelCSSParser {
             if let Token::Delim('.') = token
                 && let Ok(Token::Ident(name)) = input.next()
             {
-                class_name.push_str(&name.to_string().to_lowercase());
+                class_name.push_str(&name.to_lowercase());
+            }
+        }
+
+        Ok(class_name)
+    }
+
+    fn parse_block<'t>(
+        &mut self,
+        prelude: Self::Prelude,
+        _start: &cssparser::ParserState,
+        input: &mut Parser<'i, 't>,
+    ) -> Result<Self::QualifiedRule, ParseError<'i, Self::Error>> {
+        let mut css_rules = Vec::new();
+        let mut handler = CSSDeclarationParser;
+        let body_parser = RuleBodyParser::new(input, &mut handler);
+
+        for rule in body_parser.flatten().flatten() {
+            css_rules.push(rule);
+        }
+
+        if prelude.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(CSSRule::QualifiedRule(StyleItem {
+                selector: prelude,
+                declarations: css_rules,
+            })))
+        }
+    }
+}
+
+impl<'a> AtRuleParser<'a> for CSSDeclarationParser {
+    type AtRule = Option<CSSRule>;
+    type Error = ();
+    type Prelude = (String, String);
+
+    fn parse_prelude<'t>(
+        &mut self,
+        name: cssparser::CowRcStr<'a>,
+        input: &mut Parser<'a, 't>,
+    ) -> Result<Self::Prelude, ParseError<'a, Self::Error>> {
+        match name.to_string().to_lowercase().as_str() {
+            "media" | "supports" | "layer" => {
+                let start = input.position();
+                while let Ok(tok) = input.next() {
+                    if matches!(tok, Token::CurlyBracketBlock) {
+                        break;
+                    }
+                }
+
+                Ok((name.to_string(), input.slice_from(start).trim().to_string()))
+            }
+            _ => Err(input.new_custom_error(())),
+        }
+    }
+
+    fn parse_block<'t>(
+        &mut self,
+        prelude: Self::Prelude,
+        _start: &cssparser::ParserState,
+        input: &mut Parser<'a, 't>,
+    ) -> Result<Self::AtRule, ParseError<'a, Self::Error>> {
+        let mut nested_rules = Vec::new();
+        let mut handler = CSSDeclarationParser;
+        let rule_body_parser = RuleBodyParser::new(input, &mut handler);
+
+        for rule in rule_body_parser.flatten().flatten() {
+            nested_rules.push(rule);
+        }
+
+        Ok(Some(CSSRule::Media(QueryItem {
+            name: prelude.0,
+            condition: prelude.1,
+            rules: nested_rules,
+        })))
+    }
+}
+
+impl<'i> QualifiedRuleParser<'i> for CSSParserDriver {
+    type Error = ();
+    type Prelude = String;
+    type QualifiedRule = Option<CSSRule>;
+
+    fn parse_prelude<'t>(
+        &mut self,
+        input: &mut Parser<'i, 't>,
+    ) -> Result<Self::Prelude, ParseError<'i, Self::Error>> {
+        let mut class_name = String::new();
+        while let Ok(token) = input.next() {
+            if let Token::Delim('.') = token
+                && let Ok(Token::Ident(name)) = input.next()
+            {
+                class_name.push_str(&name.to_lowercase());
             }
         }
         Ok(class_name)
@@ -74,70 +179,128 @@ impl<'i> QualifiedRuleParser<'i> for TopLevelCSSParser {
         _start: &cssparser::ParserState,
         input: &mut Parser<'i, 't>,
     ) -> Result<Self::QualifiedRule, ParseError<'i, Self::Error>> {
-        let mut declarations = Vec::new();
-        let mut handler = CSSBodyParser;
+        let mut css_rules = Vec::new();
+        let mut handler = CSSDeclarationParser;
         let body_parser = RuleBodyParser::new(input, &mut handler);
 
-        for declaration in body_parser.flatten() {
-            declarations.push(declaration);
+        for css_rule in body_parser.flatten().flatten() {
+            css_rules.push(css_rule);
         }
 
         if prelude.is_empty() {
             Ok(None)
         } else {
-            Ok(Some(StyleItem {
-                class: prelude,
-                declarations,
-            }))
+            Ok(Some(CSSRule::QualifiedRule(StyleItem {
+                selector: prelude,
+                declarations: css_rules,
+            })))
         }
     }
 }
 
-impl<'a> AtRuleParser<'a> for TopLevelCSSParser {
-    type AtRule = Option<StyleItem>;
+impl<'a> AtRuleParser<'a> for CSSParserDriver {
+    type AtRule = Option<CSSRule>;
     type Error = ();
-    type Prelude = String;
+    type Prelude = (String, String);
+
+    fn parse_block<'t>(
+        &mut self,
+        prelude: Self::Prelude,
+        _start: &cssparser::ParserState,
+        input: &mut Parser<'a, 't>,
+    ) -> Result<Self::AtRule, ParseError<'a, Self::Error>> {
+        let mut driver = CSSParserDriver;
+        let rule_parser = StyleSheetParser::new(input, &mut driver);
+        let mut nested_rules = Vec::new();
+
+        for rule in rule_parser {
+            match rule {
+                Ok(r) => {
+                    if let Some(inner) = r {
+                        nested_rules.push(inner)
+                    }
+                }
+                Err(e) => eprintln!("{e:?}"),
+            }
+        }
+
+        Ok(Some(CSSRule::Media(QueryItem {
+            name: prelude.0,
+            condition: prelude.1,
+            rules: nested_rules,
+        })))
+    }
+
+    fn parse_prelude<'t>(
+        &mut self,
+        name: cssparser::CowRcStr<'a>,
+        input: &mut Parser<'a, 't>,
+    ) -> Result<Self::Prelude, ParseError<'a, Self::Error>> {
+        match name.to_string().as_str() {
+            "media" | "supports" | "layer" => {
+                let start = input.position();
+                while let Ok(tok) = input.next() {
+                    if matches!(tok, Token::CurlyBracketBlock) {
+                        break;
+                    }
+                }
+
+                Ok((name.to_string(), input.slice_from(start).trim().to_string()))
+            }
+            _ => Err(input.new_custom_error(())),
+        }
+    }
 }
 
-impl<'i> RuleBodyItemParser<'i, (String, String), ()> for CSSBodyParser {
+impl<'i> RuleBodyItemParser<'i, Option<CSSRule>, ()> for CSSDeclarationParser {
     fn parse_declarations(&self) -> bool {
         true
     }
     fn parse_qualified(&self) -> bool {
-        false
+        true
     }
 }
 
-pub fn parse_css_classes(css_content: &str) -> Result<Vec<CSSClass>, ParseStylesError> {
+pub fn parse_css(css_content: &str) -> Result<Vec<ParsedCss>, ParseStylesError> {
+    let mut styles = Vec::new();
     let mut input = ParserInput::new(css_content);
     let mut parser = Parser::new(&mut input);
-    let mut top_level_extractor = TopLevelCSSParser;
-    let stylesheets = StyleSheetParser::new(&mut parser, &mut top_level_extractor);
+    let mut extractor = CSSParserDriver;
+    let stylesheets = StyleSheetParser::new(&mut parser, &mut extractor);
 
-    let mut css_classes = Vec::new();
-
-    for res in stylesheets.flatten() {
-        let mut styles = Vec::new();
-        if let Some(style) = res {
-            for declaration in style.declarations {
-                let parsed_styles = ParsedCssStyle {
-                    property: declaration.0,
-                    value: declaration.1,
-                };
-
-                styles.push(parsed_styles)
+    for rule in stylesheets.flatten().flatten() {
+        match rule {
+            CSSRule::QualifiedRule(style) => {
+                styles.push(ParsedCss::SelectorRule(style));
             }
-            css_classes.push(CSSClass {
-                name: style.class,
-                styles,
-            });
+            CSSRule::Media(query) => {
+                styles.push(ParsedCss::TopLevelAtRule(query));
+            }
+            _ => {}
         }
     }
 
-    Ok(css_classes)
+    for style in &styles {
+        match style {
+            ParsedCss::SelectorRule(style) => {
+                println!(
+                    "selector: {}\ndeclarations: {:#?}",
+                    style.selector, style.declarations
+                );
+            }
+            ParsedCss::TopLevelAtRule(query) => {
+                println!(
+                    "name: {}\ncondition: {}\n rules: {:#?}",
+                    query.name, query.condition, query.rules
+                );
+            }
+        }
+    }
+
+    Ok(styles)
 }
 
-pub fn parse_stylesheet(css_content: &str) -> Result<Vec<ParsedCssStyle>, ParseStylesError> {
+pub fn parse_stylesheet(css_content: &str) -> Result<Vec<CSSDeclaration>, ParseStylesError> {
     let mut parsed_css_styles = Vec::new();
     let mut input = ParserInput::new(css_content);
     let mut parser = Parser::new(&mut input);
@@ -160,7 +323,7 @@ pub fn parse_stylesheet(css_content: &str) -> Result<Vec<ParsedCssStyle>, ParseS
                                     value.push_str(&v.to_css_string());
                                 }
 
-                                parsed_css_styles.push(ParsedCssStyle {
+                                parsed_css_styles.push(CSSDeclaration {
                                     property: property_name,
                                     value,
                                 });
@@ -177,7 +340,7 @@ pub fn parse_stylesheet(css_content: &str) -> Result<Vec<ParsedCssStyle>, ParseS
     Ok(parsed_css_styles)
 }
 
-pub fn parse_inline_styles(styles: &str) -> Result<Vec<ParsedCssStyle>, ParseStylesError> {
+pub fn parse_inline_styles(styles: &str) -> Result<Vec<CSSDeclaration>, ParseStylesError> {
     let mut parsed_styles = vec![];
     let mut input = ParserInput::new(styles);
     let mut parser = Parser::new(&mut input);
@@ -196,7 +359,7 @@ pub fn parse_inline_styles(styles: &str) -> Result<Vec<ParsedCssStyle>, ParseSty
 
                 parse_value_tokens(&mut parser, &mut value)?;
 
-                parsed_styles.push(ParsedCssStyle {
+                parsed_styles.push(CSSDeclaration {
                     property: property_name,
                     value,
                 })

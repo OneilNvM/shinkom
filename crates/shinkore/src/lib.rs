@@ -36,7 +36,6 @@ pub use shinkore_types::{Deserialize, Serialize};
 pub use version::{Version, VersionRequirement};
 use wasm_bindgen::prelude::*;
 
-use crate::css::parse_css_classes;
 use crate::engine::RustEngine;
 
 #[derive(Deserialize, Default, Debug)]
@@ -175,34 +174,14 @@ impl WASMEngine {
     }
 
     #[wasm_bindgen]
-    pub fn add_external_css_styles(&mut self, css: JsValue) -> Result<(), JsError> {
-        match serde_wasm_bindgen::from_value::<Vec<String>>(css) {
-            Ok(stylesheets) => {
-                for sheet in stylesheets {
-                    let parsed_classes = parse_css_classes(&sheet)?;
-
-                    for class in parsed_classes {
-                        if let Some(ref mut store) = self.inner.css_store {
-                            store.class_index.entry(class.name).or_insert(class.styles);
-                        }
-                    }
-                }
-            }
-            Err(e) => {
-                return Err(JsError::new(&format!(
-                    "Failed to convert css map to a HashMap: {e}"
-                )));
-            }
-        };
+    pub fn add_external_css_styles(&mut self, stylesheets: Vec<String>) -> Result<(), JsError> {
+        self.inner.add_external_css_styles(stylesheets)?;
 
         Ok(())
     }
 
     #[wasm_bindgen]
-    pub fn log_class_indexes(&self) {
-        if let Some(ref store) = self.inner.css_store {
-            let class_indexes = serde_wasm_bindgen::to_value(&store.class_index).unwrap_throw();
-            web_sys::console::log_1(&class_indexes);
-        }
+    pub fn log_css_indices(&self) {
+        self.inner.log_css_indices();
     }
 }

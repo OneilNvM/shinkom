@@ -77,7 +77,7 @@ export class SKEngine {
         }
 
         this.wasmEngine?.add_external_css_styles(rawCSSContents)
-        this.wasmEngine?.log_class_indexes()
+        this.wasmEngine?.log_css_indices()
     }
 
     /**

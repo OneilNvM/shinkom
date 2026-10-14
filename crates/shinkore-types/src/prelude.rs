@@ -153,7 +153,7 @@ pub enum CompatType<'a> {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ParsedCssStyle {
+pub struct CSSDeclaration {
     pub property: String,
     pub value: String,
 }
@@ -161,7 +161,13 @@ pub struct ParsedCssStyle {
 #[derive(Debug)]
 pub struct CSSClass {
     pub name: String,
-    pub styles: Vec<ParsedCssStyle>,
+    pub styles: Vec<CSSDeclaration>,
+}
+
+#[derive(Debug)]
+pub struct AtRule {
+    pub name: String,
+    pub condition: String,
 }
 
 #[derive(Debug)]
