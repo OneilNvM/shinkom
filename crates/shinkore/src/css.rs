@@ -151,6 +151,18 @@ impl<'a> AtRuleParser<'a> for CSSDeclarationParser {
             rules: nested_rules,
         })))
     }
+
+    fn rule_without_block(
+        &mut self,
+        prelude: Self::Prelude,
+        _start: &cssparser::ParserState,
+    ) -> Result<Self::AtRule, ()> {
+        Ok(Some(CSSRule::Media(QueryItem {
+            name: prelude.0,
+            condition: prelude.1,
+            rules: vec![],
+        })))
+    }
 }
 
 impl<'i> QualifiedRuleParser<'i> for CSSParserDriver {
@@ -247,8 +259,30 @@ impl<'a> AtRuleParser<'a> for CSSParserDriver {
 
                 Ok((name.to_string(), input.slice_from(start).trim().to_string()))
             }
+            "import" => {
+                let start = input.position();
+                while let Ok(tok) = input.next() {
+                    if matches!(tok, Token::Semicolon) {
+                        break;
+                    }
+                }
+
+                Ok((name.to_string(), input.slice_from(start).trim().to_string()))
+            }
             _ => Err(input.new_custom_error(())),
         }
+    }
+
+    fn rule_without_block(
+        &mut self,
+        prelude: Self::Prelude,
+        _start: &cssparser::ParserState,
+    ) -> Result<Self::AtRule, ()> {
+        Ok(Some(CSSRule::Media(QueryItem {
+            name: prelude.0,
+            condition: prelude.1,
+            rules: vec![],
+        })))
     }
 }
 

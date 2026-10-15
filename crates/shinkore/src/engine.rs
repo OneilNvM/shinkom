@@ -79,7 +79,7 @@ macro_rules! process_css_rules {
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct CSSStore {
     pub class_index: HashMap<String, Vec<CSSDeclaration>>,
-    pub at_rule_index: HashMap<String, String>,
+    pub at_rule_index: HashMap<String, Vec<String>>,
 }
 
 #[derive(Debug, Default)]
@@ -728,8 +728,14 @@ impl RustEngine {
                 if let Some(ref store) = self.css_store {
                     for name in class_names {
                         if store.class_index.contains_key(name)
-                            && let Some(_rules) = store.class_index.get(name)
+                            && let Some(rules) = store.class_index.get(name)
                         {
+                            for declaration in rules {
+                                properties_values.insert(
+                                    declaration.property.clone(),
+                                    declaration.value.clone(),
+                                );
+                            }
                         }
                     }
                 }
@@ -819,10 +825,11 @@ impl RustEngine {
                 && !at_rules.is_empty()
             {
                 for at_rule in at_rules {
-                    store
-                        .at_rule_index
-                        .entry(at_rule.name)
-                        .or_insert(at_rule.condition);
+                    if let Some(v) = store.at_rule_index.get_mut(&at_rule.name) {
+                        v.push(at_rule.condition);
+                    } else {
+                        store.at_rule_index.insert(at_rule.name, vec![at_rule.condition]);
+                    }
                 }
             }
         }
@@ -845,8 +852,8 @@ impl RustEngine {
         #[cfg(not(target_arch = "wasm32"))]
         {
             if let Some(ref store) = self.css_store {
-                println!("Class indices: {:?}", store.class_index);
-                println!("At rule indices: {:?}", store.at_rule_index);
+                println!("Class indices: {:#?}", store.class_index);
+                println!("At rule indices: {:#?}", store.at_rule_index);
             }
         }
     }
