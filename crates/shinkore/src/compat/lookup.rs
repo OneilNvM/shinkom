@@ -10,7 +10,7 @@ use shinkore_types::prelude::{
     WebFeatureContext,
 };
 
-pub enum AttributeLookupState {
+enum AttributeLookupState {
     GlobalAttribute,
     DataAttribute,
     LocalAttribute,
@@ -18,9 +18,6 @@ pub enum AttributeLookupState {
 }
 
 /// Perform a compatibility lookup for a single element.
-///
-/// ## Errors
-/// A [`CheckError`] is returned if there are any errors in score calculations.
 pub fn lookup_element(ctx: LookupElementsContext) -> Option<WebFeatureContext> {
     if let Some(el) = ctx.el_data.get(ctx.tag) {
         Some(WebFeatureContext {
@@ -46,9 +43,6 @@ pub fn lookup_element(ctx: LookupElementsContext) -> Option<WebFeatureContext> {
 }
 
 /// Perform compatibility lookups for multiple elements.
-///
-/// ## Errors
-/// A [`CheckError`] is returned if there are any errors in score calculations.
 pub fn multi_lookup_element<'a>(
     ctx: &'a LookupElementsContext,
     element_cache: &mut HashSet<String>,
@@ -83,9 +77,6 @@ pub fn multi_lookup_element<'a>(
 }
 
 /// Perform compatibility lookups for an element's attributes.
-///
-/// ## Errors
-/// A [`CheckError`] is returned if there are any errors in score calculations.
 pub fn lookup_attribs<'a>(ctx: &'a LookupAttribsContext) -> Option<Vec<WebFeatureContext<'a>>> {
     let mut state;
     let mut features: Vec<WebFeatureContext> = vec![];
@@ -170,9 +161,6 @@ pub fn lookup_attribs<'a>(ctx: &'a LookupAttribsContext) -> Option<Vec<WebFeatur
 }
 
 /// Perform compatibility lookups for multiple elements' attributes.
-///
-/// ## Errors
-/// A [`CheckError`] is returned if there are any errors in score calculations.
 pub fn multi_lookup_attribs<'a>(
     ctx: &'a LookupAttribsContext,
     attrib_cache: &mut HashSet<String>,

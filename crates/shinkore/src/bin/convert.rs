@@ -8,8 +8,8 @@ use std::{
 
 use serde::{Serialize, de::DeserializeOwned};
 use serde_json::Value;
-use shinkore::{BrowserData, BrowserUsageData, HTMLData, JSONStructure, SVGData};
-use shinkore_types::prelude::CSSData;
+use shinkore::{BrowserData, BrowserUsageData, HTMLData, SVGData};
+use shinkore_types::prelude::{CSSData, JSONStructure};
 use wincode::{SchemaWrite, config::DefaultConfig};
 
 fn get_project_root() -> PathBuf {

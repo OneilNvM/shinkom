@@ -1,39 +1,78 @@
 //! # Shinkore
 //!
-//! Shinkore is a cross-browser compatability data processesor and analyser originally built for the [Shinkom](https://github.com/OneilNvM/shinkom)
-//! Javascript library. This library is made with [wasm-bindgen](https://github.com/wasm-bindgen/wasm-bindgen) which builds and outputs a WASM binary
-//! and JS '*glue code*' to allow for usage of the compatibility engine in Javascript through WebAssembly. **Keep in mind that the usage of the engine
-//! in Javascript through WebAssembly is asynchronous at initialization.**
-//!
-//! If you plan on using this purely in Rust, then make use of the [`engine`] module for a pure Rust application.
+//! A cross-browser compatability data processesor and analyser originally built for the [Shinkom](https://github.com/OneilNvM/shinkom)
+//! JavaScript toolkikt. The engine itself was built natively in Rust alongside a wrapper that compiles to WebAssembly via
+//! [wasm-bindgen](https://github.com/wasm-bindgen/wasm-bindgen) allowing the engine to be output as WebAssembly and JavaScript code using the
+//! [wasm-pack](https://github.com/wasm-bindgen/wasm-pack) binary.
 //!
 //! ---
 //!
-//! ## Notes
+//! ## Usage
+//! A simple way to use the engine would be to build the engine from the compiled compatibility data.
 //!
-//! The library consists of modules containing functions used for performing cross-browser compatibility checks of web features on modern browsers.
-//! The engine requires compatibility data in JSON format, therefore usage of crates such as [`serde`] and [`serde_json`] or [`serde_wasm_bindgen`]
-//! for JSON parsing will be necessary. The JSON structure to follow for the compatibility data can be interpreted in the [`shinkore_types`] crate, but most
-//! of the structure in the schema module is based on the [compat-data-schema](https://github.com/mdn/browser-compat-data/blob/main/schemas/compat-data-schema.md)
-//! in the [browser-compat-data](https://github.com/mdn/browser-compat-data) project by MDN, as well as the
-//! [browser-data](https://github.com/mdn/browser-compat-data/blob/main/schemas/browsers-schema.md) format in [`shinkore_types::prelude`].
+//! ```rust
+//! use shinkore::engine::RustEngine;
+//!     
+//! let engine = RustEngine::from_compiled_data();
+//! ```
 //!
-//! The [`BrowserUsageData`] is based on the [caniuse-db](https://github.com/Fyrd/caniuse) format which only includes the usage data for each browser.
+//! For more control and customization of the data being used by the engine, use the engine builder to define where to read data files from.
 //!
-//! If your not planning on using your own custom data, then you can download each JSON file from the [gen directory](https://github.com/OneilNvM/shinkom/tree/master/packages/shinkom/gen)
-//! on the Shinkom GitHub repository.
+//! ```rust
+//! use shinkore::engine::RustEngineBuilder;
+//!
+//! let mut builder = RustEngineBuilder::new();
+//!
+//! builder.with_data_dir("gen".into());
+//!
+//! let engine = builder.build();
+//! ```
+//!
+//! **Note: The data files must be in JSON format and follow the specified schema for data to be deserialized appropriately. Check the [`shinkore_types::schema`]
+//! for more details about the schema.**
+//!
+//! ---
+//!
+//! ## Compatibility Data Files
+//! The engine requires the compatiblity data based on the [BCD](https://github.com/mdn/browser-compat-data) (browser-compatibility-data) by MDN, specifically
+//! HTML, CSS and browser data by both the BCD and [caniuse-db](https://github.com/Fyrd/caniuse) for browser usage data.
+//!
+//! ### .json to .bin
+//! The engine doesn't store this data as JSON (although the original data files need to be JSON), instead it uses `.bin` (binary) files to serialize JSON data into
+//! binary format and deserialize them into the data structures used by the engine.
+//!
+//! Therefore, the `.json` files will need to be converted into `.bin` files by deserializing the JSON into the correct data structures, and then serailizing them into
+//! binary code. Shinkore comes with a binary executable that converts `.json` files into `.bin` files called `sk_convert` that writes its output to a gen directory
+//! in the Rust project. The following command installs this executable.
+//!
+//! ```bash
+//! cargo install shinkore --bin sk_convert
+//! ```
+//!
+//! Alternatively, developers can make their own converter as long as the output is in .bin format and can be deserialized by [`wincode`].
+//!
+//! ### Naming Conventions
+//! The files providing compatibility data must be named accordingly for the engine to read data from `.bin` files and for `sk_convert` to read the `.json` files.
+//! - HTML Data: `html-compat-data.json`, `html-compat-data.bin`
+//! - SVG Data: `svg-compat-data.json`, `svg-compat-data.bin`
+//! - CSS Data: `css-compat-data.json`, `css-compat-data.bin`
+//! - Browser Data: `browser-data.json`, `browser-data.bin`
+//! - Browser Usage Data (from caniuse-db): `browser-usage-data.json`, `browser-usage-data.bin`
+//!
 pub mod compat;
 mod constants;
 pub mod css;
 pub mod engine;
 pub mod errors;
+mod macros;
 pub mod preprocess;
 mod version;
 
 pub use lol_html::{RewriteStrSettings, element, rewrite_str};
-pub use shinkore_types::prelude::*;
-pub use shinkore_types::{Deserialize, Serialize};
-pub use version::{Version, VersionRequirement};
+pub use shinkore_types::{
+    Deserialize, Serialize,
+    prelude::{BrowserData, BrowserUsageData, CSSData, HTMLData, SVGData},
+};
 use wasm_bindgen::prelude::*;
 
 use crate::engine::RustEngine;
@@ -110,8 +149,8 @@ impl WASMEngineBuilder {
     }
 }
 
-/// The [`CompatEngine`] struct stores the compatibility data
-/// and acts as an entry-point for the Rust/WASM engine.
+/// A struct that wraps the native [`RustEngine`] and exports the
+/// engine to WebAssembly through [`macro@wasm_bindgen`].
 #[derive(Serialize, Deserialize, Default, Debug)]
 #[wasm_bindgen]
 pub struct WASMEngine {

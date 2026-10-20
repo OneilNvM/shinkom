@@ -148,7 +148,7 @@ pub fn calculate_compat_score(
 ///
 /// ## Errors
 /// A [`CheckError`] is returned if the status is not available for the feature.
-pub fn calculate_status_score(
+fn calculate_status_score(
     feature_name: String,
     compat_status: &Option<Status>,
     lookup_type: LookupType,
@@ -208,7 +208,7 @@ pub fn calculate_status_score(
 ///
 /// ## Errors
 /// A [`CheckError`] is returned if an error occurs in the calculations for support scores.
-pub fn calculate_browser_score(
+fn calculate_browser_score(
     feature_name: String,
     compat_type: CompatType,
     browser_results: &mut Vec<BrowserResult>,
