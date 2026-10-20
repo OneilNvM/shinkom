@@ -23,8 +23,12 @@ fn get_project_root() -> PathBuf {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    let args: Vec<String> = env::args().collect();
+    let data_dir = &args[1];
+    let new_data_dir = &args[2];
+
     let root = get_project_root();
-    let base_path = root.join(PathBuf::from("packages/shinkom/gen/json"));
+    let base_path = root.join(PathBuf::from(data_dir));
     let read_json = |filename: &str| -> Result<serde_json::Value, Box<dyn Error>> {
         let path = base_path.join(filename);
         let file = fs::File::open(&path)
@@ -48,11 +52,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let usage_data: BrowserUsageData = deserialize_json(&mut usage_root, None)?;
 
     println!("writing bin files...");
-    write_bin(&html_data, &root, "html-compat-data.bin")?;
-    write_bin(&svg_data, &root, "svg-compat-data.bin")?;
-    write_bin(&css_data, &root, "css-compat-data.bin")?;
-    write_bin(&browser_data, &root, "browser-data.bin")?;
-    write_bin(&usage_data, &root, "browser-usage-data.bin")?;
+    write_bin(&html_data, &root, "html-compat-data.bin", new_data_dir)?;
+    write_bin(&svg_data, &root, "svg-compat-data.bin", new_data_dir)?;
+    write_bin(&css_data, &root, "css-compat-data.bin", new_data_dir)?;
+    write_bin(&browser_data, &root, "browser-data.bin", new_data_dir)?;
+    write_bin(&usage_data, &root, "browser-usage-data.bin", new_data_dir)?;
 
     println!("converted compatibility data from .json to .bin");
 
@@ -85,12 +89,17 @@ where
     }
 }
 
-fn write_bin<T>(data: &T, root: &Path, filename: &str) -> Result<(), Box<dyn Error>>
+fn write_bin<T>(
+    data: &T,
+    root: &Path,
+    filename: &str,
+    new_data_dir: &String,
+) -> Result<(), Box<dyn Error>>
 where
     T: JSONStructure + SchemaWrite<DefaultConfig, Src = T> + Serialize + DeserializeOwned,
 {
     let encoded = wincode::serialize(data)?;
-    let base_path = root.join(PathBuf::from("crates/shinkore/gen"));
+    let base_path = root.join(PathBuf::from(new_data_dir));
     let path = base_path.join(filename);
 
     let mut output = fs::File::create(path)?;
