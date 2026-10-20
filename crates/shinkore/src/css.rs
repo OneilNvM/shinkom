@@ -7,35 +7,35 @@ use shinkore_types::prelude::CSSDeclaration;
 
 use crate::errors::ParseStylesError;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ParsedCss {
     SelectorRule(StyleItem),
     TopLevelAtRule(QueryItem),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct StyleItem {
     pub selector: String,
     pub declarations: Vec<CSSRule>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct QueryItem {
     pub name: String,
     pub condition: String,
     pub rules: Vec<CSSRule>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum CSSRule {
     Declaration((String, String)),
     QualifiedRule(StyleItem),
     Media(QueryItem),
 }
 
-pub struct CSSParserDriver;
+struct CSSParserDriver;
 
-pub struct CSSDeclarationParser;
+struct CSSDeclarationParser;
 
 impl<'i> DeclarationParser<'i> for CSSDeclarationParser {
     type Declaration = Option<CSSRule>;
@@ -314,64 +314,7 @@ pub fn parse_css(css_content: &str) -> Result<Vec<ParsedCss>, ParseStylesError> 
         }
     }
 
-    for style in &styles {
-        match style {
-            ParsedCss::SelectorRule(style) => {
-                println!(
-                    "selector: {}\ndeclarations: {:#?}",
-                    style.selector, style.declarations
-                );
-            }
-            ParsedCss::TopLevelAtRule(query) => {
-                println!(
-                    "name: {}\ncondition: {}\n rules: {:#?}",
-                    query.name, query.condition, query.rules
-                );
-            }
-        }
-    }
-
     Ok(styles)
-}
-
-pub fn parse_stylesheet(css_content: &str) -> Result<Vec<CSSDeclaration>, ParseStylesError> {
-    let mut parsed_css_styles = Vec::new();
-    let mut input = ParserInput::new(css_content);
-    let mut parser = Parser::new(&mut input);
-
-    while !parser.is_exhausted() {
-        let _ = parser.parse_entirely(|p| {
-            if let Token::CurlyBracketBlock = p.next()?.clone() {
-                let _ = p.parse_nested_block(|n| {
-                    while !n.is_exhausted() {
-                        if let Token::Ident(name) = n.next()?.clone() {
-                            let property_name = name.to_string().to_lowercase();
-
-                            if n.expect_colon().is_ok() {
-                                let mut value = String::new();
-
-                                while let Ok(v) = n.next().clone() {
-                                    if matches!(v, Token::Semicolon) {
-                                        break;
-                                    }
-                                    value.push_str(&v.to_css_string());
-                                }
-
-                                parsed_css_styles.push(CSSDeclaration {
-                                    property: property_name,
-                                    value,
-                                });
-                            }
-                        }
-                    }
-                    Ok::<(), ParseError<'_, ParseStylesError>>(())
-                });
-            }
-            Ok::<(), ParseError<'_, ParseStylesError>>(())
-        });
-    }
-
-    Ok(parsed_css_styles)
 }
 
 pub fn parse_inline_styles(styles: &str) -> Result<Vec<CSSDeclaration>, ParseStylesError> {

@@ -1,6 +1,4 @@
-//! This module contains a Rust compatible version of the compatibility engine.
-//! It contains the same functionality of the [`crate::CompatEngine`] version but removes any usage of the [`wasm_bindgen`] implementations
-//! and replaces [`wasm_bindgen::JsValue`] and [`wasm_bindgen::JsError`] usage with native Rust types.
+//! The core engine for compatibility analysis and data processing.
 use std::{
     cell::RefCell,
     collections::{HashMap, HashSet},
@@ -27,8 +25,9 @@ use crate::{
         },
     },
     constants::{IGNORE_TAGS, SKIP_TAGS},
-    css::{CSSRule, ParsedCss, parse_css, parse_inline_styles, parse_stylesheet},
+    css::{CSSRule, ParsedCss, parse_css, parse_inline_styles},
     errors::{CheckError, ParseStylesError, PreProcessError},
+    extract_css_rules, flatten_css,
     preprocess::{format_html, pre_process_html},
 };
 
@@ -36,45 +35,6 @@ use shinkore_types::prelude::{
     BrowserData, BrowserUsageData, CompatResult, ElementContext, HTMLData, LookupAttribsContext,
     LookupCaches, LookupElementsContext, LookupResults, SVGData,
 };
-
-macro_rules! process_css_rules {
-    ($queue:expr, $classes:expr, $at_rules:expr) => {
-        while !$queue.is_empty() {
-            let rule = $queue.remove(0);
-            match rule {
-                CSSRule::QualifiedRule(s) => {
-                    let mut styles = Vec::new();
-                    for item in s.declarations {
-                        if let CSSRule::Declaration((property, value)) = item {
-                            styles.push(CSSDeclaration { property, value });
-                        } else {
-                            $queue.push(item);
-                        }
-                    }
-                    $classes.push(CSSClass {
-                        name: s.selector,
-                        styles,
-                    });
-                }
-                CSSRule::Media(q) => {
-                    $at_rules.push(AtRule {
-                        name: q.name,
-                        condition: q.condition,
-                    });
-
-                    for item in q.rules {
-                        if matches!(item, CSSRule::Declaration(_)) {
-                            continue;
-                        } else {
-                            $queue.push(item);
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
-    };
-}
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct CSSStore {
@@ -719,8 +679,15 @@ impl RustEngine {
                 }
             }
             CSSType::StyleTag => {
-                for style in parse_stylesheet(css_content)? {
-                    properties_values.insert(style.property, style.value);
+                let parsed_css = parse_css(css_content)?;
+                let mut classes = Vec::new();
+
+                extract_css_rules!(parsed_css, classes);
+
+                for class in classes {
+                    for style in class.styles {
+                        properties_values.insert(style.property, style.value);
+                    }
                 }
             }
             CSSType::Class => {
@@ -774,45 +741,7 @@ impl RustEngine {
             let mut classes: Vec<CSSClass> = Vec::new();
             let mut at_rules: Vec<AtRule> = Vec::new();
 
-            for css in parsed_css {
-                match css {
-                    ParsedCss::SelectorRule(style) => {
-                        let mut queue = Vec::new();
-
-                        let mut top_level_declarations = Vec::new();
-                        for rule in style.declarations {
-                            if let CSSRule::Declaration((property, value)) = rule {
-                                top_level_declarations.push(CSSDeclaration { property, value });
-                            } else {
-                                queue.push(rule);
-                            }
-                        }
-                        classes.push(CSSClass {
-                            name: style.selector,
-                            styles: top_level_declarations,
-                        });
-
-                        process_css_rules!(queue, classes, at_rules);
-                    }
-                    ParsedCss::TopLevelAtRule(query) => {
-                        let mut queue = Vec::new();
-                        at_rules.push(AtRule {
-                            name: query.name,
-                            condition: query.condition,
-                        });
-
-                        for rule in query.rules {
-                            if matches!(rule, CSSRule::Declaration(_)) {
-                                continue;
-                            } else {
-                                queue.push(rule);
-                            }
-                        }
-
-                        process_css_rules!(queue, classes, at_rules);
-                    }
-                }
-            }
+            extract_css_rules!(parsed_css, classes, at_rules);
 
             if let Some(ref mut store) = self.css_store
                 && !classes.is_empty()
@@ -828,7 +757,9 @@ impl RustEngine {
                     if let Some(v) = store.at_rule_index.get_mut(&at_rule.name) {
                         v.push(at_rule.condition);
                     } else {
-                        store.at_rule_index.insert(at_rule.name, vec![at_rule.condition]);
+                        store
+                            .at_rule_index
+                            .insert(at_rule.name, vec![at_rule.condition]);
                     }
                 }
             }
