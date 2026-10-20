@@ -5,20 +5,10 @@ import { Shinkom } from 'shinkom'
 
 export default function ShinkomClient() {
     useEffect(() => {
-        const compiledCss = Array.from(document.styleSheets)
-            .flatMap((sheet) => {
-                try {
-                    return Array.from(sheet.cssRules).map((rule) => rule.cssText);
-                } catch {
-                    return [];
-                }
-            })
-            .join('\n');
-        const shinkom = new Shinkom({ inspector: { disabled: true }, engine: { css: { externalCSS: { imports: [compiledCss] } } } })
+
+        const shinkom = new Shinkom({ inspector: { disabled: false }, engine: { css: { tailwindCSS: true } } })
 
         shinkom.init()
-
-        console.log(compiledCss)
 
         return () => shinkom.destroy()
     }, [])
