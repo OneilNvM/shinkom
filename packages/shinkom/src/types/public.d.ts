@@ -59,7 +59,8 @@ export type EngineConfig = {
  * * `https://localhost:5173/main.css`
  */
 export type CSSConfig = {
-    externalCSS: {
+    tailwindCSS?: boolean,
+    externalCSS?: {
         imports?: string[],
         files?: string[]
         directories?: string[]

@@ -54,6 +54,22 @@ export class SKEngine {
         instance = this
     }
 
+    async #autoDiscoverTailwindClasses() {
+        console.log("finding css in document")
+        const compiledCss = Array.from(document.styleSheets)
+            .flatMap((sheet) => {
+                try {
+                    return Array.from(sheet.cssRules).map((rule) => rule.cssText);
+                } catch {
+                    return [];
+                }
+            })
+            .join('\n');
+
+        this.wasmEngine?.add_external_css_styles([compiledCss])
+        this.wasmEngine?.log_css_indices()
+    }
+
     /**
      * 
      * @param {CSSConfig['externalCSS']} cssConfig
@@ -62,17 +78,19 @@ export class SKEngine {
         const isNode = typeof window === "undefined"
         const rawCSSContents = []
 
-        if (cssConfig.files) {
-            for (const file of cssConfig.files) {
-                rawCSSContents.push(...(await readCSSFiles(file, isNode)).flat())
-            }
-        } else if (cssConfig.directories) {
-            for (const dir of cssConfig.directories) {
-                rawCSSContents.push(...(await readCSSFiles(dir, isNode)).flat())
-            }
-        } else if (cssConfig.imports) {
-            for (const content of cssConfig.imports) {
-                rawCSSContents.push(content)
+        if (cssConfig) {
+            if (cssConfig.files) {
+                for (const file of cssConfig.files) {
+                    rawCSSContents.push(...(await readCSSFiles(file, isNode)).flat())
+                }
+            } else if (cssConfig.directories) {
+                for (const dir of cssConfig.directories) {
+                    rawCSSContents.push(...(await readCSSFiles(dir, isNode)).flat())
+                }
+            } else if (cssConfig.imports) {
+                for (const content of cssConfig.imports) {
+                    rawCSSContents.push(content)
+                }
             }
         }
 
@@ -231,8 +249,14 @@ export class SKEngine {
 
                 this.initialized = true
 
-                if (this.#config && this.#config.css && this.#config.css.externalCSS)
-                    this.#loadExternalStylesheets(this.#config.css.externalCSS)
+                if (this.#config && this.#config.css) {
+                    if (this.#config.css.externalCSS) {
+                        this.#loadExternalStylesheets(this.#config.css.externalCSS)
+                    }
+                    if (this.#config.css.tailwindCSS) {
+                        this.#autoDiscoverTailwindClasses()
+                    }
+                }
 
                 console.log("initialized engine")
             }
