@@ -42,11 +42,18 @@
 //! binary format and deserialize them into the data structures used by the engine.
 //!
 //! Therefore, the `.json` files will need to be converted into `.bin` files by deserializing the JSON into the correct data structures, and then serailizing them into
-//! binary code. Shinkore comes with a binary executable that converts `.json` files into `.bin` files called `sk_convert` that writes its output to a gen directory
+//! binary code. Shinkore comes with a binary executable that converts `.json` files into `.bin` files called `sk-convert` that writes its output to a gen directory
 //! in the Rust project. The following command installs this executable.
 //!
 //! ```bash
-//! cargo install shinkore --bin sk_convert
+//! cargo install shinkore --bin sk-convert
+//! ```
+//!
+//! To use this binary, make sure to add the path to the directory containing your JSON data files. The path always starts relative to the terminal's current working
+//! directory.
+//!
+//! ```bash
+//! sk-convert path/to/awesome/data output/dir
 //! ```
 //!
 //! Alternatively, developers can make their own converter as long as the output is in .bin format and can be deserialized by [`wincode`].
