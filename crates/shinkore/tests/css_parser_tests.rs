@@ -1,7 +1,4 @@
-use shinkore::{
-    css::{parse_css, parse_stylesheet},
-    errors::ParseStylesError,
-};
+use shinkore::{css::parse_css, errors::ParseStylesError};
 
 #[test]
 fn should_parse_simple_css() {
@@ -16,11 +13,11 @@ color: whitesmoke;
 }
     "#;
 
-    let result = parse_stylesheet(simple_css).unwrap();
+    let result = parse_css(simple_css).unwrap();
 
     println!("{result:#?}");
 
-    assert!(result.len() == 6)
+    assert!(result.len() == 1)
 }
 
 #[test]
