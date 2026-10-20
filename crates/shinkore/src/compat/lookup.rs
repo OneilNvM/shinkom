@@ -11,10 +11,10 @@ use shinkore_types::prelude::{
 };
 
 enum AttributeLookupState {
-    GlobalAttribute,
-    DataAttribute,
-    LocalAttribute,
-    MissingAttribute,
+    Global,
+    Data,
+    Local,
+    Missing,
 }
 
 /// Perform a compatibility lookup for a single element.
@@ -83,17 +83,17 @@ pub fn lookup_attribs<'a>(ctx: &'a LookupAttribsContext) -> Option<Vec<WebFeatur
 
     for (name, value) in &ctx.attribs {
         if name.starts_with("data-") {
-            state = AttributeLookupState::DataAttribute;
+            state = AttributeLookupState::Data;
         } else if ctx.g_attrib_data.contains_key(name) {
-            state = AttributeLookupState::GlobalAttribute;
+            state = AttributeLookupState::Global;
         } else if ctx.el_data.contains_key(ctx.tag) {
-            state = AttributeLookupState::LocalAttribute;
+            state = AttributeLookupState::Local;
         } else {
-            state = AttributeLookupState::MissingAttribute;
+            state = AttributeLookupState::Missing;
         }
 
         match state {
-            AttributeLookupState::GlobalAttribute => {
+            AttributeLookupState::Global => {
                 if let Some(g_attrib) = ctx.g_attrib_data.get(name) {
                     // Handle global attribute lookups
                     features.push(WebFeatureContext {
@@ -103,7 +103,7 @@ pub fn lookup_attribs<'a>(ctx: &'a LookupAttribsContext) -> Option<Vec<WebFeatur
                     });
                 }
             }
-            AttributeLookupState::DataAttribute => {
+            AttributeLookupState::Data => {
                 if let Some(d_attrib) = ctx.g_attrib_data.get("data_attributes") {
                     // Handle special data-* attribute lookups
                     features.push(WebFeatureContext {
@@ -113,7 +113,7 @@ pub fn lookup_attribs<'a>(ctx: &'a LookupAttribsContext) -> Option<Vec<WebFeatur
                     });
                 }
             }
-            AttributeLookupState::LocalAttribute => {
+            AttributeLookupState::Local => {
                 if let Some(el) = ctx.el_data.get(ctx.tag) {
                     if ctx.tag == "input"
                         && let Some(input_attrib) = el.sub_features.get(&format!("type_{value}"))
@@ -132,14 +132,14 @@ pub fn lookup_attribs<'a>(ctx: &'a LookupAttribsContext) -> Option<Vec<WebFeatur
                             lookup_type: LookupType::Attribute(name),
                         });
                     } else {
-                        state = AttributeLookupState::MissingAttribute;
+                        state = AttributeLookupState::Missing;
                     }
                 }
             }
             _ => (),
         }
 
-        if let AttributeLookupState::MissingAttribute = state {
+        if let AttributeLookupState::Missing = state {
             #[cfg(target_arch = "wasm32")]
             {
                 web_sys::console::warn_1(&JsValue::from_str(&format!(
@@ -170,17 +170,17 @@ pub fn multi_lookup_attribs<'a>(
 
     for (name, value) in &ctx.attribs {
         if name.starts_with("data-") {
-            state = AttributeLookupState::DataAttribute;
+            state = AttributeLookupState::Data;
         } else if ctx.g_attrib_data.contains_key(name) {
-            state = AttributeLookupState::GlobalAttribute;
+            state = AttributeLookupState::Global;
         } else if ctx.el_data.contains_key(ctx.tag) {
-            state = AttributeLookupState::LocalAttribute;
+            state = AttributeLookupState::Local;
         } else {
-            state = AttributeLookupState::MissingAttribute;
+            state = AttributeLookupState::Missing;
         }
 
         match state {
-            AttributeLookupState::GlobalAttribute => {
+            AttributeLookupState::Global => {
                 if let Some(g_attrib) = ctx.g_attrib_data.get(name) {
                     // Store global attribute name in attribute cache to prevent duplicate attribute lookups
                     if !attrib_cache.contains(name) {
@@ -193,7 +193,7 @@ pub fn multi_lookup_attribs<'a>(
                     }
                 }
             }
-            AttributeLookupState::DataAttribute => {
+            AttributeLookupState::Data => {
                 if let Some(d_attrib) = ctx.g_attrib_data.get("data_attributes")
                     && !attrib_cache.contains("data-attributes")
                 {
@@ -207,7 +207,7 @@ pub fn multi_lookup_attribs<'a>(
                     attrib_cache.insert("data-attributes".to_string());
                 }
             }
-            AttributeLookupState::LocalAttribute => {
+            AttributeLookupState::Local => {
                 if let Some(el) = ctx.el_data.get(ctx.tag) {
                     if ctx.tag == "input"
                         && let Some(input_attrib) = el.sub_features.get(&format!("type_{value}"))
@@ -238,7 +238,7 @@ pub fn multi_lookup_attribs<'a>(
             _ => (),
         }
 
-        if let AttributeLookupState::MissingAttribute = state {
+        if let AttributeLookupState::Missing = state {
             // Insert name into attribute cache to prevent duplicate error messages
             if !attrib_cache.contains(name) {
                 #[cfg(target_arch = "wasm32")]
