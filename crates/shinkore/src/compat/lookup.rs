@@ -1,4 +1,4 @@
-//! Module contains functions for performing compatibility data lookup logic to calculate the
+//! Contains functions for performing compatibility data lookup logic to calculate the
 //! compatibility score.
 use std::collections::HashSet;
 

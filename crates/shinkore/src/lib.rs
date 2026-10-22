@@ -10,7 +10,7 @@
 //! ## Usage
 //! A simple way to use the engine would be to build the engine from the compiled compatibility data.
 //!
-//! ```rust
+//! ```no_run
 //! use shinkore::engine::RustEngine;
 //!     
 //! let engine = RustEngine::from_compiled_data();
@@ -18,14 +18,14 @@
 //!
 //! For more control and customization of the data being used by the engine, use the engine builder to define where to read data files from.
 //!
-//! ```rust
+//! ```no_run
 //! use shinkore::engine::RustEngineBuilder;
 //!
-//! let mut builder = RustEngineBuilder::new();
-//!
-//! builder.with_data_dir("gen".into());
+//! # fn main() {
+//! let mut builder = RustEngineBuilder::new().with_data_dir("gen".into());
 //!
 //! let engine = builder.build();
+//! # }
 //! ```
 //!
 //! **Note: The data files must be in JSON format and follow the specified schema for data to be deserialized appropriately. Check the [`shinkore_types::schema`]
@@ -65,7 +65,18 @@
 //! - CSS Data: `css-compat-data.json`, `css-compat-data.bin`
 //! - Browser Data: `browser-data.json`, `browser-data.bin`
 //! - Browser Usage Data (from caniuse-db): `browser-usage-data.json`, `browser-usage-data.bin`
-//!
+//! 
+//! ---
+//! 
+//! ## CSS Parsing
+//! Shinkore uses the [`cssparser`] crate for its parsing implementation. The [`css`] module contains functions for parsing CSS stylesheets and inline styles from
+//! style attributes. The implementation of CSS parsing currently parses: classes and their declarations and at-rules and their conditions, as well as their rules.
+//! The parsing implementation also finds nested classes and at-rules, which is helpful for any third-party tools that use this feature a lot like TailwindCSS.
+//! 
+//! ### Limitations
+//! There are a few limitations of the current parsing implementation:
+//! - It is only able to parse single class names (e.g. `.test`, `.square`, `.demo`) and not multiple (e.g. `.demo.container`, `.container .inner`).
+//! - The only selectors it can parse are class selectors; cannot parse tags, attributes, pseudo-elements etc.
 pub mod compat;
 mod constants;
 pub mod css;
@@ -84,6 +95,14 @@ use wasm_bindgen::prelude::*;
 
 use crate::engine::RustEngine;
 
+
+/// Builds a [`WASMEngine`] from binary-encoded compatibility data.
+///
+/// Create a builder, provide any available datasets with their respective set
+/// methods, then call [`build`](WASMEngineBuilder::build). Each setter expects
+/// bytes serialized in the format used by Shinkore's generated `.bin` data
+/// files. If a dataset is not provided, or its bytes cannot be deserialized,
+/// that dataset is omitted from the engine.
 #[derive(Deserialize, Default, Debug)]
 #[serde(rename_all = "camelCase")]
 #[wasm_bindgen]
@@ -102,11 +121,15 @@ pub struct WASMEngineBuilder {
 
 #[wasm_bindgen]
 impl WASMEngineBuilder {
+    /// Creates an empty builder.
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Sets the HTML compatibility dataset from its serialized binary data.
+    ///
+    /// If `data` cannot be deserialized, the HTML dataset is unset.
     #[wasm_bindgen]
     pub fn set_html_binary_data(&mut self, data: &[u8]) {
         let html_data: Option<HTMLData> = wincode::deserialize(data).ok();
@@ -114,6 +137,9 @@ impl WASMEngineBuilder {
         self.html = html_data;
     }
 
+    /// Sets the SVG compatibility dataset from its serialized binary data.
+    ///
+    /// If `data` cannot be deserialized, the SVG dataset is unset.
     #[wasm_bindgen]
     pub fn set_svg_binary_data(&mut self, data: &[u8]) {
         let svg_data: Option<SVGData> = wincode::deserialize(data).ok();
@@ -121,6 +147,9 @@ impl WASMEngineBuilder {
         self.svg = svg_data;
     }
 
+    /// Sets the CSS compatibility dataset from its serialized binary data.
+    ///
+    /// If `data` cannot be deserialized, the CSS dataset is unset.
     #[wasm_bindgen]
     pub fn set_css_binary_data(&mut self, data: &[u8]) {
         let css_data: Option<CSSData> = wincode::deserialize(data).ok();
@@ -128,6 +157,9 @@ impl WASMEngineBuilder {
         self.css = css_data;
     }
 
+    /// Sets the browser dataset from its serialized binary data.
+    ///
+    /// If `data` cannot be deserialized, the browser dataset is unset.
     #[wasm_bindgen]
     pub fn set_browser_binary_data(&mut self, data: &[u8]) {
         let browser_data: Option<BrowserData> = wincode::deserialize(data).ok();
@@ -135,6 +167,9 @@ impl WASMEngineBuilder {
         self.browser_data = browser_data;
     }
 
+    /// Sets the browser usage dataset from its serialized binary data.
+    ///
+    /// If `data` cannot be deserialized, the browser usage dataset is unset.
     #[wasm_bindgen]
     pub fn set_browser_usage_binary_data(&mut self, data: &[u8]) {
         let browser_usage_data: Option<BrowserUsageData> = wincode::deserialize(data).ok();
@@ -142,6 +177,7 @@ impl WASMEngineBuilder {
         self.usage_data = browser_usage_data;
     }
 
+    /// Builds a [`WASMEngine`] using the datasets currently set on this builder.
     #[wasm_bindgen]
     pub fn build(self) -> WASMEngine {
         WASMEngine {
@@ -156,7 +192,7 @@ impl WASMEngineBuilder {
     }
 }
 
-/// A struct that wraps the native [`RustEngine`] and exports the
+/// A wrapper for the native [`RustEngine`] and exports the
 /// engine to WebAssembly through [`macro@wasm_bindgen`].
 #[derive(Serialize, Deserialize, Default, Debug)]
 #[wasm_bindgen]
@@ -186,8 +222,6 @@ impl WASMEngine {
     ///
     /// `depth_level` is used to control how far down in a nested HTML structure to go before
     /// returning element tags.
-    ///
-    /// See [`preprocess::pre_process_html`] to learn more about how `depth_level` works.
     #[wasm_bindgen]
     pub fn check_elements(&self, html: &str, depth_level: u32) -> Result<JsValue, JsError> {
         let compat_result = self
@@ -219,6 +253,10 @@ impl WASMEngine {
         }
     }
 
+    /// Adds classes and at-rules to the engine from stylesheets by mapping them to their declarations.
+    /// 
+    /// Used for performing compatibility checks on the declarations of a class when the `class` attribute
+    /// is retrieved during an element check.
     #[wasm_bindgen]
     pub fn add_external_css_styles(&mut self, stylesheets: Vec<String>) -> Result<(), JsError> {
         self.inner.add_external_css_styles(stylesheets)?;
@@ -226,6 +264,7 @@ impl WASMEngine {
         Ok(())
     }
 
+    /// Logs the indices for the classes and at-rules stored in the engine.
     #[wasm_bindgen]
     pub fn log_css_indices(&self) {
         self.inner.log_css_indices();

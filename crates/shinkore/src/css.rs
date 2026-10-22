@@ -1,3 +1,4 @@
+//! This module contains functions for parsing CSS content as well as some structs and enums related to the parser.
 use cssparser::{
     AtRuleParser, DeclarationParser, ParseError, Parser, ParserInput, QualifiedRuleParser,
     RuleBodyItemParser, RuleBodyParser, StyleSheetParser, ToCss, Token,
@@ -7,29 +8,43 @@ use shinkore_types::prelude::CSSDeclaration;
 
 use crate::errors::ParseStylesError;
 
+/// A parsed top-level CSS rule.
 #[derive(Debug, Clone)]
 pub enum ParsedCss {
+    /// A selector rule and its declarations.
     SelectorRule(StyleItem),
+    /// A top-level at-rule, such as `@media`.
     TopLevelAtRule(QueryItem),
 }
 
+/// A CSS selector and the rules declared within its block.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct StyleItem {
+    /// The selector associated with these declarations.
     pub selector: String,
+    /// Declarations and nested rules in the selector block.
     pub declarations: Vec<CSSRule>,
 }
 
+/// An at-rule name, its condition or prelude, and any nested rules.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct QueryItem {
+    /// The at-rule name, such as `media`, `supports`, or `layer`.
     pub name: String,
+    /// The text following the at-rule name.
     pub condition: String,
+    /// Rules contained in the at-rule block.
     pub rules: Vec<CSSRule>,
 }
 
+/// A rule parsed from a CSS stylesheet or declaration block.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum CSSRule {
+    /// A property name and its value.
     Declaration((String, String)),
+    /// A selector rule containing declarations or nested rules.
     QualifiedRule(StyleItem),
+    /// An at-rule and its nested rules.
     Media(QueryItem),
 }
 
@@ -295,6 +310,32 @@ impl<'i> RuleBodyItemParser<'i, Option<CSSRule>, ()> for CSSDeclarationParser {
     }
 }
 
+/// Parses CSS content from stylesheets.
+/// 
+/// Uses a parsing implementation to find CSS classes and at-rules declared in the stylesheet.
+/// 
+/// ## Example
+/// ```
+/// use shinkore::css::{parse_css, ParsedCss};
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// 
+/// let example_css = r#"
+/// .container {
+///     display: flex;
+///     flex-direction: column;
+///     align-items: center;
+///     gap: 4rem;
+///     background-color: grey;
+///     border-radius: 3rem;
+/// }
+/// "#;
+/// 
+/// let parsed_css = parse_css(example_css)?;
+/// 
+/// assert!(matches!(parsed_css[0], ParsedCss::SelectorRule(_)));
+/// # Ok(())
+/// # }
+/// ```
 pub fn parse_css(css_content: &str) -> Result<Vec<ParsedCss>, ParseStylesError> {
     let mut styles = Vec::new();
     let mut input = ParserInput::new(css_content);
@@ -317,6 +358,22 @@ pub fn parse_css(css_content: &str) -> Result<Vec<ParsedCss>, ParseStylesError> 
     Ok(styles)
 }
 
+/// Parses inline styles from style attributes.
+/// 
+/// ## Example
+/// ```
+/// use shinkore::css::parse_inline_styles;
+/// 
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// let example_styles = "width: 120px; height: 120px; border: 1px dotted orange; background-color: cyan;";
+/// 
+/// let declarations = parse_inline_styles(example_styles)?;
+/// 
+/// assert_eq!(declarations.len(), 4);
+/// 
+/// # Ok(())
+/// # }
+/// ```
 pub fn parse_inline_styles(styles: &str) -> Result<Vec<CSSDeclaration>, ParseStylesError> {
     let mut parsed_styles = vec![];
     let mut input = ParserInput::new(styles);

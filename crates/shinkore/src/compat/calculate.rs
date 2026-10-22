@@ -1,4 +1,4 @@
-//! Module contains functions for calculating the compatibility scores for web features.
+//! Contains functions for calculating the compatibility scores for web features.
 use std::collections::HashMap;
 
 #[cfg(feature = "hints")]
@@ -143,9 +143,7 @@ pub fn calculate_compat_score(
 }
 
 /// Calculates the status score for a web feature
-///
-/// Returns the score as an [`f32`].
-///
+/// 
 /// ## Errors
 /// A [`CheckError`] is returned if the status is not available for the feature.
 fn calculate_status_score(

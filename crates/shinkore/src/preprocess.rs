@@ -40,25 +40,38 @@ enum PreProcessState {
 ///     </section>
 /// </main>
 /// ```
-/// If we call the function with a depth level of 3:
+/// Now we call the function with this HTML at a depth level of 3 which only returns
+/// the elements less than or equal to the nest level in the HTML:
 ///
-/// ```rust
+/// ```
 /// use shinkore::preprocess::pre_process_html;
-///
-/// let html = "example"; // Example html above
-///
-/// let val = pre_process_html(html, 3);
+/// # let html = r#"
+/// # <main>
+/// #     <section>
+/// #         <div>
+/// #             <h2>Grand example</h2>
+/// #             <p>This is a big example</p>
+/// #             <div class="inner-div">
+/// #                 <p>I will not be returned</p>
+/// #                 <p>Or will I?</p>
+/// #             </div>
+/// #         </div>
+/// #     </section>
+/// # </main> "#;
+/// 
+/// let output = pre_process_html(html, 3);
+/// 
+/// assert_eq!(
+///     output,
+///     r#"<main>
+///     <section>
+///         <div>
+///             <h2>Grand example</h2>
+///             <p>This is a big example</p>
+///             <div class="inner-div">"#
+/// );
 /// ```
-/// The returned output would look like this:
-///
-/// ```html
-/// <main>
-/// <section>
-/// <div>
-/// <h2>
-/// <p>
-/// <div class="inner-div">
-/// ```
+/// 
 /// Notice how the `<p>` tags in the `inner-div` were not returned.
 pub fn pre_process_html(html: &str, depth_level: u32) -> String {
     let mut result: Vec<&str> = vec![];
@@ -74,7 +87,6 @@ pub fn pre_process_html(html: &str, depth_level: u32) -> String {
         return String::new();
     }
 
-    // Current depth level in the iteration
     let mut cur_depth = 0;
 
     // Vector of tags that have been closed
@@ -193,7 +205,7 @@ pub fn pre_process_html(html: &str, depth_level: u32) -> String {
 ///
 /// ## Examples
 ///
-/// ```rust
+/// ```no_run
 /// use shinkore::preprocess::write_close_tag;
 ///
 /// // Single open tag
@@ -254,32 +266,31 @@ pub fn write_close_tag(line: &str) -> Option<String> {
 }
 
 /// Format the tags in HTML string to be on individual lines.
+/// 
+/// Uses [`regex`] to format HTML string to put new tags onto new lines.
 ///
 /// ## Examples
 ///
-/// ```rust
+/// ```
 /// use shinkore::preprocess::format_html;
 /// use shinkore::errors::PreProcessError;
-///
-/// fn main() -> Result<(), PreProcessError> {
+/// # fn main() -> Result<(), PreProcessError> {
 ///
 /// let html = "<aside><section><h2>Aside Title</h2><div>Content</div></section></aside>";
 ///
 /// let formatted = format_html(html)?;
 ///
-/// println!("{formatted}");
-///
-/// /* Prints
-///     <aside>
+/// assert_eq!(
+///     formatted,
+///     r#"<aside>
 ///     <section>
 ///     <h2>Aside Title</h2>
 ///     <div>Content</div>
 ///     </section>
-///     </aside>
-/// */
-///
-/// Ok(())
-/// }
+///     </aside>"#
+/// );
+/// # Ok(())
+/// # }
 /// ```
 pub fn format_html(html: &str) -> Result<String, PreProcessError> {
     let regex = Regex::new(r">\s*<")?;

@@ -36,27 +36,44 @@ use shinkore_types::prelude::{
     LookupCaches, LookupElementsContext, LookupResults, SVGData,
 };
 
+/// Stores indices that map classes to their declarations and at-rules to their conditions.
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct CSSStore {
     pub class_index: HashMap<String, Vec<CSSDeclaration>>,
     pub at_rule_index: HashMap<String, Vec<String>>,
 }
 
+/// Configures and builds a [`RustEngine`] using compatibility data from `.bin` files.
+///
+/// By default, the builder reads the data files from `./shinkore-data`, relative
+/// to the process's current working directory. Use [`with_data_dir`](Self::with_data_dir)
+/// to select another directory. The directory must contain the expected Shinkore
+/// binary data files, such as those produced by `sk-convert`.
 #[derive(Debug, Default)]
 pub struct RustEngineBuilder {
     data_dir: Option<PathBuf>,
 }
 
 impl RustEngineBuilder {
+    /// Creates a builder that reads data from `./shinkore-data`.
     pub fn new() -> Self {
         Self { data_dir: None }
     }
 
+    /// Sets the directory containing the engine's binary compatibility data.
+    ///
+    /// The path is used as provided; relative paths are resolved from the
+    /// process's current working directory.
     pub fn with_data_dir(mut self, dir: PathBuf) -> Self {
         self.data_dir = Some(dir);
         self
     }
 
+    /// Reads and deserializes the compatibility data, then creates the engine.
+    ///
+    /// ## Errors
+    /// File read errors are returned. If a file's contents cannot be
+    /// deserialized, that dataset is omitted from the engine.
     pub fn build(self) -> Result<RustEngine, Box<dyn Error>> {
         let base_path = self
             .data_dir
@@ -97,6 +114,28 @@ impl RustEngineBuilder {
     }
 }
 
+
+/// An engine for checking HTML and CSS against browser compatibility data.
+///
+/// The engine stores HTML, SVG, CSS, browser-support, and browser-usage
+/// datasets. Use [`from_compiled_data`](Self::from_compiled_data) to load the
+/// data bundled with the crate, [`RustEngineBuilder`] to load binary data from
+/// a directory, or [`new`](Self::new) to supply datasets directly. Missing
+/// datasets passed to `new` are replaced with their default empty values.
+///
+/// # Examples
+///
+/// ```no_run
+/// use shinkore::engine::RustEngine;
+/// 
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// let engine = RustEngine::from_compiled_data()?;
+/// 
+/// let result = engine.check_element("<div></div>")?;
+/// # Ok(())
+/// # }
+
+/// ```
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct RustEngine {
     html: HTMLData,
@@ -104,6 +143,7 @@ pub struct RustEngine {
     css: CSSData,
     browser_data: BrowserData,
     browser_usage_data: BrowserUsageData,
+    /// Indices of CSS classes and at-rules used during compatibility checks.
     pub css_store: Option<CSSStore>,
 }
 
@@ -118,6 +158,7 @@ type CompiledData = OnceLock<(
 static COMPILED_DATA: CompiledData = OnceLock::new();
 
 impl RustEngine {
+    /// Creates the engine with the supplied data.
     pub fn new(
         bcd_html_data: Option<HTMLData>,
         bcd_svg_data: Option<SVGData>,
@@ -135,6 +176,7 @@ impl RustEngine {
         }
     }
 
+    /// Builds the engine with the data compiled with the crate.
     pub fn from_compiled_data() -> Result<Self, Box<dyn Error>> {
         let (html, svg, css, browser_data, usage_data) = COMPILED_DATA.get_or_init(|| {
             let bcd_html_data: Option<HTMLData> =
@@ -170,10 +212,8 @@ impl RustEngine {
     pub fn check_element(&self, html: &str) -> Result<CompatResult, CheckError> {
         let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
 
-        // Format HTML tags onto individual lines
         let formatted = format_html(html).map_err(<PreProcessError as Into<CheckError>>::into)?;
 
-        // Only get the first line of the HTML String
         let first_line = formatted.lines().next().ok_or(CheckError::NoLines)?;
 
         let caches = Rc::new(RefCell::new(LookupCaches {
@@ -182,7 +222,6 @@ impl RustEngine {
             style_cache: Some(HashSet::new()),
         }));
 
-        // Use rewrite_str to find tag for compatibility check
         let rewrite = rewrite_str(
             first_line,
             RewriteStrSettings::new()
@@ -230,7 +269,6 @@ impl RustEngine {
             return Err(e.into());
         }
 
-        // Calculates the overall score
         let mut final_score: f32 = 0.0;
         for res in &*results.borrow() {
             final_score += res
@@ -252,23 +290,20 @@ impl RustEngine {
     /// `depth_level` is used to control how far down in a nested HTML structure to go before
     /// returning element tags.
     ///
-    /// See [`crate::preprocess::pre_process_html`] to learn more about how `depth_level` works.
+    /// See [`pre_process_html`] to learn more about how `depth_level` works.
     pub fn check_elements(&self, html: &str, depth_level: u32) -> Result<CompatResult, CheckError> {
         let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
 
         let formatted = format_html(html).map_err(<PreProcessError as Into<CheckError>>::into)?;
 
-        // Pre-process HTML to return the appropriate String of elements
         let elements = pre_process_html(&formatted, depth_level);
 
-        // Create HashSet cache to prevent repeated element/ attribute searches
         let caches = Rc::new(RefCell::new(LookupCaches {
             element_cache: Some(HashSet::new()),
             attrib_cache: Some(HashSet::new()),
             style_cache: Some(HashSet::new()),
         }));
 
-        // Use rewrite_str to find tags for compatibility checks
         let rewrite = rewrite_str(
             &elements,
             RewriteStrSettings::new()
@@ -316,7 +351,6 @@ impl RustEngine {
             return Err(e.into());
         }
 
-        // Calculates the overall score
         let mut final_score: f32 = 0.0;
         for res in &*results.borrow() {
             final_score += res
@@ -337,17 +371,14 @@ impl RustEngine {
     pub fn full_inspect(&self, html: &str) -> Result<CompatResult, CheckError> {
         let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
 
-        // Format the HTML tags onto individual lines
         let formatted = format_html(html).map_err(<PreProcessError as Into<CheckError>>::into)?;
 
-        // Create HashSet cache to prevent repeated element/ attribute searches
         let caches = Rc::new(RefCell::new(LookupCaches {
             element_cache: Some(HashSet::new()),
             attrib_cache: Some(HashSet::new()),
             style_cache: Some(HashSet::new()),
         }));
 
-        // Use rewrite_str to find tags for compatibility checks
         let rewrite = rewrite_str(
             &formatted,
             RewriteStrSettings::new()
@@ -395,7 +426,6 @@ impl RustEngine {
             return Err(e.into());
         }
 
-        // Calculates the overall score
         let mut final_score: f32 = 0.0;
         for res in &*results.borrow() {
             final_score += res
@@ -521,9 +551,9 @@ impl RustEngine {
         Ok(overall_results)
     }
 
-    /// Perform a compatibility check for multiple elements and their attributes
+    /// Perform a compatibility check for multiple elements and their attributes.
     ///
-    /// Returns a Vector of [`LookupResults`] when successful
+    /// Returns a Vector of [`LookupResults`] when successful.
     ///
     /// ## Errors
     /// A [`CheckError`] is returned if there are any errors in lookups.
@@ -662,6 +692,12 @@ impl RustEngine {
         Ok(overall_results)
     }
 
+    /// Perform a compatibility check for CSS styles.
+    ///
+    /// Returns a Vector of [`LookupResults`] when successful.
+    ///
+    /// ## Errors
+    /// A [`CheckError`] is returned if there are any errors in lookups.
     fn css_compat_check(
         &self,
         css_content: &str,
@@ -732,6 +768,10 @@ impl RustEngine {
         Ok(overall_results)
     }
 
+    /// Adds classes and at-rules to the engine from stylesheets by mapping them to their declarations.
+    /// 
+    /// Used for performing compatibility checks on the declarations of a class when the `class` attribute
+    /// is retrieved during an element check.
     pub fn add_external_css_styles(
         &mut self,
         stylesheets: Vec<String>,
@@ -768,6 +808,7 @@ impl RustEngine {
         Ok(())
     }
 
+    /// Logs the indices for the classes and at-rules stored in the engine.
     pub fn log_css_indices(&self) {
         #[cfg(target_arch = "wasm32")]
         {

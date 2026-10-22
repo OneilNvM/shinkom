@@ -1,3 +1,4 @@
+//! The errors produced by the crate's API.
 use std::{error::Error, fmt::Display, num::ParseFloatError};
 
 use cssparser::{ParseError, ParseErrorKind};
