@@ -1,5 +1,6 @@
 [package]
 name = "shinkore-hints"
+description = "A library for generating hints about the usage of a web features based on currently available compatibility data."
 version = "0.1.0"
 edition = "2024"
 

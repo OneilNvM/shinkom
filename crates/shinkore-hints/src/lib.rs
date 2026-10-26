@@ -1,3 +1,7 @@
+//! A crate providing a hint engine for generating useful hints about web features based on currently available cross-browser compatibility data.
+//!
+//! Provides an engine for compiling hints based on compatibility checks against [BCD](https://github.com/mdn/browser-compat-data) data
+//! and logs hints based on the compatibility score of the feature.
 pub mod overrides;
 use std::collections::HashMap;
 
@@ -10,12 +14,23 @@ use wasm_bindgen::JsValue;
 use crate::overrides::get_html_overrides;
 
 #[derive(Default)]
+/// Collects compatibility and status hints for later logging.
+///
+/// Hint compilation methods append messages to an internal buffer. Use
+/// [`log_hints`](Self::log_hints) to print them to the browser console on
+/// WebAssembly or standard output on native targets, and
+/// [`clear_hints`](Self::clear_hints) to empty the buffer.
+///
+/// [`new`](Self::new) loads the built-in HTML tag overrides used by
+/// [`tier_3_hints`](Self::tier_3_hints). The derived [`Default`] implementation
+/// starts with an empty override map instead.
 pub struct HintEngine {
     hints: Vec<String>,
     overrides: HashMap<String, String>,
 }
 
 impl HintEngine {
+    /// Creates an engine with an empty hint buffer and built-in HTML tag overrides.
     pub fn new() -> Self {
         let remedies_map = get_html_overrides();
 
@@ -25,6 +40,8 @@ impl HintEngine {
         }
     }
 
+    /// Compiles hints from browser compatibility data and appends an MDN link
+    /// when the issue includes one.
     pub fn compile_browser_hints(&mut self, issue: BrowserIssue) {
         self.tier_2_hints(&issue);
 
@@ -34,6 +51,7 @@ impl HintEngine {
         }
     }
 
+    /// Appends warnings for deprecated or experimental feature status.
     pub fn compile_status_hints(&mut self, issue: StatusIssue) {
         if issue.status.deprecated {
             self.hints.push(format!("[shinkore] 💡 Warning: {} is deprecated and should not be used anymore in websites.", issue.feature_name))
@@ -43,6 +61,7 @@ impl HintEngine {
         }
     }
 
+    /// Appends the first matching built-in HTML tag override, if any.
     pub fn tier_3_hints(&mut self, tags: &Vec<String>) {
         for tag in tags {
             if self.overrides.contains_key(tag) {
@@ -55,10 +74,12 @@ impl HintEngine {
         }
     }
 
+    /// Compiles hints from the support details in a browser compatibility issue.
     fn tier_2_hints(&mut self, issue: &BrowserIssue) {
         match issue.support {
             SupportData::Single(detail) => {
-                if detail.partial_implementation
+                if let Some(partial) = detail.partial_implementation
+                    && partial
                     && let Some(notes_val) = &detail.notes
                     && let NotesValue::Single(note) = notes_val
                 {
@@ -110,7 +131,8 @@ impl HintEngine {
                         self.hints.push(format!("[shinkore] 💡 Hint: {} was removed in version {version}. If you need support for {} version {version}, consider using supported alternatives.",issue.feature_name,issue.browser_target))
                     }
 
-                    if detail.partial_implementation
+                    if let Some(partial) = detail.partial_implementation
+                        && partial
                         && let Some(notes_val) = &detail.notes
                         && let NotesValue::Single(note) = notes_val
                     {
@@ -160,6 +182,8 @@ impl HintEngine {
         }
     }
 
+    /// Logs all buffered hints to the browser console on WebAssembly targets,
+    /// or to standard output on native targets.
     pub fn log_hints(&self) {
         #[cfg(target_arch = "wasm32")]
         {
@@ -175,6 +199,7 @@ impl HintEngine {
         }
     }
 
+    /// Removes all currently buffered hints.
     pub fn clear_hints(&mut self) {
         self.hints.clear()
     }

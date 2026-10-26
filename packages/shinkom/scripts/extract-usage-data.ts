@@ -47,9 +47,9 @@ const extractUsageData = () => {
 
     output.marketShare = marketShare
 
-    const outDir = path.resolve("./gen")
+    const outDir = path.resolve("./gen/json")
 
-    if (!existsSync(outDir)) mkdirSync('./gen')
+    if (!existsSync(outDir)) mkdirSync(outDir)
 
     writeFileSync(path.join(outDir, "browser-usage-data.json"), JSON.stringify(output))
 

@@ -1,165 +1,271 @@
 //! # Shinkore
 //!
-//! Shinkore is a cross-browser compatability data processesor and analyser originally built for the [Shinkom](https://github.com/OneilNvM/shinkom)
-//! Javascript library. This library is made with [wasm-bindgen](https://github.com/wasm-bindgen/wasm-bindgen) which builds and outputs a WASM binary
-//! and JS '*glue code*' to allow for usage of the compatibility engine in Javascript through WebAssembly. **Keep in mind that the usage of the engine
-//! in Javascript through WebAssembly is asynchronous at initialization.**
-//!
-//! If you plan on using this purely in Rust, then make use of the [`engine`] module for a pure Rust application.
+//! A cross-browser compatability data processesor and analyser originally built for the [Shinkom](https://github.com/OneilNvM/shinkom)
+//! JavaScript toolkikt. The engine itself was built natively in Rust alongside a wrapper that compiles to WebAssembly via
+//! [wasm-bindgen](https://github.com/wasm-bindgen/wasm-bindgen) allowing the engine to be output as WebAssembly and JavaScript code using the
+//! [wasm-pack](https://github.com/wasm-bindgen/wasm-pack) binary.
 //!
 //! ---
 //!
-//! ## Notes
+//! ## Usage
+//! A simple way to use the engine would be to build the engine from the compiled compatibility data.
 //!
-//! The library consists of modules containing functions used for performing cross-browser compatibility checks of web features on modern browsers.
-//! The engine requires compatibility data in JSON format, therefore usage of crates such as [`serde`] and [`serde_json`] or [`serde_wasm_bindgen`]
-//! for JSON parsing will be necessary. The JSON structure to follow for the compatibility data can be interpreted in the [`shinkore_types`] crate, but most
-//! of the structure in the schema module is based on the [compat-data-schema](https://github.com/mdn/browser-compat-data/blob/main/schemas/compat-data-schema.md)
-//! in the [browser-compat-data](https://github.com/mdn/browser-compat-data) project by MDN, as well as the
-//! [browser-data](https://github.com/mdn/browser-compat-data/blob/main/schemas/browsers-schema.md) format in [`shinkore_types::prelude`].
+//! ```no_run
+//! use shinkore::engine::RustEngine;
+//!     
+//! let engine = RustEngine::from_compiled_data();
+//! ```
 //!
-//! The [`BrowserUsageData`] is based on the [caniuse-db](https://github.com/Fyrd/caniuse) format which only includes the usage data for each browser.
+//! For more control and customization of the data being used by the engine, use the engine builder to define where to read data files from.
 //!
-//! If your not planning on using your own custom data, then you can download each JSON file from the [gen directory](https://github.com/OneilNvM/shinkom/tree/master/packages/shinkom/gen)
-//! on the Shinkom GitHub repository.
+//! ```no_run
+//! use shinkore::engine::RustEngineBuilder;
+//!
+//! # fn main() {
+//! let mut builder = RustEngineBuilder::new().with_data_dir("gen".into());
+//!
+//! let engine = builder.build();
+//! # }
+//! ```
+//!
+//! **Note: The data files must be in JSON format and follow the specified schema for data to be deserialized appropriately. Check the [`shinkore_types::schema`]
+//! for more details about the schema.**
+//!
+//! The engine can then be used for checking the compatibility of HTML elements and their local attributes, global attributes, CSS properties and at-rules.
+//!
+//! ```no_run
+//! use shinkore::engine::RustEngine;
+//!
+//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! let engine = RustEngine::from_compiled_data()?;
+//!
+//! let result = engine.check_element(r#"<div class="test" style="width: 60px; height: 30px;"></div>"#)?;
+//!
+//! println!("Overall Score: {}\nResults: {:#?}", result.overall_score, result.lookup_results);
+//! # Ok(())
+//! # }
+//! ```
+//! ---
+//!
+//! ## Compatibility Scoring
+//! The scoring for the compatibility check is an important feature to make sure that it gives fair and understandable results that won't leave you
+//! guessing why a check resulted in a particular score.
+//!
+//! The table below lists the score types and their respective formulas:
+//!
+//! | Score Type     |                                                        Formula                                                         |
+//! |----------------|:----------------------------------------------------------------------------------------------------------------------:|
+//! | overall_score  |                (compat_score<sub>1</sub> + compat_score<sub>2</sub> + ... compat_score<sub>n</sub>) / N                |
+//! | compat_score   |                                ((browser_score + status_score) / MAX_COMPAT_SCORE) * 100                               |
+//! | browser_score  | ((weighted_score<sub>1</sub> + weighted_score<sub>2</sub> + ... weighted_score<sub>n</sub>) / MAX_BROWSER_SCORE) * 100 |
+//! | status_score   |                                         (status_score / MAX_STATUS_SCORE) * 100                                        |
+//! | raw_score      |                                          Raw score calculation explained below                                         |
+//! | weighted_score |                                         raw_score * (total_usage / market_share)                                       |
+//!
+//! Here are a few things to clarify about these formulas:
+//!
+//! - In `overall_score`, *N* represents the number of lookup results returned.
+//! - `MAX_COMPAT_SCORE` has a value of 200, whereas `MAX_BROWSER_SCORE` and `MAX_STATUS_SCORE` have a value of 100.
+//! - The `raw_score` is calculated based on many different factors.
+//!   - If the current version of the browser is greater than the `version_added` value, the score is 100. This is
+//!     also the case if `version_added` is set to `true`.
+//!   - If the `version_removed` value is greater than the `version_added` value, the score is 0 since it is a removed feature.
+//!   - If the `partial_implementation` value is set to true, the score is 80.
+//! - `total_usage` is the usage of a browser across all of its versions, and the `market_share` is the sum of `total_usage`
+//!   between every browser.
+//! - The `browser_score` is the sum of the weighted scores from each browser divided by the `MAX_BROWSER_SCORE`.
+//!
+//! The formula used for scoring may be changed in the future if the current formula does not accurately represent a features
+//! compatibility across browsers.
+//!
+//! ---
+//!
+//! ## Compatibility Data Files
+//! The engine requires the compatiblity data based on the [BCD](https://github.com/mdn/browser-compat-data) (browser-compatibility-data) by MDN, specifically
+//! HTML, CSS and browser data by both the BCD and [caniuse-db](https://github.com/Fyrd/caniuse) for browser usage data.
+//!
+//! ### .json to .bin
+//! The engine doesn't store this data as JSON (although the original data files need to be JSON), instead it uses `.bin` (binary) files to serialize JSON data into
+//! binary format and deserialize them into the data structures used by the engine.
+//!
+//! Therefore, the `.json` files will need to be converted into `.bin` files by deserializing the JSON into the correct data structures, and then serailizing them into
+//! binary code. Shinkore comes with a binary executable that converts `.json` files into `.bin` files called `sk-convert` that writes its output to a gen directory
+//! in the Rust project. The following command installs this executable.
+//!
+//! ```bash
+//! cargo install shinkore --bin sk-convert
+//! ```
+//!
+//! To use this binary, make sure to add the path to the directory containing your JSON data files. The path always starts relative to the terminal's current working
+//! directory.
+//!
+//! ```bash
+//! sk-convert path/to/awesome/data output/dir
+//! ```
+//!
+//! Alternatively, developers can make their own converter as long as the output is in .bin format and can be deserialized by [`wincode`].
+//!
+//! ### Naming Conventions
+//! The files providing compatibility data must be named accordingly for the engine to read data from `.bin` files and for `sk_convert` to read the `.json` files.
+//! - HTML Data: `html-compat-data.json`, `html-compat-data.bin`
+//! - SVG Data: `svg-compat-data.json`, `svg-compat-data.bin`
+//! - CSS Data: `css-compat-data.json`, `css-compat-data.bin`
+//! - Browser Data: `browser-data.json`, `browser-data.bin`
+//! - Browser Usage Data (from caniuse-db): `browser-usage-data.json`, `browser-usage-data.bin`
+//!
+//! ---
+//!
+//! ## CSS Parsing
+//! Shinkore uses the [`cssparser`] crate for its parsing implementation. The [`css`] module contains functions for parsing CSS stylesheets and inline styles from
+//! style attributes. The implementation of CSS parsing currently parses: classes and their declarations and at-rules and their conditions, as well as their rules.
+//! The parsing implementation also finds nested classes and at-rules, which is helpful for any third-party tools that use this feature a lot like TailwindCSS.
+//!
+//! ### Limitations
+//! There are a few limitations of the current parsing implementation:
+//! - It is only able to parse single class names (e.g. `.test`, `.square`, `.demo`) and not multiple (e.g. `.demo.container`, `.container .inner`).
+//! - The only selectors it can parse are class selectors; cannot parse tags, attributes, pseudo-elements etc.
+//!
+//! ---
+//!
+//! ## Features
+//! Shinkore has some Cargo features to extend the capabilities of the engine. Using `default-features = false` will disable
+//! the default features that come with Shinkore.
+//!
+//! ### features = \["hints"\]
+//! ***This feature is enabled by default***
+//!
+//! Provides generated hint logging after compatibility checks when the calculated score
+//! is not perfect.
 pub mod compat;
 mod constants;
+pub mod css;
 pub mod engine;
 pub mod errors;
+mod macros;
 pub mod preprocess;
 mod version;
-use std::collections::{HashMap, HashSet};
-use std::{cell::RefCell, rc::Rc};
 
-pub use lol_html::{RewriteStrSettings, element, rewrite_str};
-use preprocess::{format_html, pre_process_html};
-pub use shinkore_types::prelude::*;
-pub use shinkore_types::{Deserialize, Serialize};
-pub use version::{Version, VersionRequirement};
+use shinkore_types::{
+    Deserialize, Serialize,
+    prelude::{BrowserData, BrowserUsageData, CSSData, HTMLData, SVGData},
+};
 use wasm_bindgen::prelude::*;
 
-use crate::compat::lookup::{
-    lookup_attribs, lookup_element, multi_lookup_attribs, multi_lookup_element,
-};
-use crate::constants::{IGNORE_TAGS, SKIP_TAGS};
-use crate::errors::CheckError;
+use crate::engine::RustEngine;
 
-/// The [`CompatEngine`] struct stores the compatibility data
-/// and acts as an entry-point for the Rust/WASM engine.
-#[derive(Serialize, Deserialize, Default, Debug)]
+/// Builds a [`WASMEngine`] from binary-encoded compatibility data.
+///
+/// Create a builder, provide any available datasets with their respective set
+/// methods, then call [`build`](WASMEngineBuilder::build). Each setter expects
+/// bytes serialized in the format used by Shinkore's generated `.bin` data
+/// files. If a dataset is not provided, or its bytes cannot be deserialized,
+/// that dataset is omitted from the engine.
+#[derive(Deserialize, Default, Debug)]
+#[serde(rename_all = "camelCase")]
 #[wasm_bindgen]
-pub struct CompatEngine {
-    html: HTMLData,
-    svg: SVGData,
-    browser_data: BrowserData,
-    browser_usage_data: BrowserUsageData,
+pub struct WASMEngineBuilder {
+    #[serde(default)]
+    html: Option<HTMLData>,
+    #[serde(default)]
+    svg: Option<SVGData>,
+    #[serde(default)]
+    css: Option<CSSData>,
+    #[serde(default)]
+    browser_data: Option<BrowserData>,
+    #[serde(default)]
+    usage_data: Option<BrowserUsageData>,
 }
 
 #[wasm_bindgen]
-impl CompatEngine {
-    /// Constructs an new engine instance
+impl WASMEngineBuilder {
+    /// Creates an empty builder.
     #[wasm_bindgen(constructor)]
-    pub fn new(
-        bcd_html_data: JsValue,
-        bcd_svg_data: JsValue,
-        bcd_browser_data: JsValue,
-        ciu_usage_data: JsValue,
-    ) -> Self {
-        let mut engine = CompatEngine::default();
-
-        match serde_wasm_bindgen::from_value::<HTMLData>(bcd_html_data) {
-            Ok(parsed) => engine.html = parsed,
-            Err(e) => {
-                web_sys::console::error_1(&JsValue::from_str(&format!(
-                    "BCD HTML data parsing error: {e}"
-                )));
-            }
-        }
-
-        match serde_wasm_bindgen::from_value::<SVGData>(bcd_svg_data) {
-            Ok(parsed) => engine.svg = parsed,
-            Err(e) => {
-                web_sys::console::error_1(&JsValue::from_str(&format!(
-                    "BCD SVG data parsing error: {e}"
-                )));
-            }
-        }
-
-        match serde_wasm_bindgen::from_value::<BrowserData>(bcd_browser_data) {
-            Ok(parsed) => engine.browser_data = parsed,
-            Err(e) => {
-                web_sys::console::error_1(&JsValue::from_str(&format!(
-                    "BCD Browser data parsing error: {e}"
-                )));
-            }
-        }
-
-        match serde_wasm_bindgen::from_value::<BrowserUsageData>(ciu_usage_data) {
-            Ok(parsed) => engine.browser_usage_data = parsed,
-            Err(e) => {
-                web_sys::console::error_1(&JsValue::from_str(&format!(
-                    "BCD Browser Usage data parsing error: {e}"
-                )));
-            }
-        }
-
-        engine
+    pub fn new() -> Self {
+        Self::default()
     }
 
+    /// Sets the HTML compatibility dataset from its serialized binary data.
+    ///
+    /// If `data` cannot be deserialized, the HTML dataset is unset.
+    #[wasm_bindgen]
+    pub fn set_html_binary_data(&mut self, data: &[u8]) {
+        let html_data: Option<HTMLData> = wincode::deserialize(data).ok();
+
+        self.html = html_data;
+    }
+
+    /// Sets the SVG compatibility dataset from its serialized binary data.
+    ///
+    /// If `data` cannot be deserialized, the SVG dataset is unset.
+    #[wasm_bindgen]
+    pub fn set_svg_binary_data(&mut self, data: &[u8]) {
+        let svg_data: Option<SVGData> = wincode::deserialize(data).ok();
+
+        self.svg = svg_data;
+    }
+
+    /// Sets the CSS compatibility dataset from its serialized binary data.
+    ///
+    /// If `data` cannot be deserialized, the CSS dataset is unset.
+    #[wasm_bindgen]
+    pub fn set_css_binary_data(&mut self, data: &[u8]) {
+        let css_data: Option<CSSData> = wincode::deserialize(data).ok();
+
+        self.css = css_data;
+    }
+
+    /// Sets the browser dataset from its serialized binary data.
+    ///
+    /// If `data` cannot be deserialized, the browser dataset is unset.
+    #[wasm_bindgen]
+    pub fn set_browser_binary_data(&mut self, data: &[u8]) {
+        let browser_data: Option<BrowserData> = wincode::deserialize(data).ok();
+
+        self.browser_data = browser_data;
+    }
+
+    /// Sets the browser usage dataset from its serialized binary data.
+    ///
+    /// If `data` cannot be deserialized, the browser usage dataset is unset.
+    #[wasm_bindgen]
+    pub fn set_browser_usage_binary_data(&mut self, data: &[u8]) {
+        let browser_usage_data: Option<BrowserUsageData> = wincode::deserialize(data).ok();
+
+        self.usage_data = browser_usage_data;
+    }
+
+    /// Builds a [`WASMEngine`] using the datasets currently set on this builder.
+    #[wasm_bindgen]
+    pub fn build(self) -> WASMEngine {
+        WASMEngine {
+            inner: RustEngine::new(
+                self.html,
+                self.svg,
+                self.css,
+                self.browser_data,
+                self.usage_data,
+            ),
+        }
+    }
+}
+
+/// A wrapper for the native [`RustEngine`] and exports the
+/// engine to WebAssembly through [`macro@wasm_bindgen`].
+#[derive(Serialize, Deserialize, Default, Debug)]
+#[wasm_bindgen]
+pub struct WASMEngine {
+    inner: RustEngine,
+}
+
+#[wasm_bindgen]
+impl WASMEngine {
     /// Used for checking the compatibility of a single element and its attributes.
     #[wasm_bindgen]
     pub fn check_element(&self, html: &str) -> Result<JsValue, JsError> {
-        let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
-
-        // Format HTML tags onto individual lines
-        let formatted = format_html(html)?;
-
-        // Only get the first line of the HTML String
-        let first_line = formatted
-            .lines()
-            .next()
-            .ok_or_else(|| JsError::new("no lines were found in HTML"))?;
-
-        // Use rewrite_str to find tag for compatibility check
-        let rewrite = rewrite_str(
-            first_line,
-            RewriteStrSettings::new().append_element_content_handler(element!("*", |el| {
-                let tag_name = el.tag_name();
-                let attributes = el.attributes();
-
-                let ctx = ElementContext {
-                    tag_name: &tag_name,
-                    attributes,
-                };
-
-                let compat_results = self.compat_check(ctx);
-
-                match compat_results {
-                    Ok(res) => results.borrow_mut().extend(res),
-                    Err(e) => return Err(format!("{e:?}").into()),
-                }
-
-                Ok(())
-            })),
-        );
-
-        if let Err(e) = rewrite {
-            return Err(JsError::new(&format!("Error occurred rewriting html: {e}")));
-        }
-
-        // Calculates the overall score
-        let mut final_score: f32 = 0.0;
-        for res in &*results.borrow() {
-            final_score += res
-                .compat_score
-                .parse::<f32>()
-                .map_err(|e| JsError::new(&e.to_string()))?;
-        }
-
-        let compat_result = CompatResult {
-            overall_score: (final_score / results.borrow().len() as f32) as u8,
-            lookup_results: results.borrow().to_vec(),
-        };
+        let compat_result = self
+            .inner
+            .check_element(html)
+            .map_err(|e| JsError::new(&format!("{e}")))?;
 
         match serde_wasm_bindgen::to_value(&compat_result) {
             Ok(val) => Ok(val),
@@ -173,61 +279,12 @@ impl CompatEngine {
     ///
     /// `depth_level` is used to control how far down in a nested HTML structure to go before
     /// returning element tags.
-    ///
-    /// See [`preprocess::pre_process_html`] to learn more about how `depth_level` works.
     #[wasm_bindgen]
     pub fn check_elements(&self, html: &str, depth_level: u32) -> Result<JsValue, JsError> {
-        let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
-
-        // Pre-process HTML to return the appropriate String of elements
-        let elements = pre_process_html(&format_html(html)?, depth_level);
-
-        // Create HashSet cache to prevent repeated element/ attribute searches
-        let mut caches = LookupCaches {
-            element_cache: HashSet::new(),
-            attrib_cache: HashSet::new(),
-        };
-
-        // Use rewrite_str to find tags for compatibility checks
-        let rewrite = rewrite_str(
-            &elements,
-            RewriteStrSettings::new().append_element_content_handler(element!("*", |el| {
-                let tag_name = el.tag_name();
-                let attributes = el.attributes();
-
-                let ctx = ElementContext {
-                    tag_name: &tag_name,
-                    attributes,
-                };
-
-                let compat_results = self.multi_compat_check(ctx, &mut caches);
-
-                match compat_results {
-                    Ok(res) => results.borrow_mut().extend(res),
-                    Err(e) => return Err(format!("{e:?}").into()),
-                }
-
-                Ok(())
-            })),
-        );
-
-        if let Err(e) = rewrite {
-            return Err(JsError::new(&format!("Error occurred rewriting html: {e}")));
-        }
-
-        // Calculates the overall score
-        let mut final_score: f32 = 0.0;
-        for res in &*results.borrow() {
-            final_score += res
-                .compat_score
-                .parse::<f32>()
-                .map_err(|e| JsError::new(&e.to_string()))?;
-        }
-
-        let compat_result = CompatResult {
-            overall_score: (final_score / results.borrow().len() as f32) as u8,
-            lookup_results: results.borrow().to_vec(),
-        };
+        let compat_result = self
+            .inner
+            .check_elements(html, depth_level)
+            .map_err(|e| JsError::new(&format!("{e}")))?;
 
         match serde_wasm_bindgen::to_value(&compat_result) {
             Ok(val) => Ok(val),
@@ -240,57 +297,10 @@ impl CompatEngine {
     /// Used for performing a full page compatibility check.
     #[wasm_bindgen]
     pub fn full_inspect(&self, html: &str) -> Result<JsValue, JsError> {
-        let results = Rc::new(RefCell::new(Vec::<LookupResults>::new()));
-
-        // Format the HTML tags onto individual lines
-        let formatted = format_html(html)?;
-
-        // Create HashSet cache to prevent repeated element/ attribute searches
-        let mut caches = LookupCaches {
-            element_cache: HashSet::new(),
-            attrib_cache: HashSet::new(),
-        };
-
-        // Use rewrite_str to find tags for compatibility checks
-        let rewrite = rewrite_str(
-            &formatted,
-            RewriteStrSettings::new().append_element_content_handler(element!("*", |el| {
-                let tag_name = el.tag_name();
-                let attributes = el.attributes();
-
-                let ctx = ElementContext {
-                    tag_name: &tag_name,
-                    attributes,
-                };
-
-                let compat_results = self.multi_compat_check(ctx, &mut caches);
-
-                match compat_results {
-                    Ok(res) => results.borrow_mut().extend(res),
-                    Err(e) => return Err(e.into()),
-                }
-
-                Ok(())
-            })),
-        );
-
-        if let Err(e) = rewrite {
-            return Err(JsError::new(&format!("Error occurred rewriting html: {e}")));
-        }
-
-        // Calculates the overall score
-        let mut final_score: f32 = 0.0;
-        for res in &*results.borrow() {
-            final_score += res
-                .compat_score
-                .parse::<f32>()
-                .map_err(|e| JsError::new(&e.to_string()))?;
-        }
-
-        let compat_result = CompatResult {
-            overall_score: (final_score / results.borrow().len() as f32) as u8,
-            lookup_results: results.borrow().to_vec(),
-        };
+        let compat_result = self
+            .inner
+            .full_inspect(html)
+            .map_err(|e| JsError::new(&format!("{e}")))?;
 
         match serde_wasm_bindgen::to_value(&compat_result) {
             Ok(val) => Ok(val),
@@ -300,157 +310,20 @@ impl CompatEngine {
         }
     }
 
-    /// Perform a compatibility check for a single element and its attributes.
+    /// Adds classes and at-rules to the engine from stylesheets by mapping them to their declarations.
     ///
-    /// Returns a Vector of [`LookupResults`] when successful.
-    ///
-    /// ## Errors
-    /// A [`CheckError`] is returned if there are any errors in lookups.
-    fn compat_check(&self, ctx: ElementContext) -> Result<Vec<LookupResults>, CheckError> {
-        let mut overall_results: Vec<LookupResults> = vec![];
-        let mut attribs: HashMap<String, String> = HashMap::new();
+    /// Used for performing compatibility checks on the declarations of a class when the `class` attribute
+    /// is retrieved during an element check.
+    #[wasm_bindgen]
+    pub fn add_external_css_styles(&mut self, stylesheets: Vec<String>) -> Result<(), JsError> {
+        self.inner.add_external_css_styles(stylesheets)?;
 
-        for attribute in ctx.attributes {
-            attribs.insert(attribute.name_preserve_case(), attribute.value());
-        }
-
-        // If the element is an SVG element, opt for an SVG data lookup
-        if self.svg.el_data.contains_key(ctx.tag_name) && !IGNORE_TAGS.contains(&ctx.tag_name) {
-            let lookup_el_ctx = LookupElementsContext {
-                tag: ctx.tag_name,
-                el_data: &self.svg.el_data,
-            };
-            let lookup_attribs_ctx = LookupAttribsContext {
-                tag: ctx.tag_name,
-                attribs,
-                el_data: &self.svg.el_data,
-                g_attrib_data: &self.svg.g_attrib_data,
-            };
-
-            lookup_element(
-                lookup_el_ctx,
-                &mut overall_results,
-                &vec![
-                    BrowserDataParamType::BrowserData(&self.browser_data),
-                    BrowserDataParamType::UsageData(&self.browser_usage_data),
-                ],
-            )?;
-            lookup_attribs(
-                lookup_attribs_ctx,
-                &mut overall_results,
-                &vec![
-                    BrowserDataParamType::BrowserData(&self.browser_data),
-                    BrowserDataParamType::UsageData(&self.browser_usage_data),
-                ],
-            )?;
-        } else {
-            let lookup_el_ctx = LookupElementsContext {
-                tag: ctx.tag_name,
-                el_data: &self.html.el_data,
-            };
-            let lookup_attribs_ctx = LookupAttribsContext {
-                tag: ctx.tag_name,
-                attribs,
-                el_data: &self.html.el_data,
-                g_attrib_data: &self.html.g_attrib_data,
-            };
-
-            lookup_element(
-                lookup_el_ctx,
-                &mut overall_results,
-                &vec![
-                    BrowserDataParamType::BrowserData(&self.browser_data),
-                    BrowserDataParamType::UsageData(&self.browser_usage_data),
-                ],
-            )?;
-            lookup_attribs(
-                lookup_attribs_ctx,
-                &mut overall_results,
-                &vec![
-                    BrowserDataParamType::BrowserData(&self.browser_data),
-                    BrowserDataParamType::UsageData(&self.browser_usage_data),
-                ],
-            )?;
-        }
-
-        Ok(overall_results)
+        Ok(())
     }
 
-    /// Perform a compatibility check for multiple elements and their attributes
-    ///
-    /// Returns a Vector of [`LookupResults`] when successful
-    ///
-    /// ## Errors
-    /// A [`CheckError`] is returned if there are any errors in lookups.
-    fn multi_compat_check(
-        &self,
-        ctx: ElementContext,
-        caches: &mut LookupCaches,
-    ) -> Result<Vec<LookupResults>, CheckError> {
-        let mut overall_results: Vec<LookupResults> = vec![];
-        let mut attribs: HashMap<String, String> = HashMap::new();
-
-        for attribute in ctx.attributes {
-            attribs.insert(attribute.name_preserve_case(), attribute.value());
-        }
-
-        // If the element is an SVG element, opt for an SVG data lookup
-        if self.svg.el_data.contains_key(ctx.tag_name) && !SKIP_TAGS.contains(&ctx.tag_name) {
-            multi_lookup_element(
-                LookupElementsContext {
-                    tag: ctx.tag_name,
-                    el_data: &self.svg.el_data,
-                },
-                &mut overall_results,
-                &mut caches.element_cache,
-                &vec![
-                    BrowserDataParamType::BrowserData(&self.browser_data),
-                    BrowserDataParamType::UsageData(&self.browser_usage_data),
-                ],
-            )?;
-            multi_lookup_attribs(
-                LookupAttribsContext {
-                    tag: ctx.tag_name,
-                    attribs,
-                    el_data: &self.svg.el_data,
-                    g_attrib_data: &self.svg.g_attrib_data,
-                },
-                &mut overall_results,
-                &mut caches.attrib_cache,
-                &vec![
-                    BrowserDataParamType::BrowserData(&self.browser_data),
-                    BrowserDataParamType::UsageData(&self.browser_usage_data),
-                ],
-            )?;
-        } else {
-            multi_lookup_element(
-                LookupElementsContext {
-                    tag: ctx.tag_name,
-                    el_data: &self.html.el_data,
-                },
-                &mut overall_results,
-                &mut caches.element_cache,
-                &vec![
-                    BrowserDataParamType::BrowserData(&self.browser_data),
-                    BrowserDataParamType::UsageData(&self.browser_usage_data),
-                ],
-            )?;
-            multi_lookup_attribs(
-                LookupAttribsContext {
-                    tag: ctx.tag_name,
-                    attribs,
-                    el_data: &self.html.el_data,
-                    g_attrib_data: &self.html.g_attrib_data,
-                },
-                &mut overall_results,
-                &mut caches.attrib_cache,
-                &vec![
-                    BrowserDataParamType::BrowserData(&self.browser_data),
-                    BrowserDataParamType::UsageData(&self.browser_usage_data),
-                ],
-            )?;
-        }
-
-        Ok(overall_results)
+    /// Logs the indices for the classes and at-rules stored in the engine.
+    #[wasm_bindgen]
+    pub fn log_css_indices(&self) {
+        self.inner.log_css_indices();
     }
 }

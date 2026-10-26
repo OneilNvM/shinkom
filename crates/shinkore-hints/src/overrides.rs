@@ -1,5 +1,10 @@
+//! Contains override hints for web features.
 use std::collections::HashMap;
 
+/// Returns a map of web features with manually written hints.
+///
+/// These hints go into more depth on how a web feature works, its fallbacks and
+/// the alternatives depending on the use case of the feature.
 pub fn get_html_overrides() -> HashMap<String, String> {
     let mut map = HashMap::new();
 

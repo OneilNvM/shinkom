@@ -2,6 +2,12 @@ use std::str::FromStr;
 
 use crate::errors::ParseVersionError;
 
+/// A browser version represented as a sequence of numeric components.
+///
+/// Parse a version from dot-separated unsigned integers with [`str::parse`].
+/// Spaces and the `≤` or `<=` prefixes are ignored, allowing version strings
+/// such as `"≤ 10.2"` to be parsed. Ordering compares the component sequences
+/// lexicographically.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Version {
     components: Vec<u32>,
@@ -9,10 +15,15 @@ pub struct Version {
 }
 
 impl Version {
+    /// Returns the first numeric component, or `0` if there are no components.
     pub fn major(&self) -> u32 {
         self.components.first().copied().unwrap_or(0)
     }
 
+    /// Returns the number of major versions by which `self` exceeds `other`.
+    ///
+    /// Returns `0` when both versions have the same major component or when
+    /// `self` has a lower major component.
     pub fn major_versions_ahead(&self, other: &Self) -> u32 {
         if self.major() > other.major() {
             self.major() - other.major()
@@ -55,14 +66,41 @@ impl FromStr for Version {
     }
 }
 
+/// A parsed browser-version requirement.
+///
+/// Parse requirements with [`str::parse`]. A plain version such as `"10.2"`
+/// creates a [`GreaterThanOrEqualTo`](Self::GreaterThanOrEqualTo)
+/// requirement; a version prefixed with `≤` or `<=` creates a
+/// [`LessThanOrEqualTo`](Self::LessThanOrEqualTo) requirement; and two
+/// dot-separated versions joined by `-`, such as `"10.2-12"`, create a
+/// [`Range`](Self::Range).
+///
+/// [`is_satisfied_by`](Self::is_satisfied_by) currently compares the target
+/// against the stored version for `GreaterThanOrEqualTo` and
+/// `LessThanOrEqualTo`, and against the minimum version for `Range`. It does
+/// not enforce an upper bound for `LessThanOrEqualTo` or `Range`.
 #[derive(Debug)]
 pub enum VersionRequirement {
+    /// The target must be greater than or equal to this version.
     GreaterThanOrEqualTo(Version),
+    /// Stores a version parsed from a `≤` or `<=` requirement.
+    ///
+    /// Note that [`is_satisfied_by`](Self::is_satisfied_by) currently checks
+    /// that the target is greater than or equal to this version.
     LessThanOrEqualTo(Version),
+    /// Stores the minimum and maximum versions parsed from a `min-max` range.
+    ///
+    /// Note that [`is_satisfied_by`](Self::is_satisfied_by) currently checks
+    /// only the minimum version; it does not enforce the maximum.
     Range(Version, Version),
 }
 
 impl VersionRequirement {
+    /// Returns whether `target` satisfies this requirement's current comparison.
+    ///
+    /// `GreaterThanOrEqualTo` and `LessThanOrEqualTo` compare `target` against
+    /// their stored version using `>=`. `Range` compares `target` against its
+    /// minimum version and does not check its maximum.
     pub fn is_satisfied_by(&self, target: &Version) -> bool {
         match self {
             VersionRequirement::GreaterThanOrEqualTo(version) => target >= version,

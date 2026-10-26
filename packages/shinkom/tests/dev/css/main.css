@@ -82,3 +82,62 @@ h2 {
     font-size: 1.25rem;
 }
 
+@layer utilities {
+    .flex {
+      display: flex;
+    }
+    .h-12 {
+      height: calc(var(--spacing) * 12);
+    }
+    .h-full {
+      height: 100%;
+    }
+    .min-h-full {
+      min-height: 100%;
+    }
+    .w-full {
+      width: 100%;
+    }
+    .max-w-3xl {
+      max-width: var(--container-3xl);
+    }
+    .max-w-md {
+      max-width: var(--container-md);
+    }
+    .max-w-xs {
+      max-width: var(--container-xs);
+    }
+}
+
+.foo {
+  display: grid;
+  @media (orientation: landscape) {
+    grid-auto-flow: column;
+    @media (width >= 1024px) {
+      max-inline-size: 1024px;
+    }
+  }
+}
+
+@media (orientation: landscape) {
+  .bar {
+    grid-auto-flow: column;
+    @media (max-width >= 960px) {
+      max-inline-size: 960px;
+    }
+  }
+}
+
+.baz {
+  display: flex;
+  flex-direction: column;
+
+  @media (width <= 960px) {
+    .flex-col-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+}

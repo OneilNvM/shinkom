@@ -1,9 +1,12 @@
 /**@typedef {import('../types/types').CustomEventEngineDetail} CustomEventEngineDetail */
 /**@typedef {import('../types/public').CompatResult} CompatResult */
-import init, { CompatEngine } from '../../pkg/shinkore'
-import compatData, { browserData, usageData } from '../../gen/index'
+/**@typedef {import('../types/public').EngineConfig} EngineConfig */
+/**@typedef {import('../types/public').CSSConfig} CSSConfig */
+import init, { WASMEngine, WASMEngineBuilder } from '../../pkg/shinkore'
+import { htmlCompatData, svgCompatData, cssCompatData, browserData, usageData } from '../../gen/index'
 import { ShinkomBus } from '../core/event-bus'
 import { getModulePath } from '../core/helpers'
+import { readCSSFiles, resolveCSSLocation } from '../core/utils'
 
 /**@type {SKEngine | null} */
 let instance = null
@@ -19,6 +22,8 @@ let instance = null
 export class SKEngine {
     /**@type {Promise<void> | null} */
     #wasmLoaded = null;
+    /**@type {EngineConfig | undefined} */
+    #config;
     /**
      * Initializes the compatibility engine.
      * 
@@ -27,15 +32,16 @@ export class SKEngine {
      * components.
      * 
      * @param {ShinkomBus | null} bus
+     * @param {EngineConfig | undefined} config
      */
-    constructor(bus = null) {
+    constructor(bus = null, config = undefined) {
         if (instance) {
             return instance
         }
 
         this.initialized = false
-        /**@type {CompatEngine | null} */
-        this.compatEngine = null
+        /**@type {WASMEngine | null} */
+        this.wasmEngine = null
 
         /**@type {ShinkomBus | null} */
         this.bus = bus
@@ -43,7 +49,53 @@ export class SKEngine {
         /**@type {(() => void)[]} */
         this.unsubEvents = []
 
+        this.#config = config
+
         instance = this
+    }
+
+    async #autoDiscoverTailwindClasses() {
+        console.log("finding css in document")
+        const compiledCss = Array.from(document.styleSheets)
+            .flatMap((sheet) => {
+                try {
+                    return Array.from(sheet.cssRules).map((rule) => rule.cssText);
+                } catch {
+                    return [];
+                }
+            })
+            .join('\n');
+
+        this.wasmEngine?.add_external_css_styles([compiledCss])
+        this.wasmEngine?.log_css_indices()
+    }
+
+    /**
+     * 
+     * @param {CSSConfig['externalCSS']} cssConfig
+     */
+    async #loadExternalStylesheets(cssConfig) {
+        const isNode = typeof window === "undefined"
+        const rawCSSContents = []
+
+        if (cssConfig) {
+            if (cssConfig.files) {
+                for (const file of cssConfig.files) {
+                    rawCSSContents.push(...(await readCSSFiles(file, isNode)).flat())
+                }
+            } else if (cssConfig.directories) {
+                for (const dir of cssConfig.directories) {
+                    rawCSSContents.push(...(await readCSSFiles(dir, isNode)).flat())
+                }
+            } else if (cssConfig.imports) {
+                for (const content of cssConfig.imports) {
+                    rawCSSContents.push(content)
+                }
+            }
+        }
+
+        this.wasmEngine?.add_external_css_styles(rawCSSContents)
+        this.wasmEngine?.log_css_indices()
     }
 
     /**
@@ -163,10 +215,8 @@ export class SKEngine {
      *
      * The engine is created after the WASM runtime has been loaded and is
      * configured with the bundled compatibility data.
-     *
-     * @param {string | undefined} wasmURL
      */
-    async initEngine(wasmURL = undefined) {
+    async initEngine() {
         if (this.initialized) {
             console.warn("SKEngine is already initialized.")
             return
@@ -177,21 +227,36 @@ export class SKEngine {
         }
 
         try {
-            if (!this.compatEngine) {
+            if (!this.wasmEngine) {
                 if (!this.#wasmLoaded) {
-                    if (wasmURL) {
-                        await this.loadWasm(wasmURL)
+                    if (this.#config && this.#config.wasmURL) {
+                        await this.loadWasm(this.#config.wasmURL)
                     }
                     else {
                         await this.loadWasm()
                     }
                 }
 
-                this.compatEngine = new CompatEngine(compatData.html, compatData.svg, browserData, usageData)
+                const builder = new WASMEngineBuilder()
+
+                builder.set_html_binary_data(Uint8Array.fromBase64(htmlCompatData))
+                builder.set_svg_binary_data(Uint8Array.fromBase64(svgCompatData))
+                builder.set_css_binary_data(Uint8Array.fromBase64(cssCompatData))
+                builder.set_browser_binary_data(Uint8Array.fromBase64(browserData))
+                builder.set_browser_usage_binary_data(Uint8Array.fromBase64(usageData))
+
+                this.wasmEngine = builder.build()
 
                 this.initialized = true
 
-                this.getInstance()
+                if (this.#config && this.#config.css) {
+                    if (this.#config.css.externalCSS) {
+                        this.#loadExternalStylesheets(this.#config.css.externalCSS)
+                    }
+                    if (this.#config.css.tailwindCSS) {
+                        this.#autoDiscoverTailwindClasses()
+                    }
+                }
 
                 console.log("initialized engine")
             }
@@ -213,7 +278,7 @@ export class SKEngine {
     checkElement(element) {
         try {
             /**@type {CompatResult} */
-            const result = this.compatEngine?.check_element(element)
+            const result = this.wasmEngine?.check_element(element)
 
             console.dir(result)
 
@@ -241,7 +306,7 @@ export class SKEngine {
      */
     checkElements(html, depthLevel) {
         try {
-            const result = this.compatEngine?.check_elements(html, depthLevel)
+            const result = this.wasmEngine?.check_elements(html, depthLevel)
 
             console.dir(result)
 
@@ -268,7 +333,7 @@ export class SKEngine {
      */
     fullInspect() {
         try {
-            const result = this.compatEngine?.full_inspect(document.documentElement.outerHTML.replace(/<sk-[\w-]+><\/sk-[\w-]+>/g, ""))
+            const result = this.wasmEngine?.full_inspect(document.documentElement.outerHTML.replace(/<sk-[\w-]+><\/sk-[\w-]+>/g, ""))
 
             console.dir(result)
 
@@ -300,11 +365,11 @@ export class SKEngine {
             console.warn("SKEngine has not been initialized.")
             return;
         }
-        this.compatEngine?.free()
+        this.wasmEngine?.free()
         this.#cleanupEventBusListeners()
 
         this.#wasmLoaded = null
-        this.compatEngine = null
+        this.wasmEngine = null
 
         this.initialized = false
 
