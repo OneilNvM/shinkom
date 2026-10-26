@@ -1,5 +1,6 @@
 [package]
 name = "shinkore-types"
+description = "Contains all types related to the Shinkore crate."
 version = "0.1.0"
 edition = "2024"
 

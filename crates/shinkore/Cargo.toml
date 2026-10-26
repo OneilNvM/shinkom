@@ -2,7 +2,7 @@
 name = "shinkore"
 version = "0.1.0"
 authors = ["OneilNvM <oneil324@outlook.com>"]
-description = "A parsing and data processing library for the Shinkom package using WebAssembly"
+description = "A library for calculating the cross-browser compatibility of web features through data processing and analysis."
 repository = "https://github.com/OneilNvM/shinkom/tree/master/crates/shinkore"
 license = "MIT"
 edition = "2024"
