@@ -145,8 +145,7 @@ mod macros;
 pub mod preprocess;
 mod version;
 
-pub use lol_html::{RewriteStrSettings, element, rewrite_str};
-pub use shinkore_types::{
+use shinkore_types::{
     Deserialize, Serialize,
     prelude::{BrowserData, BrowserUsageData, CSSData, HTMLData, SVGData},
 };

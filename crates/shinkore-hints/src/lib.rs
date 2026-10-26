@@ -1,4 +1,4 @@
-//! Hints feature for the shinkore library.
+//! A crate providing a hint engine for generating useful hints about web features based on currently available cross-browser compatibility data.
 //!
 //! Provides an engine for compiling hints based on compatibility checks against [BCD](https://github.com/mdn/browser-compat-data) data
 //! and logs hints based on the compatibility score of the feature.
