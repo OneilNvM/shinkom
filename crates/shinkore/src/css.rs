@@ -311,14 +311,14 @@ impl<'i> RuleBodyItemParser<'i, Option<CSSRule>, ()> for CSSDeclarationParser {
 }
 
 /// Parses CSS content from stylesheets.
-/// 
+///
 /// Uses a parsing implementation to find CSS classes and at-rules declared in the stylesheet.
-/// 
+///
 /// ## Example
 /// ```
 /// use shinkore::css::{parse_css, ParsedCss};
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// 
+///
 /// let example_css = r#"
 /// .container {
 ///     display: flex;
@@ -329,9 +329,9 @@ impl<'i> RuleBodyItemParser<'i, Option<CSSRule>, ()> for CSSDeclarationParser {
 ///     border-radius: 3rem;
 /// }
 /// "#;
-/// 
+///
 /// let parsed_css = parse_css(example_css)?;
-/// 
+///
 /// assert!(matches!(parsed_css[0], ParsedCss::SelectorRule(_)));
 /// # Ok(())
 /// # }
@@ -359,18 +359,18 @@ pub fn parse_css(css_content: &str) -> Result<Vec<ParsedCss>, ParseStylesError> 
 }
 
 /// Parses inline styles from style attributes.
-/// 
+///
 /// ## Example
 /// ```
 /// use shinkore::css::parse_inline_styles;
-/// 
+///
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// let example_styles = "width: 120px; height: 120px; border: 1px dotted orange; background-color: cyan;";
-/// 
+///
 /// let declarations = parse_inline_styles(example_styles)?;
-/// 
+///
 /// assert_eq!(declarations.len(), 4);
-/// 
+///
 /// # Ok(())
 /// # }
 /// ```

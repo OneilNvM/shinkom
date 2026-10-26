@@ -114,7 +114,6 @@ impl RustEngineBuilder {
     }
 }
 
-
 /// An engine for checking HTML and CSS against browser compatibility data.
 ///
 /// The engine stores HTML, SVG, CSS, browser-support, and browser-usage
@@ -127,10 +126,10 @@ impl RustEngineBuilder {
 ///
 /// ```no_run
 /// use shinkore::engine::RustEngine;
-/// 
+///
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// let engine = RustEngine::from_compiled_data()?;
-/// 
+///
 /// let result = engine.check_element("<div></div>")?;
 /// # Ok(())
 /// # }
@@ -769,7 +768,7 @@ impl RustEngine {
     }
 
     /// Adds classes and at-rules to the engine from stylesheets by mapping them to their declarations.
-    /// 
+    ///
     /// Used for performing compatibility checks on the declarations of a class when the `class` attribute
     /// is retrieved during an element check.
     pub fn add_external_css_styles(

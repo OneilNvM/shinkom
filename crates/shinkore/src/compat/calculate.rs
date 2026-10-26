@@ -143,7 +143,7 @@ pub fn calculate_compat_score(
 }
 
 /// Calculates the status score for a web feature
-/// 
+///
 /// ## Errors
 /// A [`CheckError`] is returned if the status is not available for the feature.
 fn calculate_status_score(

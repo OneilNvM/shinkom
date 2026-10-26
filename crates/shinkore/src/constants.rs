@@ -1,4 +1,4 @@
-//! Contains constants used in the crate. 
+//! Contains constants used in the crate.
 
 /// Tags to not search for in the SVG data.
 pub const SKIP_TAGS: [&str; 2] = ["script", "a"];

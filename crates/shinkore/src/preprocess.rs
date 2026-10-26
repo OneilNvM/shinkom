@@ -58,9 +58,9 @@ enum PreProcessState {
 /// #         </div>
 /// #     </section>
 /// # </main> "#;
-/// 
+///
 /// let output = pre_process_html(html, 3);
-/// 
+///
 /// assert_eq!(
 ///     output,
 ///     r#"<main>
@@ -71,7 +71,7 @@ enum PreProcessState {
 ///             <div class="inner-div">"#
 /// );
 /// ```
-/// 
+///
 /// Notice how the `<p>` tags in the `inner-div` were not returned.
 pub fn pre_process_html(html: &str, depth_level: u32) -> String {
     let mut result: Vec<&str> = vec![];
@@ -266,7 +266,7 @@ pub fn write_close_tag(line: &str) -> Option<String> {
 }
 
 /// Format the tags in HTML string to be on individual lines.
-/// 
+///
 /// Uses [`regex`] to format HTML string to put new tags onto new lines.
 ///
 /// ## Examples
@@ -283,11 +283,11 @@ pub fn write_close_tag(line: &str) -> Option<String> {
 /// assert_eq!(
 ///     formatted,
 ///     r#"<aside>
-///     <section>
-///     <h2>Aside Title</h2>
-///     <div>Content</div>
-///     </section>
-///     </aside>"#
+/// <section>
+/// <h2>Aside Title</h2>
+/// <div>Content</div>
+/// </section>
+/// </aside>"#
 /// );
 /// # Ok(())
 /// # }

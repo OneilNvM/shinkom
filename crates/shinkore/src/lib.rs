@@ -31,6 +31,53 @@
 //! **Note: The data files must be in JSON format and follow the specified schema for data to be deserialized appropriately. Check the [`shinkore_types::schema`]
 //! for more details about the schema.**
 //!
+//! The engine can then be used for checking the compatibility of HTML elements and their local attributes, global attributes, CSS properties and at-rules.
+//!
+//! ```no_run
+//! use shinkore::engine::RustEngine;
+//!
+//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! let engine = RustEngine::from_compiled_data()?;
+//!
+//! let result = engine.check_element(r#"<div class="test" style="width: 60px; height: 30px;"></div>"#)?;
+//!
+//! println!("Overall Score: {}\nResults: {:#?}", result.overall_score, result.lookup_results);
+//! # Ok(())
+//! # }
+//! ```
+//! ---
+//!
+//! ## Compatibility Scoring
+//! The scoring for the compatibility check is an important feature to make sure that it gives fair and understandable results that won't leave you
+//! guessing why a check resulted in a particular score.
+//!
+//! The table below lists the score types and their respective formulas:
+//!
+//! | Score Type     |                                                        Formula                                                         |
+//! |----------------|:----------------------------------------------------------------------------------------------------------------------:|
+//! | overall_score  |                (compat_score<sub>1</sub> + compat_score<sub>2</sub> + ... compat_score<sub>n</sub>) / N                |
+//! | compat_score   |                                ((browser_score + status_score) / MAX_COMPAT_SCORE) * 100                               |
+//! | browser_score  | ((weighted_score<sub>1</sub> + weighted_score<sub>2</sub> + ... weighted_score<sub>n</sub>) / MAX_BROWSER_SCORE) * 100 |
+//! | status_score   |                                         (status_score / MAX_STATUS_SCORE) * 100                                        |
+//! | raw_score      |                                          Raw score calculation explained below                                         |
+//! | weighted_score |                                         raw_score * (total_usage / market_share)                                       |
+//!
+//! Here are a few things to clarify about these formulas:
+//!
+//! - In `overall_score`, *N* represents the number of lookup results returned.
+//! - `MAX_COMPAT_SCORE` has a value of 200, whereas `MAX_BROWSER_SCORE` and `MAX_STATUS_SCORE` have a value of 100.
+//! - The `raw_score` is calculated based on many different factors.
+//!   - If the current version of the browser is greater than the `version_added` value, the score is 100. This is
+//!     also the case if `version_added` is set to `true`.
+//!   - If the `version_removed` value is greater than the `version_added` value, the score is 0 since it is a removed feature.
+//!   - If the `partial_implementation` value is set to true, the score is 80.
+//! - `total_usage` is the usage of a browser across all of its versions, and the `market_share` is the sum of `total_usage`
+//!   between every browser.
+//! - The `browser_score` is the sum of the weighted scores from each browser divided by the `MAX_BROWSER_SCORE`.
+//!
+//! The formula used for scoring may be changed in the future if the current formula does not accurately represent a features
+//! compatibility across browsers.
+//!
 //! ---
 //!
 //! ## Compatibility Data Files
@@ -65,18 +112,30 @@
 //! - CSS Data: `css-compat-data.json`, `css-compat-data.bin`
 //! - Browser Data: `browser-data.json`, `browser-data.bin`
 //! - Browser Usage Data (from caniuse-db): `browser-usage-data.json`, `browser-usage-data.bin`
-//! 
+//!
 //! ---
-//! 
+//!
 //! ## CSS Parsing
 //! Shinkore uses the [`cssparser`] crate for its parsing implementation. The [`css`] module contains functions for parsing CSS stylesheets and inline styles from
 //! style attributes. The implementation of CSS parsing currently parses: classes and their declarations and at-rules and their conditions, as well as their rules.
 //! The parsing implementation also finds nested classes and at-rules, which is helpful for any third-party tools that use this feature a lot like TailwindCSS.
-//! 
+//!
 //! ### Limitations
 //! There are a few limitations of the current parsing implementation:
 //! - It is only able to parse single class names (e.g. `.test`, `.square`, `.demo`) and not multiple (e.g. `.demo.container`, `.container .inner`).
 //! - The only selectors it can parse are class selectors; cannot parse tags, attributes, pseudo-elements etc.
+//!
+//! ---
+//!
+//! ## Features
+//! Shinkore has some Cargo features to extend the capabilities of the engine. Using `default-features = false` will disable
+//! the default features that come with Shinkore.
+//!
+//! ### features = \["hints"\]
+//! ***This feature is enabled by default***
+//!
+//! Provides generated hint logging after compatibility checks when the calculated score
+//! is not perfect.
 pub mod compat;
 mod constants;
 pub mod css;
@@ -94,7 +153,6 @@ pub use shinkore_types::{
 use wasm_bindgen::prelude::*;
 
 use crate::engine::RustEngine;
-
 
 /// Builds a [`WASMEngine`] from binary-encoded compatibility data.
 ///
@@ -254,7 +312,7 @@ impl WASMEngine {
     }
 
     /// Adds classes and at-rules to the engine from stylesheets by mapping them to their declarations.
-    /// 
+    ///
     /// Used for performing compatibility checks on the declarations of a class when the `class` attribute
     /// is retrieved during an element check.
     #[wasm_bindgen]

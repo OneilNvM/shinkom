@@ -3,7 +3,7 @@
 /// This macro should typically be used after calling [`parse_css`](crate::css::parse_css) to extract
 /// all of the classes and at-rules separately. The macro accepts two or three arguments including the
 /// mandatory parsed CSS, a vector for the CSS classes and a vector for the at-rules.
-/// 
+///
 /// If only two arguments are supplied, then only the CSS classes will be extracted.
 ///
 /// ## Example
@@ -11,7 +11,7 @@
 /// use shinkore::css::{CSSRule, ParsedCss, StyleItem, QueryItem, parse_css};
 /// use shinkore::{extract_css_rules, flatten_css};
 /// use shinkore_types::prelude::{CSSDeclaration, CSSClass, AtRule};
-/// 
+///
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// let demo_css = r#"
 /// .foo {
@@ -22,7 +22,7 @@
 ///         grid-auto-flow: column;
 ///     }
 /// }
-/// 
+///
 /// @layer utilities {
 ///     .flex {
 ///         display: flex;
@@ -30,15 +30,15 @@
 ///     .flex-col {
 ///         flex-direction: column;
 ///     }
-/// } 
+/// }
 /// "#;
-/// 
+///
 /// let mut classes = Vec::new();
 /// let mut at_rules = Vec::new();
 /// let parsed_css = parse_css(demo_css)?;
-/// 
+///
 /// extract_css_rules!(parsed_css, classes, at_rules);
-/// 
+///
 /// assert_eq!(classes.len(), 3);
 /// assert_eq!(at_rules.len(), 2);
 /// # Ok(())
@@ -127,11 +127,11 @@ macro_rules! extract_css_rules {
 }
 
 /// A macro for flattening CSS rules in a queue.
-/// 
+///
 /// This macro uses a BFS approach to flattening CSS rules returned by the [`parse_css`](crate::css::parse_css)
 /// function. The macro accepts two or three arguments including a mandatory vector representing the queue,
 /// a vector for the CSS classes and a vector for the at-rules.
-/// 
+///
 /// If only two arguments are supplied, then only the CSS classes are flattened.
 #[macro_export]
 macro_rules! flatten_css {
