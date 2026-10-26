@@ -1,5 +1,5 @@
 //! Hints feature for the shinkore library.
-//! 
+//!
 //! Provides an engine for compiling hints based on compatibility checks against [BCD](https://github.com/mdn/browser-compat-data) data
 //! and logs hints based on the compatibility score of the feature.
 pub mod overrides;
