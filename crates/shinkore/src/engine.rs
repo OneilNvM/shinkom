@@ -133,7 +133,6 @@ impl RustEngineBuilder {
 /// let result = engine.check_element("<div></div>")?;
 /// # Ok(())
 /// # }
-
 /// ```
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct RustEngine {
