@@ -67,7 +67,6 @@ export class SKEngine {
             .join('\n');
 
         this.wasmEngine?.add_external_css_styles([compiledCss])
-        this.wasmEngine?.log_css_indices()
     }
 
     /**
@@ -95,7 +94,6 @@ export class SKEngine {
         }
 
         this.wasmEngine?.add_external_css_styles(rawCSSContents)
-        this.wasmEngine?.log_css_indices()
     }
 
     /**
