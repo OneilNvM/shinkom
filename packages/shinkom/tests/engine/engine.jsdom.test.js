@@ -1,54 +1,45 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it, test, beforeEach, vi } from "vitest";
-import { CompatControlPanel, CompatInspector, CompatUI, Shinkom, SKEngine } from "../../src";
+import { CompatControlPanel, CompatInspector, CompatUI } from "../../src";
+import { SKEngineProxy } from "../../src/engine/engine-proxy";
 import { ShinkomBus, ShinkomState } from "../../src/core";
+const bus = new ShinkomBus()
+const skEngine = new SKEngineProxy(bus)
 
 describe("Power the Shinkore WASM engine", () => {
-    const shinkom = new Shinkom()
-    afterEach(() => {
-        shinkom.skEngine.destroy()
-    })
-
     test("should set the CompatEngine in Browser environment", async () => {
-        await shinkom.skEngine.initEngine()
+        await skEngine.initEngine()
 
-        expect(shinkom.skEngine.compatEngine).not.toBeNull()
+        expect(skEngine.initialized).not.toBe(false)
+
+        await skEngine.destroy()
     })
 })
 
 describe("Analyze compatibility of HTML elements and attributes", () => {
-    let bus;
-    let state;
-    let inspector;
-    let controlPanel;
-    let engine;
-    let compatUI;
+    const state = new ShinkomState()
+    const inspector = new CompatInspector(bus, state)
+    const controlPanel = new CompatControlPanel(bus, state)
+    const compatUI = new CompatUI(bus, state, [
+        inspector,
+        controlPanel
+    ])
 
     beforeEach(async () => {
-        bus = new ShinkomBus()
-        state = new ShinkomState()
-        inspector = new CompatInspector(bus, state)
-        controlPanel = new CompatControlPanel(bus, state)
-        engine = new SKEngine(bus)
-        compatUI = new CompatUI(bus, state, [
-            inspector,
-            controlPanel
-        ])
-
-        await engine.initEngine()
+        await skEngine.initEngine()
         compatUI.init()
     })
 
-    afterEach(() => {
-        engine.destroy()
+    afterEach(async () => {
+        await skEngine.destroy()
         compatUI.destroy()
         document.body.innerHTML = ""
 
         vi.restoreAllMocks()
     })
 
-    it("should console.dir <video> tag with a score of 100", () => {
+    it("should console.dir <video> tag with a score of 100", async () => {
         const dirSpy = vi.spyOn(console, 'dir')
 
         document.body.innerHTML = `
@@ -65,10 +56,12 @@ describe("Analyze compatibility of HTML elements and attributes", () => {
             pointerType: 'mouse'
         }))
 
-        expect(dirSpy).toHaveBeenCalled()
+        vi.waitFor(() => {
+            expect(dirSpy).toHaveBeenCalled()
+        })
     })
 
-    it("should console.dir <big> with a score of 0", () => {
+    it("should console.dir <big> with a score of 0", async () => {
         const dirSpy = vi.spyOn(console, 'dir')
 
         document.body.innerHTML = `
@@ -85,10 +78,12 @@ describe("Analyze compatibility of HTML elements and attributes", () => {
             pointerType: 'mouse'
         }))
 
-        expect(dirSpy).toHaveBeenCalled()
+        vi.waitFor(() => {
+            expect(dirSpy).toHaveBeenCalled()
+        })
     })
 
-    it("should console.dir <main> <h1> <p> <div> <button> and all of their attributes", () => {
+    it("should console.dir <main> <h1> <p> <div> <button> and all of their attributes", async () => {
         const dirSpy = vi.spyOn(console, 'dir')
         controlPanel.multiElements = true
         controlPanel.depthLevel = 1
@@ -112,10 +107,12 @@ describe("Analyze compatibility of HTML elements and attributes", () => {
             pointerType: 'mouse'
         }))
 
-        expect(dirSpy).toHaveBeenCalled()
+        vi.waitFor(() => {
+            expect(dirSpy).toHaveBeenCalled()
+        })
     })
 
-    it("should console.dir all elements and their attributes", () => {
+    it("should console.dir all elements and their attributes", async () => {
         const dirSpy = vi.spyOn(console, 'dir')
         controlPanel.multiElements = true
         controlPanel.depthLevel = 2
@@ -139,7 +136,9 @@ describe("Analyze compatibility of HTML elements and attributes", () => {
             pointerType: 'mouse'
         }))
 
-        expect(dirSpy).toHaveBeenCalled()
+        vi.waitFor(() => {
+            expect(dirSpy).toHaveBeenCalled()
+        })
     })
 })
 

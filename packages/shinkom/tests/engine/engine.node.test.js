@@ -1,9 +1,9 @@
 // @vitest-environment node
 
 import { afterEach, beforeEach, describe, expect, it, test, vi } from "vitest";
-import { SKEngine } from "../../src/engine";
+import { SKEngineProxy } from "../../src/engine/engine-proxy";
 
-const skEngine = new SKEngine()
+const skEngine = new SKEngineProxy()
 
 describe("Power the Shinkore WASM engine", () => {
     afterEach(() => {
@@ -26,37 +26,37 @@ describe("Analyze compatibility of HTML elements and attributes", () => {
         skEngine.destroy()
     })
 
-    it("should return a score of 100 for <header> tag", () => {
+    it("should return a score of 100 for <header> tag", async () => {
         const mockHTML = `<header></header>`
 
-        const result = skEngine.checkElement(mockHTML)
+        const result = await skEngine.checkElement(mockHTML)
 
         expect(result).not.toBeNull()
 
         expect(result?.overall_score).toBe(100)
     })
 
-    it("should return a score of 50 for div tag and align attribute", () => {
+    it("should return a score of 50 for div tag and align attribute", async () => {
         const mockHTML = `<div align="center"></div>`
 
-        const result = skEngine.checkElement(mockHTML)
+        const result = await skEngine.checkElement(mockHTML)
 
         expect(result).not.toBeNull()
 
         expect(result?.overall_score).toBe(50)
     })
 
-    it("should return a score of 100 for div tag and data-level attribute", () => {
+    it("should return a score of 100 for div tag and data-level attribute", async () => {
         const mockHTML = `<div data-level=20></div>`
 
-        const result = skEngine.checkElement(mockHTML)
+        const result = await skEngine.checkElement(mockHTML)
 
         expect(result).not.toBeNull()
 
         expect(result?.overall_score).toBe(100)
     })
 
-    it("should call console.dir 3 times when checking elements three times", () => {
+    it("should call console.dir 3 times when checking elements three times", async () => {
         const dirSpy = vi.spyOn(console, 'dir')
         const mockHTML = `
         <main class="flex flex-col gap-32">
@@ -100,10 +100,10 @@ describe("Analyze compatibility of HTML elements and attributes", () => {
         </main>
         `
 
-        skEngine.checkElements(mockHTML, 1)
-        skEngine.checkElements(mockHTML, 2)
-        skEngine.checkElements(mockHTML, 3)
+        await skEngine.checkElements(mockHTML, 1)
+        await skEngine.checkElements(mockHTML, 2)
+        await skEngine.checkElements(mockHTML, 3)
 
-        expect(dirSpy).toBeCalledTimes(3)
+        expect(dirSpy).toHaveBeenCalledTimes(3)
     })
 })

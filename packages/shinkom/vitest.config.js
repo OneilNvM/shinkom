@@ -22,7 +22,7 @@ export default defineConfig({
                 }
             }
         ],
-        setupFiles: ['tests/setup_files/webassembly.ts'],
+        setupFiles: ['tests/setup_files/webassembly.ts', '@vitest/web-worker'],
         globals: true
     }
 })

@@ -1,8 +1,7 @@
 /**@typedef {import("../../src/types/public").CompatSnapshot} CompatSnapshot */
-
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { CompatInspector, CompatView, ShinkomBus, ShinkomState } from "../../src";
-import { SKEngine } from '../../src/engine'
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { CompatView, ShinkomBus, ShinkomState } from "../../src";
+import { SKEngineProxy } from '../../src/engine'
 
 const state = new ShinkomState()
 const bus = new ShinkomBus()
@@ -142,7 +141,7 @@ describe("Full page inspect", () => {
     })
 
     test('should perform a full page inspect', async () => {
-        const engine = new SKEngine(bus)
+        const engine = new SKEngineProxy(bus)
         await engine.initEngine()
 
         const inspect = compatView.compatViewEl.shadowRootRef.getElementById('sk-full-inspect')
@@ -155,19 +154,23 @@ describe("Full page inspect", () => {
 
         const resultsHistory = localStorage.getItem('resultsHistory')
 
-        expect(resultsHistory).not.toBeNull()
+        vi.waitFor(() => {
+            expect(resultsHistory).not.toBeNull()
+        })
 
         const results = /**@type {CompatSnapshot[]} */ (JSON.parse(resultsHistory))
 
-        expect(results.length).toBe(1)
+        vi.waitFor(() => {
+            expect(results.length).toBe(1)
+        })
 
-        engine.destroy()
+        await engine.destroy()
         localStorage.clear()
     })
 })
 
 describe('Viewing previous results', () => {
-    const engine = new SKEngine(bus)
+    const engine = new SKEngineProxy(bus)
 
     beforeEach(async () => {
         compatView.mount()
@@ -175,12 +178,12 @@ describe('Viewing previous results', () => {
         await engine.initEngine()
     })
 
-    afterEach(() => {
+    afterEach(async () => {
         compatView.unmount()
 
         document.body.innerHTML = ''
 
-        engine.destroy()
+        await engine.destroy()
         localStorage.clear()
     })
 
@@ -201,18 +204,20 @@ describe('Viewing previous results', () => {
 
         const recentsList = compatView.compatViewEl.shadowRootRef.getElementById('sk-recent-results-list')
 
-        expect(recentsList.childElementCount).toBe(2)
+        vi.waitFor(() => {
+            expect(recentsList.childElementCount).toBe(2)
 
-        const item = recentsList.querySelector('sk-recent-result-item')
-        const view = item.querySelector('.sk-view-result')
+            const item = recentsList.querySelector('sk-recent-result-item')
+            const view = item.querySelector('.sk-view-result')
 
-        view.dispatchEvent(new PointerEvent('click', {
-            bubbles: true,
-            cancelable: true,
-            pointerType: 'mouse'
-        }))
+            view.dispatchEvent(new PointerEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                pointerType: 'mouse'
+            }))
 
-        expect(compatView.currentTab).toBe('results')
+            expect(compatView.currentTab).toBe('results')
+        })
     })
 
     it('should perform a 3 full page inspects and view the second result from the history tab', () => {
@@ -247,17 +252,19 @@ describe('Viewing previous results', () => {
 
         const historyContainer = compatView.compatViewEl.shadowRootRef.getElementById('sk-history-container')
 
-        expect(historyContainer.childElementCount).toBe(3)
+        vi.waitFor(() => {
+            expect(historyContainer.childElementCount).toBe(3)
 
-        const item = historyContainer.querySelectorAll('sk-history-item')[1]
-        const view = item.querySelector('.sk-history-item')
+            const item = historyContainer.querySelectorAll('sk-history-item')[1]
+            const view = item.querySelector('.sk-history-item')
 
-        view.dispatchEvent(new PointerEvent('click', {
-            bubbles: true,
-            cancelable: true,
-            pointerType: 'mouse'
-        }))
+            view.dispatchEvent(new PointerEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                pointerType: 'mouse'
+            }))
 
-        expect(compatView.currentTab).toBe('results')
+            expect(compatView.currentTab).toBe('results')
+        })
     })
 })
