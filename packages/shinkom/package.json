@@ -1,7 +1,7 @@
 {
   "name": "shinkom",
-  "version": "1.2.4",
-  "description": "A cross-browser compatibility library for developers",
+  "version": "2.0.0",
+  "description": "A cross-browser compatibility toolkit for developers.",
   "license": "MIT",
   "author": "OneilNvM <oneil324@outlook.com>",
   "type": "module",
@@ -44,6 +44,11 @@
       "types": "./dist/bundles/engine/engine.d.ts",
       "import": "./dist/bundles/engine/engine.js",
       "require": "./dist/modules/engine/engine.cjs"
+    },
+    "./engine-proxy": {
+      "types": "./dist/bundles/engine/engine-proxy.d.ts",
+      "import": "./dist/bundles/engine/engine-proxy.js",
+      "require": "./dist/modules/engine/engine-proxy.cjs"
     },
     "./ui": {
       "types": "./dist/bundles/ui/index.d.ts",

@@ -4,9 +4,8 @@
 /**@typedef {import('../types/public').CSSConfig} CSSConfig */
 import init, { WASMEngine, WASMEngineBuilder } from '../../pkg/shinkore'
 import { htmlCompatData, svgCompatData, cssCompatData, browserData, usageData } from '../../gen/index'
-import { ShinkomBus } from '../core/event-bus'
 import { getModulePath } from '../core/helpers'
-import { readCSSFiles, resolveCSSLocation } from '../core/utils'
+import { readCSSFiles } from '../core/utils'
 
 /**@type {SKEngine | null} */
 let instance = null
@@ -31,50 +30,34 @@ export class SKEngine {
      * `engine:inspect` and `engine:full` events from UI
      * components.
      * 
-     * @param {ShinkomBus | null} bus
      * @param {EngineConfig | undefined} config
      */
-    constructor(bus = null, config = undefined) {
+    constructor(config = undefined) {
         if (instance) {
             return instance
         }
 
         this.initialized = false
+
         /**@type {WASMEngine | null} */
         this.wasmEngine = null
-
-        /**@type {ShinkomBus | null} */
-        this.bus = bus
-
-        /**@type {(() => void)[]} */
-        this.unsubEvents = []
 
         this.#config = config
 
         instance = this
     }
 
-    async #autoDiscoverTailwindClasses() {
-        console.log("finding css in document")
-        const compiledCss = Array.from(document.styleSheets)
-            .flatMap((sheet) => {
-                try {
-                    return Array.from(sheet.cssRules).map((rule) => rule.cssText);
-                } catch {
-                    return [];
-                }
-            })
-            .join('\n');
-
-        this.wasmEngine?.add_external_css_styles([compiledCss])
-    }
+    /**
+     * @param {string} compiledCss 
+     */
+    #addTailwindClasses = async (compiledCss) => this.wasmEngine?.add_external_css_styles([compiledCss])
 
     /**
      * 
      * @param {CSSConfig['externalCSS']} cssConfig
      */
     async #loadExternalStylesheets(cssConfig) {
-        const isNode = typeof window === "undefined"
+        const isNode = typeof window === "undefined" && typeof self === "undefined"
         const rawCSSContents = []
 
         if (cssConfig) {
@@ -115,45 +98,6 @@ export class SKEngine {
     }
 
     /**
-     * Subscribes the engine to UI-driven bus commands.
-     *
-     * The engine listens for `engine:inspect` and `engine:full` events and
-     * translates them into compatibility checks.
-     */
-    #setupEventBusListeners() {
-        if (this.bus) {
-            this.unsubEvents.push(
-                this.bus.on('engine:inspect', (/**@type {CustomEventEngineDetail} */e) => {
-                    if (typeof e === 'object') {
-                        if (e.multiElements) {
-                            this.checkElements(e.elem, e.depthLevel)
-                        } else {
-                            this.checkElement(e.elem)
-                        }
-                    }
-                }),
-                this.bus.on('engine:full', () => {
-                    this.fullInspect()
-                })
-            )
-        }
-    }
-
-    /**
-     * Unsubscribes from any registered bus listeners.
-     *
-     * This is called when the engine is destroyed so that no stale callbacks
-     * remain attached to the shared event bus.
-     */
-    #cleanupEventBusListeners() {
-        if (this.unsubEvents.length > 0) {
-            this.unsubEvents.forEach(cleanup => cleanup())
-
-            this.unsubEvents = []
-        }
-    }
-
-    /**
      * Loads the WASM runtime and initializes the native Shinkom engine.
      *
      * In Node.js this resolves the module path and loads the WASM binary from
@@ -164,7 +108,7 @@ export class SKEngine {
      */
     async loadWasm(wasmURL = undefined) {
         if (this.#wasmLoaded) return this.#wasmLoaded
-        const isNode = typeof window === "undefined"
+        const isNode = typeof window === "undefined" && typeof self === "undefined"
 
         try {
             if (isNode) {
@@ -213,15 +157,13 @@ export class SKEngine {
      *
      * The engine is created after the WASM runtime has been loaded and is
      * configured with the bundled compatibility data.
+     * 
+     * @param {string | undefined} compiledCss
      */
-    async initEngine() {
+    async initEngine(compiledCss = undefined) {
         if (this.initialized) {
             console.warn("SKEngine is already initialized.")
             return
-        }
-
-        if (this.unsubEvents.length === 0) {
-            this.#setupEventBusListeners()
         }
 
         try {
@@ -251,16 +193,16 @@ export class SKEngine {
                     if (this.#config.css.externalCSS) {
                         this.#loadExternalStylesheets(this.#config.css.externalCSS)
                     }
-                    if (this.#config.css.tailwindCSS) {
-                        this.#autoDiscoverTailwindClasses()
+                    if (this.#config.css.tailwindCSS && compiledCss) {
+                        this.#addTailwindClasses(compiledCss)
                     }
                 }
 
                 console.log("initialized engine")
             }
         } catch (error) {
-            console.error(`Engine initialization error: ${error}`)
             SKEngine.clearInstance()
+            throw new Error(`Engine initialization error: ${error}`)
         }
     }
 
@@ -271,7 +213,7 @@ export class SKEngine {
      * is emitted on `results:ready`.
      *
      * @param {string} element
-     * @returns {CompatResult | null}
+     * @returns {CompatResult | null} `CompatResult` or `null`
      */
     checkElement(element) {
         try {
@@ -279,12 +221,6 @@ export class SKEngine {
             const result = this.wasmEngine?.check_element(element)
 
             console.dir(result)
-
-            if (this.bus) {
-                this.bus.emit('results:ready', {
-                    detail: result
-                })
-            }
 
             return result
         } catch (error) {
@@ -300,19 +236,13 @@ export class SKEngine {
      *
      * @param {string} html
      * @param {number} depthLevel
-     * @returns {CompatResult | null}
+     * @returns {CompatResult | null} `CompatResult` or `null`
      */
     checkElements(html, depthLevel) {
         try {
             const result = this.wasmEngine?.check_elements(html, depthLevel)
 
             console.dir(result)
-
-            if (this.bus) {
-                this.bus.emit('results:ready', {
-                    detail: result
-                })
-            }
 
             return result
         } catch (error) {
@@ -327,19 +257,14 @@ export class SKEngine {
      * This method is browser-only because it depends on `document` and
      * inspects the serialized page HTML.
      *
-     * @returns {CompatResult | null}
+     * @param {string} html 
+     * @returns {CompatResult | null} `CompatResult` or `null`
      */
-    fullInspect() {
+    fullInspect(html) {
         try {
-            const result = this.wasmEngine?.full_inspect(document.documentElement.outerHTML.replace(/<sk-[\w-]+><\/sk-[\w-]+>/g, ""))
+            const result = this.wasmEngine?.full_inspect(html)
 
             console.dir(result)
-
-            if (this.bus) {
-                this.bus.emit('results:ready', {
-                    detail: result
-                })
-            }
 
             return result
         } catch (error) {
@@ -364,7 +289,6 @@ export class SKEngine {
             return;
         }
         this.wasmEngine?.free()
-        this.#cleanupEventBusListeners()
 
         this.#wasmLoaded = null
         this.wasmEngine = null

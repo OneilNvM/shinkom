@@ -14,7 +14,8 @@ const shinkom = new Shinkom({
         css: {
             externalCSS: {
                 imports: [maincss]
-            }
+            },
+            tailwindCSS: true
         }
     }
 })

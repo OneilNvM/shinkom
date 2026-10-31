@@ -1,6 +1,6 @@
 /**@typedef {import("./types/public").ShinkomConfig} ShinkomConfig */
 import { ShinkomBus, ShinkomState } from "./core"
-import { SKEngine } from "./engine"
+import { SKEngineProxy } from "./engine/engine-proxy";
 import { CompatControlPanel, CompatInspector, CompatUI, CompatView } from "./ui"
 
 /**@type {Shinkom | null} */
@@ -31,8 +31,8 @@ export class Shinkom {
         const bus = new ShinkomBus()
         const state = new ShinkomState()
 
-        /**@type {SKEngine} */
-        this.skEngine = new SKEngine(bus, this.#config?.engine)
+        /**@type {SKEngineProxy} */
+        this.skEngineProxy = new SKEngineProxy(bus, this.#config?.engine)
 
         /**@type {CompatUI} */
         this.compatUI = new CompatUI(bus, state, [
@@ -53,7 +53,7 @@ export class Shinkom {
                 console.warn("Shinkom is already initialized.")
                 return
             }
-            await this.skEngine.initEngine()
+            await this.skEngineProxy.initEngine()
             this.compatUI.init()
 
             this.initialized = true
@@ -70,7 +70,7 @@ export class Shinkom {
             console.warn("Shinkom has not been initialized.")
             return;
         }
-        this.skEngine.destroy()
+        this.skEngineProxy.destroy()
         this.compatUI.destroy()
         
         this.initialized = false
