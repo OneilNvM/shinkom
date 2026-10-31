@@ -86,3 +86,21 @@ export async function readCSSFiles(pathType, isNode) {
 
     return rawCSSContents
 }
+
+/**
+ * @param {string} base64 
+ * @returns {Uint8Array<ArrayBuffer>} an array buffer
+ */
+export function fromBase64ToBytes(base64) {
+    if (typeof Buffer !== 'undefined') {
+        return new Uint8Array(Buffer.from(base64, 'base64'))
+    }
+    
+    const binString = atob(base64)
+    const len = binString.length
+    const bytes = new Uint8Array(len)
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binString.charCodeAt(i)
+    }
+    return bytes
+}

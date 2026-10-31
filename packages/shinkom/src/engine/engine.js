@@ -5,7 +5,7 @@
 import init, { WASMEngine, WASMEngineBuilder } from '../../pkg/shinkore'
 import { htmlCompatData, svgCompatData, cssCompatData, browserData, usageData } from '../../gen/index'
 import { getModulePath } from '../core/helpers'
-import { readCSSFiles } from '../core/utils'
+import { fromBase64ToBytes, readCSSFiles } from '../core/utils'
 
 /**@type {SKEngine | null} */
 let instance = null
@@ -179,11 +179,11 @@ export class SKEngine {
 
                 const builder = new WASMEngineBuilder()
 
-                builder.set_html_binary_data(Uint8Array.fromBase64(htmlCompatData))
-                builder.set_svg_binary_data(Uint8Array.fromBase64(svgCompatData))
-                builder.set_css_binary_data(Uint8Array.fromBase64(cssCompatData))
-                builder.set_browser_binary_data(Uint8Array.fromBase64(browserData))
-                builder.set_browser_usage_binary_data(Uint8Array.fromBase64(usageData))
+                builder.set_html_binary_data(fromBase64ToBytes(htmlCompatData))
+                builder.set_svg_binary_data(fromBase64ToBytes(svgCompatData))
+                builder.set_css_binary_data(fromBase64ToBytes(cssCompatData))
+                builder.set_browser_binary_data(fromBase64ToBytes(browserData))
+                builder.set_browser_usage_binary_data(fromBase64ToBytes(usageData))
 
                 this.wasmEngine = builder.build()
 

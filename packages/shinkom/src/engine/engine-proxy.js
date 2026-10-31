@@ -40,6 +40,13 @@ export class SKEngineProxy {
         instance = this
     }
 
+    /**
+     * Clears the instance from memory.
+     */
+    static clearInstance() {
+        instance = null
+    }
+
     #setupEventBusListeners() {
         if (this.bus) {
             this.unsubEvents.push(
@@ -104,7 +111,6 @@ export class SKEngineProxy {
     }
 
     async #autoDiscoverTailwindClasses() {
-        console.log("finding css in document")
         const compiledCss = Array.from(document.styleSheets)
             .flatMap((sheet) => {
                 try {
@@ -126,7 +132,7 @@ export class SKEngineProxy {
      */
     async initEngine() {
         if (this.initialized) {
-            console.warn("SKEngine is already initialized.")
+            console.warn("SKEngineProxy is already initialized.")
             return
         }
 
@@ -217,13 +223,15 @@ export class SKEngineProxy {
      * After calling this method, the engine must be reinitialized before
      * further compatibility checks can be performed.
      */
-    destroy() {
+    async destroy() {
         if (!this.initialized) {
             console.warn("SKEngine has not been initialized.")
             return;
         }
         this.#cleanupEventBusListeners()
-        this.#sendMessage('DESTROY')
-        this.worker.terminate()
+        await this.#sendMessage('DESTROY')
+        this.initialized = false
+
+        SKEngineProxy.clearInstance()
     }
 }
