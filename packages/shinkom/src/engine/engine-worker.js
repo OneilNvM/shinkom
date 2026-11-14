@@ -42,9 +42,10 @@ self.onmessage = async (event) => {
                 if (!skEngine) throw new Error('Engine is not initialized')
 
                 const { html } = payload
-                skEngine.fullInspect(html)
+                
+                const result = skEngine.fullInspect(html)
 
-                self.postMessage({ id, type: "SUCCESS" })
+                self.postMessage({ id, type: "SUCCESS", result })
 
                 break;
             }

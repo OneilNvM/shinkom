@@ -277,6 +277,19 @@ fn calculate_support(
 
     match ctx.support {
         SupportData::Single(detail) => {
+            if let Some(ref status) = ctx.compat.status {
+                if status.deprecated {
+                    browser_results.push(BrowserResult {
+                        browser_name: ctx.browser_name.to_owned(),
+                        score: Scores {
+                            raw_score: format!("0"),
+                            weighted_score: format!("0"),
+                        },
+                        versions: Some(SupportData::Single(detail.clone())),
+                    });
+                    return Ok(0.0);
+                }
+            }
             // Calculate browser_score for version_added
             match_version_added(
                 SupportDetailContext {
@@ -332,6 +345,19 @@ fn calculate_support(
             })
         }
         SupportData::Multiple(details) => {
+            if let Some(ref status) = ctx.compat.status {
+                if status.deprecated {
+                    browser_results.push(BrowserResult {
+                        browser_name: ctx.browser_name.to_owned(),
+                        score: Scores {
+                            raw_score: format!("0"),
+                            weighted_score: format!("0"),
+                        },
+                        versions: Some(SupportData::Multiple(details.clone())),
+                    });
+                    return Ok(0.0);
+                }
+            }
             // Separate the total weighted score from the total raw score
             let mut sum_of_raw_scores = 0.0;
             let mut sum_of_weighted_scores = 0.0;
@@ -406,13 +432,43 @@ fn calculate_support(
             })
         }
         SupportData::Simple(version) => match version {
-            VersionValue::Version(_) => {
+            VersionValue::Version(ver) => {
+                if let Some(ref status) = ctx.compat.status {
+                    if status.deprecated {
+                        browser_results.push(BrowserResult {
+                            browser_name: ctx.browser_name.to_owned(),
+                            score: Scores {
+                                raw_score: format!("0"),
+                                weighted_score: format!("0"),
+                            },
+                            versions: Some(SupportData::Simple(VersionValue::Version(
+                                ver.to_string(),
+                            ))),
+                        });
+                        return Ok(0.0);
+                    }
+                }
                 browser_score = 100.0;
                 raw_score_val = browser_score;
             }
-            VersionValue::IsSupported(supported) if *supported => {
-                browser_score = 100.0;
-                raw_score_val = browser_score;
+            VersionValue::IsSupported(supported) => {
+                if let Some(ref status) = ctx.compat.status {
+                    if status.deprecated {
+                        browser_results.push(BrowserResult {
+                            browser_name: ctx.browser_name.to_owned(),
+                            score: Scores {
+                                raw_score: format!("0"),
+                                weighted_score: format!("0"),
+                            },
+                            versions: Some(SupportData::Simple(VersionValue::IsSupported(false))),
+                        });
+                        return Ok(0.0);
+                    }
+                }
+                if *supported {
+                    browser_score = 100.0;
+                    raw_score_val = browser_score;
+                }
             }
             _ => (),
         },

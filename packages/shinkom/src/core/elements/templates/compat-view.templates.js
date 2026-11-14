@@ -97,7 +97,7 @@ export const compatViewStyles = `
     .sk-shadow-host {
         position: relative;
         font-family: Arial, Helvetica, sans-serif;
-        z-index: 991;
+        z-index: 2147483647;
     }
     .sk-shadow-host * {
         transition-property: color, background-color, border-color;
