@@ -1,16 +1,14 @@
 import { useEffect } from "react";
 import logoDark from "./logo-dark.svg";
 import logoLight from "./logo-light.svg";
-import { Shinkom } from 'shinkom'
+import { shinkom } from './shinkom.client'
 
 export function Welcome() {
   useEffect(() => {
-    const shinkom = new Shinkom()
-
     shinkom.init()
 
     return () => shinkom.destroy()
-  })
+  }, [])
   return (
     <main className="flex items-center justify-center pt-16 pb-4">
       <div className="flex-1 flex flex-col items-center gap-16 min-h-0">
